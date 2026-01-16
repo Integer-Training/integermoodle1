@@ -1,0 +1,14 @@
+//
+// Screenreaders
+//
+
+.visually-hidden-focusable,
+.visually-hidden,
+.sr-only {
+  @include sr-only();
+}
+
+.visually-hidden-focusable,
+.sr-only-focusable {
+  @include sr-only-focusable();
+}

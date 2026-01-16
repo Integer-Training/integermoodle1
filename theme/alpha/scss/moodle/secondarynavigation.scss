@@ -1,0 +1,115 @@
+.secondary-navigation {
+    border-bottom: 1px solid $gray-200;
+    border-radius: $btn-border-radius $btn-border-radius 0 0;
+    background-color: rgba($container-bg, .9);
+
+    .theme-dark & {
+        background-color: rgba($dm-container-bg, .6);
+        border-color: $dm-border-color;
+    }
+
+    #page-admin-search & {
+        display: none;
+    }
+
+    @include media-breakpoint-up(lmd) {
+        width: calc(100% + 2 * #{$wrapper-padding-x});
+        margin: -40px -#{$wrapper-padding-x} 30px;
+        padding: 11px $wrapper-padding-x;
+    }
+
+    @include media-breakpoint-up(lmd) {
+        top: 63px;
+    }
+
+    @include media-breakpoint-up(lmd) {
+        position: sticky;
+        z-index: $zindex-fixed - 1;
+
+        #page-question-edit &,
+        .format-tiles-tile-open & {
+            position: relative;
+            top: 0;
+        }
+
+        .sticky-header & {
+            background-color: transparent;
+            border: 0;
+
+            margin: 0;
+            padding: 0;
+            position: fixed;
+
+            width: auto;
+            max-width: 150px;
+            
+            top: 70px;
+            right: 15px;
+            // top: $navbar-height + 4px;
+            // position: fixed;
+
+            // margin: 0 auto;
+            // width: 600px;
+            // left: calc(50% - 300px);
+            // max-width: 90%;
+            // border: 1px solid $gray-200;
+            // border-radius: $btn-border-radius;
+            // .theme-dark & {
+            //     border-color: $dm-border-color;
+            // }
+        }
+
+        #page-site-index & {
+            background-color: transparent;
+            top: 76px;
+            right: 45px;
+        }
+    }
+
+    @include media-breakpoint-down(md) {
+        padding-bottom: 4px;
+        margin-bottom: 20px;
+
+        #page-site-index & {
+            margin-bottom: 0;
+        }
+
+        .nav-tabs {
+            padding: 0;
+        }
+    }
+
+    .navigation {
+        .nav-tabs {
+            background: none;
+
+            .nav-link {
+                padding: 7px 10px;
+                height: 32px;
+                font-size: $font-size-xs;
+                border-radius: $btn-border-radius;
+
+                &.active {
+                    background-color: $primary-color-100;
+                    color: $primary-color-600;
+
+                    .theme-dark & {
+                        background-color: $primary-color-800;
+                        color: $primary-color-200;
+                    }
+                }
+
+                &:hover {
+                    background-color: $gray-100;
+                    color: $primary-color-600;
+
+                    .theme-dark & {
+                        background-color: $dm-gray-200;
+                        color: $primary-color-200;
+                    }
+
+                }
+            }
+        }
+    }
+}

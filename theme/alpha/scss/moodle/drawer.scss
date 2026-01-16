@@ -1,0 +1,958 @@
+/* Anchor link offset fix. This makes hash links scroll 60px down to account for the fixed header. */
+
+:target::before {
+    content: " ";
+    display: block;
+    height: 80px;
+    /* fixed header height*/
+    margin-top: -80px;
+    /* negative fixed header height */
+    width: 1px;
+    pointer-events: none;
+}
+
+.pagelayout-embedded :target {
+    padding-top: initial;
+    margin-top: initial;
+}
+
+#nav-drawer.closed {
+    left: -($drawer-width + $drawer-offscreen-gutter);
+
+    @include media-breakpoint-between(xs, sm) {
+        left: -100%;
+    }
+}
+
+#nav-drawer[aria-hidden=true] .list-group-item {
+    display: none;
+}
+
+.drawer-toggle-icon-open,
+.drawer-toggle-icon-close {
+    opacity: 0;
+    display: none;
+
+    transition: $transition-base;
+}
+
+.sidebar-btn[aria-expanded="true"] {
+    .drawer-toggle-icon-open {
+        opacity: 1;
+        display: inline-flex;
+    }
+}
+
+.sidebar-btn[aria-expanded="false"] {
+    .drawer-toggle-icon-close {
+        opacity: 1;
+        display: inline-flex;
+    }
+}
+
+// Sidebar Grid
+.simplesearchform {
+    grid-area: search;
+}
+
+#block-region-sidebartb {
+    grid-area: sidebartb;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.rui-drawer-logo {
+    grid-area: logo;
+}
+
+.rui-sidebar-mycourses {
+    grid-area: mycourse;
+}
+
+.rui-flatnavigation {
+    grid-area: nav;
+}
+
+#block-region-sidebarbb {
+    grid-area: sidebarbb;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.rui-custom-sidebar-content {
+    grid-area: customhtml;
+}
+
+.rui-customstcontent {
+    grid-area: customstcontent;
+}
+
+.rui-customsmcontent {
+    grid-area: customsmcontent;
+}
+
+.rui-customsfcontent {
+    grid-area: customsfcontent;
+}
+
+#nav-drawer {
+    .nav-drawer-container {
+        grid-template-columns: repeat(1, 1fr);
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 0 7px;
+        margin: 7px;
+
+        display: grid;
+    }
+}
+
+.drawer-layout--1 {
+    grid-template-areas:
+        "search"
+        "logo"
+        "sidebartb"
+        "mycourse"
+        "customstcontent"
+        "nav"
+        "customhtml"
+        "customsmcontent"
+        "customsfcontent"
+        "sideabrbb";
+}
+
+.drawer-layout--2 {
+    grid-template-areas:
+        "search"
+        "logo"
+        "sidebartb"
+        "customstcontent"
+        "nav"
+        "mycourse"
+        "customhtml"
+        "customsmcontent"
+        "customsfcontent"
+        "sideabrbb";
+}
+
+#nav-drawer.nav-drawer--admin {
+    .nav-drawer-container {
+        max-height: calc(100vh - 88px);
+    }
+}
+
+
+#nav-drawer {
+    position: fixed;
+    z-index: $zindex-fixed + 35;
+    width: $drawer-width;
+    top: 7px;
+    right: auto;
+    left: 7px;
+    height: calc(100% - 14px);
+
+    background-color: $drawer-bg;
+    border-radius: $btn-border-radius;
+    transition: right 250ms ease, left 250ms ease;
+
+    @include media-breakpoint-only(lmd) {
+        top: 70px;
+        left: 20px;
+        height: calc(100% - 83px);
+    }
+
+    @include media-breakpoint-only(md) {
+        top: 64px;
+        left: 7px;
+        height: calc(100% - 70px);
+    }
+
+    @include media-breakpoint-between(xs, sm) {
+        top: 64px;
+        height: calc(100% - 70px);
+        width: calc(100% - 16px);
+    }
+
+    .theme-dark & {
+        background-color: $dm-black;
+    }
+
+    .rui-drawer-footer {
+        background-color: $drawer-nav-box-bg;
+        width: calc(100% - 10px);
+        padding: 3px;
+        position: absolute;
+        left: 5px;
+        bottom: 5px;
+        border-radius: 4px;
+    }
+
+    .rui-custom-sidebar-content {
+        a {
+            color: $drawer-link;
+
+            &:hover {
+                color: $drawer-link-h;
+            }
+        }
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5 {
+        color: $drawer-text;
+    }
+}
+
+.rui-drawer-logo {
+    padding: 10px 16px;
+    margin: $topbar-padding-x 0 20px;
+}
+
+.nav-drawer-wrapper {
+    margin: 40px 0;
+}
+
+
+body.drawer-ease {
+    transition: margin-left 250ms ease, margin-right 250ms ease;
+}
+
+$right-drawer-width: 320px;
+
+[data-region=right-hand-drawer] {
+    display: flex;
+    flex-direction: column;
+    transition: all 250ms ease;
+
+    &.drawer {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100%;
+        width: $right-drawer-width;
+        border-left: 1px solid $border-color;
+        padding: 0;
+        visibility: visible;
+        opacity: 1;
+
+        overflow: hidden;
+        z-index: 11000;
+
+        .theme-dark & {
+            border-color: $dm-border-color;
+        }
+    }
+
+    &.hidden {
+        display: block;
+        right: $right-drawer-width * -1;
+        // Turn off visibility so that nothing in the drawer can receive focus when
+        // it is hidden.
+        visibility: hidden;
+        opacity: 0;
+        // Delay visibility changes until after the slide right animation has completed.
+        @include transition(right 250ms ease-in-out, visibility 0s ease-in-out 250ms, opacity 0s ease-in-out 250ms);
+    }
+}
+
+@include media-breakpoint-between(xs, sm) {
+    [data-region=right-hand-drawer] {
+        .closewidget {
+            display: block;
+            padding: 0 0.2rem;
+        }
+    }
+}
+
+
+.message-drawer-backdrop {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: $zindex-fixed + 30;
+
+    background-color: rgba(#000, .6);
+
+    cursor: e-resize;
+
+    .layout.fullscreen & {
+        display: none;
+        z-index: -1;
+    }
+}
+
+.rui-flatnavigation {
+    list-style: none;
+    padding: $drawer-box-inner-padding 0;
+    margin: 0;
+}
+
+.rui-flatnavigation-box {
+    padding-bottom: 10px;
+    margin: 0;
+
+    .rui-drawer-footer & {
+        padding: 0;
+        margin: 0;
+    }
+}
+
+.rui-sidebar-nav-item {
+    margin-bottom: 2px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.rui-sidebar-nav-item-link {
+    padding: .35rem .65rem;
+
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $drawer-nav-btn-text;
+    word-break: break-word;
+
+    background-color: transparent;
+    border: none;
+    border-radius: $btn-border-radius;
+
+    transition: color 350ms ease;
+
+    .rui-course-wrapper & {
+        padding: .35rem .5rem;
+    }
+
+    .theme-dark & {
+        color: $drawer-nav-btn-text;
+    }
+
+    .rui-sidebar-nav-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        width: 30px;
+        height: 30px;
+        margin-right: 5px;
+        color: $drawer-nav-btn-icon;
+        opacity: $drawer-icon-opacity;
+
+        .theme-dark & {
+            color: $drawer-nav-btn-icon;
+        }
+    }
+
+    &:hover {
+        border: none;
+        background-color: $drawer-nav-btn-bg-hover;
+        color: $drawer-nav-btn-text-hover;
+
+        text-decoration: none;
+
+        .theme-dark & {
+            background-color: $primary-color-800;
+            color: $primary-color-100;
+        }
+
+        .rui-sidebar-nav-icon {
+            color: $drawer-nav-btn-text-hover;
+            opacity: $drawer-icon-opacity;
+
+            .theme-dark & {
+                color: $drawer-nav-btn-text;
+            }
+        }
+    }
+
+    &.active {
+        border: none;
+        background-color: rgba($drawer-nav-btn-bg-hover, .6);
+        color: $drawer-nav-btn-text-hover;
+
+        text-decoration: none;
+
+        .theme-dark & {
+            background-color: rgba($primary-color-800, .6);
+            color: $primary-color-100;
+        }
+    }
+
+}
+
+.rui-drawer-course-nav {
+    margin-bottom: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid $drawer-border;
+
+    .rui-sidebar-nav-item-link {
+        margin-bottom: 2px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        font-size: $font-size-xs;
+    }
+}
+
+.rui-sidebar-nav-item-link--sm {
+    font-size: $font-size-xs;
+}
+
+.rui-sidebar-nav-text,
+.rui-course-menu-list-text {
+    width: calc(100% - 35px);
+}
+
+.rui-sidebar-nav-text {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.rui-sidebar-mycourses {
+    margin: 7px 0;
+    padding: $drawer-box-inner-padding;
+    background-color: $drawer-nav-box-bg;
+    border-radius: $btn-border-radius;
+    overflow: hidden;
+
+    .theme-dark & {
+        background-color: $dm-gray-100;
+    }
+}
+
+a.rui-course-list-past {
+    background-color: $green-800;
+    color: $green-100;
+
+    .rui-sidebar-nav-icon {
+        margin-right: 2px;
+        color: $green-100;
+    }
+
+    .mycourses-inprogress-on & {
+        display: none;
+    }
+
+    .theme-dark & {
+        background-color: $green-800;
+        color: $green-100;
+    }
+}
+
+.rui-course-list-hidden {
+    display: none;
+    mix-blend-mode: luminosity;
+
+    .rui-sidebar-nav-icon {
+        margin-right: 2px;
+        color: $white;
+    }
+
+    .mycourses-hidden-on & {
+        display: flex;
+    }
+}
+
+.rui-course-list-future {
+    .mycourses-inprogress-on & {
+        display: none;
+    }
+}
+
+.mycourses-filter {
+    label {
+        min-height: 20px;
+    }
+}
+
+.rui-sidebar-hr {
+    margin: 0;
+    padding: 0;
+    display: block;
+    margin: 3px -3px;
+    background-color: rgba($drawer-nav-btn-text, .1);
+    width: calc(100% + 6px);
+    height: 1px;
+
+    .theme-dark & {
+        background-color: $dm-border-color;
+    }
+}
+
+// TODO: variables
+.rui-sidebar-abtn {
+    width: 100%;
+    padding: .35rem .45rem;
+    background-color: transparent;
+    border-width: 0;
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $drawer-nav-btn-text;
+
+    .theme-dark & {
+        color: $dm-body-color;
+        border-color: $dm-border-color;
+    }
+
+    .rui-drawer-badge {
+        padding: 5px;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 20px;
+        background-color: $drawer-bg;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        font-size: 11px;
+        font-weight: $font-weight-medium;
+        color: $drawer-text;
+    }
+
+    &:hover,
+    &[aria-expanded="true"] {
+        background-color: $drawer-nav-btn-bg-hover;
+        color: $drawer-nav-btn-text-hover;
+
+        .theme-dark & {
+            background-color: $drawer-nav-btn-bg;
+            color: $drawer-nav-btn-text;
+        }
+
+        .rui-drawer-badge {
+            background-color: $drawer-nav-box-bg;
+            color: $drawer-text;
+        }
+
+        .rui-sidebar-nav-icon {
+            color: $drawer-nav-btn-text-hover;
+        }
+    }
+
+}
+
+.rui-course-wrapper {
+    max-height: 200px;
+    overflow-y: auto;
+
+    @include thin-scrolls($drawer-scroll-bg-track);
+
+    .theme-dark & {
+        @include thin-scrolls($dm-drawer-scroll-bg-track);
+    }
+}
+
+.rui-course-menu-list--more {
+    width: 100%;
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin: 0;
+    padding: .35rem 1rem;
+
+    border-radius: $btn-border-radius;
+
+    font-size: $font-size-xs;
+    color: $drawer-nav-btn-text-light;
+    text-align: right;
+
+    .theme-dark & {
+        color: $dm-body-color;
+    }
+
+    &:hover {
+        background-color: $drawer-nav-btn-bg-hover;
+        color: $drawer-nav-btn-text-hover;
+        text-decoration: none;
+
+        .theme-dark & {
+            background-color: $primary-color-600;
+            color: $primary-color-100;
+        }
+    }
+}
+
+.rui-flatnavigation-sm {
+    padding: 3px 1px;
+
+    .rui-sidebar-nav-icon svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .rui-list-group-item {
+        padding-top: 3px;
+        padding-bottom: 3px;
+
+        font-size: $font-size-xs;
+        color: $drawer-nav-btn-text-light;
+
+        .theme-dark & {
+            color: $dm-body-color-light;
+        }
+    }
+}
+
+.rui-drawer-nav-title {
+    padding: 0 12px;
+    font-size: 11px;
+    font-weight: $font-weight-medium;
+    text-transform: uppercase;
+    opacity: .6;
+}
+
+.rui-nav-item-container {
+    display: flex;
+    align-items: start;
+}
+
+.rui-nav-list-group {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: $drawer-nav-btn-text;
+
+    .theme-dark & {
+        color: $dm-body-color-secondary;
+    }
+}
+
+
+.nav-drawer-header {
+    position: sticky;
+    top: 0;
+    margin: -15px -15px 30px;
+    padding: $drawer-padding-x $drawer-padding-x 0 $drawer-padding-x;
+    z-index: $zindex-sticky;
+}
+
+body.drawer-ease {
+    transition: margin-left 250ms ease, margin-right 250ms ease;
+}
+
+body.drawer-courseindex--open,
+body.drawer-open-index--open,
+body.drawer-open-left {
+    @include media-breakpoint-up(lg) {
+        margin-left: 290px;
+    }
+}
+
+body.dir-rtl.drawer-courseindex--open,
+body.dir-rtl.drawer-open-index--open,
+body.dir-rtl.drawer-open-right {
+    @include media-breakpoint-up(lg) {
+        margin-right: 290px;
+    }
+}
+
+$right-drawer-width: 320px;
+
+
+@include media-breakpoint-between(xs, sm) {
+
+    body.drawer-open-left,
+    body.drawer-open-right {
+        overflow: hidden;
+    }
+}
+
+.rui-custom-sidebar-content {
+    font-size: $font-size-sm;
+    color: $drawer-nav-btn-text;
+
+    .theme-dark & {
+        color: $dm-body-color-light;
+    }
+}
+
+
+/* Course Index */
+.drawer-course-index {
+    overflow: hidden;
+
+    background-color: $drawer-bg;
+
+    box-shadow: $box-shadow-lg;
+    position: fixed;
+    z-index: $zindex-fixed + 200 !important;
+    transition: left 250ms ease, left 250ms ease;
+
+    @include media-breakpoint-up(lg) {
+        top: 7px;
+    }
+
+    @include media-breakpoint-between(xs, lmd) {
+        top: 72px;
+        left: 20px;
+    }
+
+    @include media-breakpoint-up(lmd) {
+        width: 280px;
+        height: 100%;
+        max-height: calc(100vh - 14px);
+        left: -280px;
+
+        border-radius: $btn-border-radius;
+    }
+
+    @include media-breakpoint-only(md) {
+        width: 280px;
+        height: 100%;
+        max-height: calc(100vh - 74px);
+        left: -280px;
+
+        border-radius: $btn-border-radius;
+    }
+
+    @include media-breakpoint-between(xs, sm) {
+        width: calc(100% - 14px);
+        left: -100%;
+        height: calc(100vh - 75px);
+        border-radius: $btn-border-radius;
+    }
+
+    .theme-dark & {
+        background-color: $dm-drawer-bg;
+    }
+
+    &.show {
+        left: 7px;
+    }
+}
+
+.btn-drawer {
+    position: fixed;
+    left: 30px;
+    z-index: $zindex-fixed + 10;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    width: 40px;
+    height: 40px;
+
+    background-color: $white;
+    border: 1px solid $gray-100;
+    box-shadow: rgb(0 0 0 / 5%) 0 1px 0, rgb(0 0 0 / 5%) 0 4px 16px, rgb(0 0 0 / 8%) 0 10px 20px;
+    color: $gray-800;
+    border-radius: $btn-border-radius;
+
+    transition: all ease 250ms;
+
+    &:hover {
+        box-shadow: rgb(0 0 0 / 8%) 0 2px 0, rgb(0 0 0 / 15%) 0 4px 16px, rgb(0 0 0 / 18%) 0 10px 20px;
+    }
+
+    @include media-breakpoint-up(lmd) {
+        .drawer-course-index--on & {
+            top: 67px;
+            left: 34px;
+        }
+
+        .drawer-open-left & {
+            left: $drawer-width + $topbar-padding-x + 28px;
+        }
+    }
+
+    @include media-breakpoint-between(xs, sm) {
+        top: 68px;
+        left: 16px;
+        right: auto;
+    }
+
+    .drawer-courseindex--open &,
+    .drawer-open-index--open & {
+        display: none;
+    }
+
+    .theme-dark & {
+        background-color: $dm-gray-200;
+        border-color: $dm-gray-200;
+        color: $dm-body-color;
+    }
+}
+
+.page-has-blocks .show-drawer-right .page-content {
+    padding-right: 0;
+}
+
+.rui-lang-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 40px;
+    width: max-content;
+    min-height: 40px;
+
+    border: none;
+    border-radius: $btn-border-radius;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+
+    #nav-drawer & {
+        background-color: $drawer-nav-btn-bg;
+        color: $drawer-nav-btn-text;
+
+        &:hover {
+            background-color: $drawer-nav-btn-bg-hover;
+            color: $drawer-nav-btn-text-hover;
+        }
+    }
+
+    #topBar & {
+        background-color: transparent;
+        color: $topbar-btn-text;
+
+        .theme-dark & {
+            color: $dm-topbar-btn-text;
+        }
+
+        &:hover {
+            background-color: $topbar-btn-hover;
+            color: $topbar-btn-hover-text;
+
+            .theme-dark & {
+                background-color: $dm-topbar-btn-hover;
+                color: $dm-topbar-btn-hover-text;
+            }
+        }
+    }
+}
+
+@mixin drawer() {
+    transition: all 350ms ease-in-out;
+    z-index: $zindex-modal;
+    position: fixed;
+
+    @include media-breakpoint-down(md) {
+        top: 67px;
+        height: calc(100% - 75px);
+    }
+
+    &.not-initialized {
+        display: none;
+    }
+}
+
+@mixin drawertypes() {
+    &.drawer-right {
+        padding: 16px;
+        width: $drawer-right-width;
+        max-width: $drawer-right-width;
+        right: -100%;
+
+        visibility: hidden;
+        @include box-shadow($box-shadow-drawer-right);
+
+        @include media-breakpoint-up(lg) {
+            height: calc(100vh - 65px);
+            z-index: $zindex-fixed + 3;
+            background-color: rgba($body-bg, .75);
+            border-radius: $btn-border-radius;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+
+            .theme-dark & {
+                background-color: $dm-body-bg;
+            }
+        }
+
+        @include media-breakpoint-between(xs, lmd) {
+            z-index: 9999;
+            padding: 20px;
+            background-color: $container-bg;
+            border-radius: $btn-border-radius;
+            box-shadow: $box-shadow-lg;
+
+            .theme-dark & {
+                background-color: $dm-container-bg;
+            }
+        }
+
+        @include media-breakpoint-between(xs, sm) {
+            width: calc(100% - 14px);
+            max-width: calc(100% - 14px);
+        }
+
+        &.show {
+            visibility: visible;
+
+            @include media-breakpoint-up(lmd) {
+                top: 67px;
+                right: 20px;
+
+                .pagelayout-secure & {
+                    height: 100vh;
+                    right: 0;
+                }
+            }
+
+            @include media-breakpoint-between(xs, md) {
+                height: calc(100vh - 74px);
+                right: 7px !important;
+
+                .pagelayout-secure & {
+                    height: calc(100vh - 14px);
+                    top: 7px;
+                    right: 7px !important;
+                }
+            }
+        }
+
+        .drawertoggle {
+            margin-left: auto;
+        }
+    }
+}
+
+.drawer {
+    @include drawer();
+    @include drawertypes();
+}
+
+.rui-sidebar-filter {
+    padding: 0 2px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border: 1px solid rgba($drawer-text, .1);
+    border-radius: $btn-border-radius;
+
+    .theme-dark & {
+        border-color: rgba($dm-drawer-text, .1);
+    }
+}
+
+.drawerheader {
+    padding: 0;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.drawer.scrolled .drawerheader {
+    box-shadow: 0 8px 11px -7px $drawer-shadow-color;
+}

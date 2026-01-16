@@ -1,0 +1,149 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template theme_alpha/tmpl-dashboard
+
+    Context variables required for this template:
+    * sitename - The name of the site
+    * output - The core renderer for the page
+    * bodyattributes - attributes for the body tag as a string of html attributes
+    * sidepreblocks - HTML for the blocks
+    * hasblocks - true if there are blocks on this page
+    * navdraweropen - true if the nav drawer should be open on page load
+    * regionmainsettingsmenu - HTML for the region main settings menu
+    * hasregionmainsettingsmenu - There is a region main settings menu on this page.
+
+    Example context (json):
+    {
+        "sitename": "Moodle",
+        "output": {
+            "doctype": "<!DOCTYPE html>",
+            "page_title": "Test page",
+            "favicon": "favicon.ico",
+            "main_content": "<h1>Headings make html validators happier</h1>"
+         },
+        "bodyattributes":"",
+        "sidepreblocks": "<h2>Blocks html goes here</h2>",
+        "hasblocks":true,
+        "navdraweropen":true,
+        "regionmainsettingsmenu": "",
+        "hasregionmainsettingsmenu": false
+    }
+}}
+{{> theme_alpha/head }}
+
+<body {{{ bodyattributes }}}>
+    {{> core/local/toast/wrapper}}
+
+    <div id="page-wrapper" class="d-print-block">
+
+        {{{ output.standard_top_of_body_html }}}
+
+        <div id="page" data-region="mainpage" data-usertour="scroller" class="container-fluid drawers {{#draweropenright}}show-hidden-drawer{{/draweropenright}} drag-container">
+
+            {{> theme_alpha/navbar }}
+            <div id="topofscroll" class="main-inner">
+                <div id="page-content" class="page-content wrapper-page">
+
+                    <div id="region-main-box" class="region-main-wrapper mt-3">
+                        <section id="region-main" class="region-main-content" aria-label="{{#str}}content{{/str}}">
+                            <div class="rui-blocks-wrapper">
+                                <div class="wrapper-course">
+
+                                    {{#secondarymoremenu}}
+                                        <div class="secondary-navigation d-print-none">
+                                            {{> core/moremenu}}
+                                        </div>
+                                    {{/secondarymoremenu}}
+
+                                    {{{ output.simple_header }}}
+
+                                    {{#headeractions}}
+                                        <div class="header-actions-container ml-1" data-region="header-actions-container">
+                                            <div class="header-action">{{{.}}}</div>
+                                        </div>
+                                    {{/headeractions}}
+                                    {{{pageheadingbutton}}}
+
+                                    {{{coursepageinformationbanners}}}
+
+                                    {{#hasregionmainsettingsmenu}}
+                                        <div class="region_main_settings_menu_proxy"></div>
+                                    {{/hasregionmainsettingsmenu}}
+                                    {{{ output.course_content_header }}}
+                                    {{#headercontent}}
+                                        {{> core/activity_header }}
+                                    {{/headercontent}}
+                                    {{#overflow}}
+                                        <div class="container-fluid tertiary-navigation">
+                                            <div class="navitem">
+                                                {{> core/url_select}}
+                                            </div>
+                                        </div>
+                                    {{/overflow}}
+
+                                    <div class="rui-dashboard-top">
+
+                                        {{#hasdtopblocks}}
+                                            <div id="blocks-dashboardtopblock" class="col-12 px-0">
+                                                {{{ dtopblocks }}}
+                                            </div>
+                                        {{/hasdtopblocks}}
+
+                                        <div class="rui-dashboard-main mb-4">{{{ output.main_content }}}</div>
+
+                                        {{#hasdbottomblocks}}
+                                            <div class="rui-dashboard-bottom mt-4 mb-4">
+                                                <div data-region="blocks-dashboardbottomblock" class="col-12 p-0">
+                                                    {{{ dbottomblocks }}}
+                                                </div>
+                                            </div>
+                                        {{/hasdbottomblocks}}
+
+                                    </div>
+
+                                </div>
+
+                                {{> theme_alpha/hasblocks-tmpl }}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                {{> theme_alpha/footer }}
+            </div>
+
+        </div>
+
+        {{^hiddensidebar}}
+            {{> theme_alpha/nav-drawer }}
+        {{/hiddensidebar}}
+        {{^hidecourseindexnav}}{{> theme_alpha/courseindex-tmpl}}{{/hidecourseindexnav}}
+
+        {{{ output.standard_after_main_region_html }}}
+
+    </div>
+
+</body>
+
+</html>
+{{#js}}
+    M.util.js_pending('theme_boost/loader');
+    require(['theme_boost/loader', 'theme_alpha/drawer'], function(Loader, Drawer) {
+    Drawer.init();
+    M.util.js_complete('theme_boost/loader');
+    });
+{{/js}}

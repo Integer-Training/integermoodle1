@@ -1,0 +1,56 @@
+
+//generate alter statements
+SELECT CONCAT(
+    'ALTER TABLE `', TABLE_NAME, '` ',
+    'MODIFY COLUMN `id` INT NOT NULL AUTO_INCREMENT;'
+) AS alter_sql
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'u774156482_epearl'
+  AND COLUMN_NAME = 'id'
+  AND IS_NULLABLE = 'NO'
+  AND COLUMN_DEFAULT IS NULL
+
+////find defualt null tables
+SELECT 
+    TABLE_NAME, 
+    COLUMN_NAME, 
+    IS_NULLABLE,
+    COLUMN_DEFAULT
+FROM 
+    INFORMATION_SCHEMA.COLUMNS
+WHERE 
+    TABLE_SCHEMA = 'u774156482_epearl'
+    AND COLUMN_DEFAULT IS NULL
+    AND COLUMN_NAME = 'id'
+    AND IS_NULLABLE = 'NO';
+/////
+update r6ua_assign set requiresubmissionstatement=0,submissiondrafts=0 where 1=1;
+
+
+// to quick assign overrides
+INSERT INTO r6ua_assign_overrides
+    (
+        assignid,
+        userid,
+        allowsubmissionsfromdate,
+        duedate,
+        cutoffdate
+    )
+SELECT
+    a.id AS assignid,
+    ue.userid,
+    UNIX_TIMESTAMP('2026-01-01 09:00:00') AS allowsubmissionsfromdate,
+    UNIX_TIMESTAMP('2026-05-30 23:59:00') AS duedate,
+    UNIX_TIMESTAMP('2026-05-31 23:59:00') AS cutoffdate
+FROM r6ua_assign a
+JOIN r6ua_course c ON c.id = a.course
+JOIN r6ua_enrol e ON e.courseid = c.id
+JOIN r6ua_user_enrolments ue ON ue.enrolid = e.id
+JOIN r6ua_context ctx ON ctx.instanceid = c.id
+JOIN r6ua_role_assignments ra ON ra.contextid = ctx.id AND ra.userid = ue.userid
+JOIN r6ua_role r ON r.id = ra.roleid
+LEFT JOIN r6ua_assign_overrides ao
+    ON ao.assignid = a.id AND ao.userid = ue.userid
+WHERE ctx.contextlevel = 50 and c.id=32
+AND r.shortname = 'student'
+AND ao.id IS NULL;

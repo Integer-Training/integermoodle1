@@ -1,0 +1,20 @@
+{{#children}}
+        {{^divider}}
+            {{#url}}
+                  <a href="{{{url}}}" title="{{{id}}}" {{#haschildren}}class="has-arrow w-100 d-block accordion" id="navdrawerabtn-{{id}}" data-bs-toggle="collapse" data-target="#accordionAdditionalNavC-{{id}}" aria-expanded="false" aria-controls="accordionAdditionalNav"{{/haschildren}}>{{{text}}}{{#haschildren}}<i class="icon fas fa-caret-down"></i>{{/haschildren}}</a>
+                  {{#haschildren}}
+                  <div id="accordionAdditionalNavC-{{id}}" class="sub-nav m-0 px-1 pb-2 collapse" data-parent="#navdrawerabtn-{{id}}">
+                      {{> theme_alpha/custom_menu }}
+                  </div>
+                  {{/haschildren}}
+            {{/url}}
+            {{^url}}
+                  <a href="#" {{#haschildren}}class="has-arrow w-100 d-block accordion" id="navdrawerabtn-{{id}}" data-bs-toggle="collapse" data-target="#accordionAdditionalNavC-{{id}}" aria-expanded="false" aria-controls="accordionAdditionalNav"{{/haschildren}}>{{{text}}}{{#haschildren}}<i class="icon fas fa-caret-down"></i>{{/haschildren}}</a>
+                  {{#haschildren}}
+                  <div id="accordionAdditionalNavC-{{id}}" class="sub-nav m-0 px-1 pb-2 collapse" data-parent="#navdrawerabtn-{{id}}">
+                      {{> theme_alpha/custom_menu }}
+                  </div>
+                  {{/haschildren}}
+            {{/url}}
+        {{/divider}}
+{{/children}}

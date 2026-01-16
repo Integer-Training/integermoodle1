@@ -1,0 +1,50 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{#hasblocks}}
+    <div id="drawerTogglerRight" class="drawer-toggler drawer-right-toggle ml-auto d-print-none">
+        <button class="btn rui-icon-no-margin" data-toggler="drawers" data-action="toggle" data-target="theme_alpha-drawers-blocks" data-bs-toggle="tooltip" data-bs-placement="right" title="{{#str}}opendrawerblocks, core{{/str}}">
+            <span class="sr-only">{{#str}}opendrawerblocks, core{{/str}}</span>
+            <span>
+                <svg width="20" height="20" viewBox="0 0 20 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;">
+                    <g transform="matrix(1,0,0,1,-2,0)">
+                        <path d="M18.333,15L18.333,5C18.333,3.629 17.205,2.5 15.833,2.5L14.167,2.5C12.795,2.5 11.667,3.629 11.667,5L11.667,15C11.667,16.371 12.795,17.5 14.167,17.5L15.833,17.5C17.205,17.5 18.333,16.371 18.333,15Z" style="fill:none;fill-rule:nonzero;stroke:currentColor;stroke-width:1.67px;" />
+                    </g>
+                    <g transform="matrix(1,0,0,1,-2,0)">
+                        <path d="M11.667,10L5,10M5,10L7.5,7.5M5,10L7.5,12.5" style="fill:none;fill-rule:nonzero;stroke:currentColor;stroke-width:1.25px;stroke-linecap:round;stroke-linejoin:round;" />
+                    </g>
+                </svg>
+
+            </span>
+        </button>
+    </div>
+    {{< theme_alpha/drawer }}
+    {{$id}}theme_alpha-drawers-blocks{{/id}}
+    {{$drawerclasses}}drawer drawer-right rui-right-drawer{{#blockdraweropen}} show{{/blockdraweropen}}{{/drawerclasses}}
+    {{$drawercontent}}
+    <section class="d-print-none" aria-label="{{#str}}blocks{{/str}}">
+        {{{ addblockbutton }}}
+        {{{ sidepreblocks }}}
+    </section>
+    {{/drawercontent}}
+    {{$drawerpreferencename}}drawer-open-block{{/drawerpreferencename}}
+    {{$forceopen}}{{#forceblockdraweropen}}1{{/forceblockdraweropen}}{{/forceopen}}
+    {{$drawerstate}}show-drawer-right{{/drawerstate}}
+    {{$tooltipplacement}}left{{/tooltipplacement}}
+    {{$drawercloseonresize}}1{{/drawercloseonresize}}
+    {{$closebuttontext}}{{#str}}closeblockdrawer, core{{/str}}{{/closebuttontext}}
+    {{/ theme_alpha/drawer}}
+{{/hasblocks}}

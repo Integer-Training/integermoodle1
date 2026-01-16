@@ -1,0 +1,151 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template theme_alpha/tmpl-admin
+}}
+{{> theme_alpha/head }}
+
+<body {{{ bodyattributes }}}>
+    {{> core/local/toast/wrapper}}
+
+    <div id="page-wrapper" class="d-print-block">
+
+        {{{ output.standard_top_of_body_html }}}
+        {{^hiddensidebar}}
+            {{> theme_alpha/nav-drawer }}
+        {{/hiddensidebar}}
+
+        <div id="page" data-region="mainpage" data-usertour="scroller" class="container-fluid drawers {{#draweropenright}}show-hidden-drawer{{/draweropenright}} drag-container">
+            {{> theme_alpha/navbar }}
+            <div id="topofscroll" class="main-inner">
+                <div id="page-content" class="page-content wrapper-page">
+
+                    {{{ output.breadcrumbs }}}
+
+                    <div id="region-main-box" class="region-main-wrapper">
+                        <section id="region-main" class="region-main-content {{#hasblocks}}has-blocks{{/hasblocks}}" aria-label="{{#str}}content{{/str}}">
+                            <div class="rui-blocks-wrapper">
+                                <div class="wrapper-course">
+                                    {{#secondarymoremenu}}
+                                        <div class="secondary-navigation d-print-none">
+                                            {{> core/moremenu}}
+                                        </div>
+                                    {{/secondarymoremenu}}
+
+                                    {{{coursepageinformationbanners}}}
+                                    {{{ output.simple_header }}}
+
+                                    {{#hasregionmainsettingsmenu}}
+                                        <div class="region_main_settings_menu_proxy"></div>
+                                    {{/hasregionmainsettingsmenu}}
+                                    {{{ output.course_content_header }}}
+                                    {{{ output.main_content }}}
+                                    {{{ output.activity_navigation }}}
+                                    {{{ output.course_content_footer }}}
+                                </div>
+                                {{> theme_alpha/hasblocks-tmpl }}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                {{> theme_alpha/footer }}
+            </div>
+        </div>
+
+        {{{ output.standard_after_main_region_html }}}
+
+    </div>
+
+    <script>
+        if (document.getElementsByTagName("body")[0].id.match(/page-admin-setting-themesettingalpha/)) {
+            for (let i = 1; i <= 23; i++) {
+                var tempID = 'id_s_theme_alpha_displayblock' + i; // Checkboxes.
+                var tempItemID = '[data-settings-name="theme_alpha_block' + i + '"]'; // Navigation items.
+                var tempFCBID = 'admin-block' + i; // Content Builder Items.
+                var checkBox = document.getElementById(tempID);
+                var navItem = document.querySelector(tempItemID);
+                var fcbItem = document.getElementById(tempFCBID);
+                if (checkBox.checked == true) {
+                    navItem.classList.add("rui--turnedon");
+                    fcbItem.classList.add("rui--turnedon");
+                } else {
+                    navItem.style.opacity = "0.3";
+                    fcbItem.style.opacity = "0.3";
+                }
+            }
+
+            for (let i = 0; i <= 23; i++) {
+                var selectID = 'id_s_theme_alpha_block' + i; // Select value.
+                var tempFCBID = 'admin-block' + i; // Content Builder Items.
+                var fcbItem = document.getElementById(tempFCBID);
+                var selectValue = document.getElementById(selectID).value;
+
+                fcbItem.dataset.blockPosition = selectValue;
+                fcbItem.dataset.blockIndex = i;
+                document.getElementById(selectID).dataset.blockIndex = i;
+            }
+
+            const buttons = document.getElementsByTagName("select");
+            const buttonPressed = e => {
+                var selectID = e.target.id; // Get ID of clicked element -> select
+                var selectByID = document.getElementById(selectID).value; // Get ID of clicked element -> select
+                var blIndex = document.getElementById(selectID).dataset.blockIndex; // Block number
+                var wrapperID = 'admin-block' + blIndex; // Wrapper ID
+                var wrapperByID = document.getElementById(wrapperID);
+                var selectValue = document.getElementById(selectID).value; // Get value - select
+                wrapperByID.dataset.blockPosition = selectByID;
+            }
+
+            for (let button of buttons) {
+                button.addEventListener("change", buttonPressed);
+            }
+        }
+    </script>
+    {{#js}}
+    require(['jquery'], function($) {
+        var $wrapper = $('#theme_alpha_scb');
+        $wrapper.find('.rui-settings-item').sort(function (a, b) {
+        return +a.dataset.blockPosition - +b.dataset.blockPosition;
+        }).appendTo( $wrapper );
+
+        $( '[id^="id_s_theme_alpha_block"]' ).on( "change", function() {
+        var $wrapper = $('#theme_alpha_scb');
+        $wrapper.find('.rui-settings-item').sort(function (a, b) {
+        return +a.dataset.blockPosition - +b.dataset.blockPosition;
+        }).appendTo( $wrapper );
+        });
+
+        $(document).ready(function(){
+            $("#page-admin-setting-themesettingalpha .tab-pane .rui-setting-heading-wrapper").nextUntil("#page-admin-setting-themesettingalpha .tab-pane .rui-setting-heading-wrapper").addClass("hidden");
+            });
+            $("#page-admin-setting-themesettingalpha .tab-pane .rui-setting-heading-wrapper").click(function() {
+            $(this).nextUntil("#page-admin-setting-themesettingalpha .rui-setting-heading-wrapper").toggleClass("hidden");
+            $(this).toggleClass("active");
+        });
+    });
+    {{/js}}
+
+</body>
+
+</html>
+{{#js}}
+    M.util.js_pending('theme_boost/loader');
+    require(['theme_boost/loader', 'theme_alpha/drawer'], function(Loader, Drawer) {
+    Drawer.init();
+    M.util.js_complete('theme_boost/loader');
+    });
+{{/js}}

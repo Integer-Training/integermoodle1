@@ -1,0 +1,197 @@
+.rui-breadcrumbs {
+  @include media-breakpoint-up(md) {
+    margin: 15px 60px;
+  }
+  @include media-breakpoint-between(xs,sm) {
+    margin: 16px 40px 14px 60px;
+  }
+}
+
+.breadcrumb,
+.coursefilesbreadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 5px;
+  margin: 0;
+
+  z-index: 0;
+
+  @include font-size($breadcrumb-font-size);
+  list-style: none;
+
+  @include media-breakpoint-down(md) {
+  width: max-content;
+  justify-content: center;
+  margin: 0 auto;
+  }
+}
+
+.breadcrumbs-container {
+  @include media-breakpoint-up(lg) {
+  width: 100%;
+  }
+
+  @include media-breakpoint-between(xs,md) {
+      margin-left: auto;
+      margin-right: auto;
+      padding: 0;
+      overflow-x: auto;
+
+      .pagelayout-incourse &,
+      .pagelayout-course &
+      {
+        width: 100%;        
+      }
+  }
+
+}
+
+.breadcrumb--in-content {
+  margin: 0;
+}
+
+.breadcrumb-item {
+  display: flex;
+  color: $breadcrumb-color;
+
+  .theme-dark & {
+    color: $dm-breadcrumb-color;
+  }
+
+  &:first-child {
+    a {
+      padding-left: 22px;
+
+      &:before {
+        content: '';
+        position: absolute;
+        top: -1px;
+        left: 0;
+
+        background-color: transparent;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='#{url-friendly-colour($breadcrumb-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6.75024 19.2502H17.2502C18.3548 19.2502 19.2502 18.3548 19.2502 17.2502V9.75025L12.0002 4.75024L4.75024 9.75025V17.2502C4.75024 18.3548 5.64568 19.2502 6.75024 19.2502Z'%3E%3C/path%3E%3Cpath stroke='#{url-friendly-colour($breadcrumb-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9.74963 15.7493C9.74963 14.6447 10.6451 13.7493 11.7496 13.7493H12.2496C13.3542 13.7493 14.2496 14.6447 14.2496 15.7493V19.2493H9.74963V15.7493Z'%3E%3C/path%3E%3C/svg%3E%0A");
+        background-repeat: no-repeat;
+        background-size: 18px;
+        background-position: 0;
+
+        width: 24px;
+        height: 100%;
+
+        .theme-dark & {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='#{url-friendly-colour($breadcrumb-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6.75024 19.2502H17.2502C18.3548 19.2502 19.2502 18.3548 19.2502 17.2502V9.75025L12.0002 4.75024L4.75024 9.75025V17.2502C4.75024 18.3548 5.64568 19.2502 6.75024 19.2502Z'%3E%3C/path%3E%3Cpath stroke='#{url-friendly-colour($dm-breadcrumb-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M9.74963 15.7493C9.74963 14.6447 10.6451 13.7493 11.7496 13.7493H12.2496C13.3542 13.7493 14.2496 14.6447 14.2496 15.7493V19.2493H9.74963V15.7493Z'%3E%3C/path%3E%3C/svg%3E%0A");
+        }
+      }
+    }
+  }
+
+  .text-truncate {
+    max-width: 300px;
+  }
+
+  // The separator between breadcrumbs (by default, a forward-slash: "/")
+  +.breadcrumb-item {
+    padding-left: $breadcrumb-item-padding;
+
+    &::before {
+      display: inline-flex; // Suppress underlining of the separator in modern browsers
+      align-items: center;
+      padding-right: $breadcrumb-item-padding;
+      color: $breadcrumb-divider-color;
+      content: escape-svg($breadcrumb-divider);
+
+      .theme-dark & {
+        color: $dm-breadcrumb-divider-color;
+      }
+    }
+  }
+
+
+  .breadcrumb--in-content & {
+    max-width: 300px;
+
+    a {
+      &:before {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='#{url-friendly-colour($breadcrumb-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6.75 15.25V6.75H15.25'%3E%3C/path%3E%3Cpath stroke='#{url-friendly-colour($breadcrumb-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M7 7L17.25 17.25'%3E%3C/path%3E%3C/svg%3E%0A");
+        background-repeat: no-repeat;
+        background-position: 0;
+        background-size: 18px;
+        width: 17px;
+        height: 17px;
+
+        .theme-dark & {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='#{url-friendly-colour($dm-breadcrumb-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6.75 15.25V6.75H15.25'%3E%3C/path%3E%3Cpath stroke='#{url-friendly-colour($dm-breadcrumb-color)}' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M7 7L17.25 17.25'%3E%3C/path%3E%3C/svg%3E%0A");
+        }
+      }
+    }
+  }
+
+  // IE9-11 hack to properly handle hyperlink underlines for breadcrumbs built
+  // without `<ul>`s. The `::before` pseudo-element generates an element
+  // *within* the .breadcrumb-item and thereby inherits the `text-decoration`.
+  //
+  // To trick IE into suppressing the underline, we give the pseudo-element an
+  // underline and then immediately remove it.
+  +.breadcrumb-item:hover::before {
+    text-decoration: underline;
+  }
+
+  // stylelint-disable-next-line no-duplicate-selectors
+  +.breadcrumb-item:hover::before {
+    text-decoration: none;
+  }
+
+  &.active {
+    color: $breadcrumb-active-color;
+
+    .theme-dark & {
+      color: $dm-breadcrumb-active-color;
+    }
+  }
+
+  .breadcrumbs-textonly {
+    margin: 0.25rem 0;
+    display: grid;
+  }
+
+  a {
+    position: relative;
+    display: inline-flex;
+    z-index: 1;
+
+    margin: 0.25rem 0;
+
+    color: $breadcrumb-color;
+    font-weight: $font-weight-medium;
+
+    .theme-dark & {
+      color: $dm-breadcrumb-color;
+    }
+
+    .text-truncate {
+      display: inline-block;
+      max-width: 200px;
+    }
+
+    &:hover {
+      text-decoration: none;
+
+      &:after {
+        content: '';
+        background-color: $container-bg;
+
+        border-radius: $btn-border-radius;
+
+        position: absolute;
+        left: -6px;
+        top: -5px;
+        width: calc(100% + 12px);
+        height: calc(100% + 9px);
+        z-index: -1;
+
+        .theme-dark & {
+          background-color: $dm-container-bg;
+        }
+      }
+    }
+  }
+}
