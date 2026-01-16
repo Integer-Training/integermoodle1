@@ -1,0 +1,265 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kopere_dashboard/about_dashboard
+
+    Example context (json):
+    {
+    }
+}}
+<!-- Top Navbar -->
+
+
+<div class="container-fluid">
+  <h3>Welcome Back {{{name}}}</h3><br>
+  <div class="row g-3">
+
+    <!-- Stats Cards -->
+    <div class="col-md-3">
+      <div class="card p-3" style="background:#dceafe;">
+        <div class="d-flex justify-content-between">
+          <span>Enrolled Courses</span>
+          <i class="fa-solid fa-user-graduate card-icon"></i>
+        </div>
+        <h3 class="mt-3">{{{enrolled_courses}}}</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card p-3" style="background:#ffeec7;">
+        <div class="d-flex justify-content-between">
+          <span>Due Assignments</span>
+          <i class="fa-solid fa-chalkboard-user card-icon"></i>
+        </div>
+        <h3 class="mt-3">{{{all_dueassignments}}}</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card p-3" style="background:#d6ffd8;">
+        <div class="d-flex justify-content-between">
+          <span>Completed Assignments</span>
+          <i class="fa-solid fa-envelope-open-text card-icon"></i>
+        </div>
+        <h3 class="mt-3">{{{all_compassignments}}}</h3>
+      </div>
+    </div>
+
+    <div class="col-md-3">
+      <div class="card p-3" style="background:#f8d9ff;">
+        <div class="d-flex justify-content-between">
+          <span>Total Assignments</span>
+          <i class="fa-solid fa-rotate card-icon"></i>
+        </div>
+        <h3 class="mt-3">{{{all_assignments}}}</h3>
+      </div>
+    </div>
+
+    <!-- Left Chart Block -->
+    <div class="col-md-6">
+      <div class="card p-4">
+        <h5 class="mb-3">Hours Spent</h5>
+          <div id="hourscontainer"></div>   
+      </div>
+    </div>
+
+    <!-- Top Courses Table -->
+    <div class="col-md-6">
+      <div class="card p-4" style="background:#f8ffcf;">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5>Your Courses</h5>
+          <a href="{{{mycourse_link}}}">View All</a>
+        </div>
+        <table class="table mt-3">
+          <thead>
+            <tr>
+              <th>Courses</th><th>Due Assignments</th><th>Completed Assignments</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{# courses}}
+            <tr><td>{{{coursename}}}</td>
+            <td style='text-align:center'>{{{dueassignments}}}</td>
+            <td style='text-align:center'>{{{completedassignments}}}</td>
+          </tr>
+            {{/ courses}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Top Instructors -->
+    
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('hoursChart');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ['Jan','Feb','Mar','Apr','May'],
+    datasets: [
+      {
+        label: 'Study',
+        data: [30, 40, 70, 25, 20],
+        backgroundColor: 'rgba(138, 43, 226, 0.8)',
+        borderRadius: 8
+      },
+      {
+        label: 'Exams',
+        data: [20, 25, 15, 20, 15],
+        backgroundColor: 'rgba(200,200,200,0.7)',
+        borderRadius: 8
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true } },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+</script>
+<script>
+  // Create the chart
+Highcharts.chart('hourscontainer', {
+    chart: {
+        type: 'column'
+    },
+    title: {
+        text: ''
+    },
+    accessibility: {
+        announceNewData: {
+            enabled: true
+        }
+    },
+    xAxis: {
+        type: 'category'
+    },
+    yAxis: {
+        title: {
+            text: 'Total  Hours Spent By Current Year Month Wise'
+        }
+
+    },
+    legend: {
+        enabled: false
+    },
+    plotOptions: {
+        series: {
+            borderWidth: 0,
+            dataLabels: {
+                enabled: true,
+                format: '{point.y:.1f}%'
+            }
+        }
+    },
+
+    tooltip: {
+        headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+        pointFormat: '<span style="color:{point.color}">{point.name}</span>: ' +
+            '<b>{point.y:.2f}%</b> of total<br/>'
+    },
+
+    series: [
+        {
+            name: 'Months',
+            colorByPoint: true,
+            data: [
+                {
+                    name: 'January',
+                    y: {{January}},
+                    drilldown: 'January'
+                },
+                {
+                    name: 'February',
+                    y: {{February}},
+                    drilldown: 'February'
+                },
+                {
+                    name: 'March',
+                    y: {{March}},
+                    drilldown: 'March'
+                },
+                {
+                    name: 'April',
+                    y: {{April}},
+                    drilldown: 'April'
+                },
+                {
+                    name: 'May',
+                    y: {{May}},
+                    drilldown: 'May'
+                },
+                {
+                    name: 'June',
+                    y: {{June}},
+                    drilldown: 'June'
+                },
+                {
+                    name: 'July',
+                    y: {{July}},
+                    drilldown: 'July'
+                },
+                {
+                    name: 'August',
+                    y: {{August}},
+                    drilldown: 'August'
+                },
+                {
+                    name: 'September',
+                    y: {{September}},
+                    drilldown: 'September'
+                },
+                {
+                    name: 'October',
+                    y: {{October}},
+                    drilldown: 'October'
+                },
+                {
+                    name: 'November',
+                    y: {{November}},
+                    drilldown: 'November'
+                },
+                {
+                    name: 'December',
+                    y: {{December}},
+                    drilldown: 'December'
+                },
+            ]
+        }
+    ],
+    drilldown: {
+        breadcrumbs: {
+            position: {
+                align: 'right'
+            }
+        },
+        series: [
+            
+        ]
+    }
+});
+</script>
+</body>
+</html>

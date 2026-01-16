@@ -1,0 +1,7 @@
+.table-primary th {
+  background-color: #1a00ff !important;
+  color: white;
+}
+.badge.bg-info {
+  background-color: #17a2b8 !important;
+}

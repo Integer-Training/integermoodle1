@@ -1,0 +1,149 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kopere_dashboard/about_dashboard
+
+    Example context (json):
+    {
+    }
+}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Contact Us</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Bootstrap 5 -->
+
+
+
+</head>
+
+<body>
+
+<div class="container py-5">
+    <div class="row align-items-center">
+
+        <!-- LEFT CONTENT -->
+        <div class="col-md-6 mb-4">
+            <large class="text-primary fw-bold">Contact Us</large>
+            <h2 class="fw-bold mt-2">Get In Touch With Us</h2>
+            <p class="text-muted">
+               Not sure which course is right for you? Message us and we’ll help you choose.<br>
+               Chat with us on WhatsApp for quick assistance and instant replies.
+            </p>
+
+            <div class="d-flex mb-3">
+                <div class="icon-box me-3">🏠</div>
+                <div>
+                    <strong>Our Location</strong><br>
+                    Bude, London, Birmingham, Wolverhampton
+                </div>
+            </div>
+
+            <div class="d-flex mb-3">
+                <div class="icon-box me-3">📞</div>
+                <div>
+                    <strong>Phone Number</strong><br>
+                    01216 909563
+                </div>
+            </div>
+
+            <div class="d-flex">
+                <div class="icon-box me-3">✉️</div>
+                <div>
+                    <strong>Email Address</strong><br>
+                    info@integertraining.com
+                </div>
+            </div>
+            <br>
+            <div class="d-flex">
+                <div class="icon-box me-3">💬</div>
+                <div>
+                    <a href="https://wa.me/message/OAYY2EFKXJBVK1" ><h5 style="margin-top: 10px;">Watsapp</h5></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT FORM -->
+        <div class="col-md-6">
+            <div class="contact-box shadow">
+                <form action="sendcontactmail.php" method="POST">
+                    <div class="mb-3">
+                        <input type="text" name="name" class="form-control" placeholder="Your Name" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="email" name="email" class="form-control" placeholder="Your Email" required>
+                    </div>
+                    <div class="mb-3">
+                        <input type="text" name="phone" class="form-control" placeholder="Your Phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <textarea name="message" class="form-control" rows="4" placeholder="Your Message" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-send w-100 py-2">
+                        Send Message
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+
+.contact-box{
+    background:#4b2aad;
+    border-radius:12px;
+    padding:30px;
+    color:#fff;
+}
+.contact-box input,
+.contact-box textarea{
+    border-radius:6px;
+    padding:12px;
+}
+.btn-send{
+    background:#ff9aa2;
+    border:none;
+    color:#000;
+    font-weight:600;
+}
+.icon-box{
+    width:45px;
+    height:45px;
+    background:#4b2aad;
+    color:#fff;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+}
+ .mform{
+         margin-right:700px;
+  }
+  .wrapper-course {
+        margin-top:-30px;
+        padding: 0px 10px !important;
+    }
+    .fheader{
+        border:none;
+    }
+</style>

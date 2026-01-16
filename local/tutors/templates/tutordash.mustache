@@ -1,0 +1,174 @@
+{{!
+    This file is part of Moodle - https://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_kopere_dashboard/about_dashboard
+
+    Example context (json):
+    {
+    }
+}}
+<!-- Top Navbar -->
+
+<div class="container-fluid p-4">
+
+  <!-- Top Stats -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-3">
+      <div class="card p-3 d-flex flex-row align-items-center">
+        <div class="stat-icon bg-primary text-white me-3"><i class="bi bi-journal"></i></div>
+        <div><h5 class="mb-0">{{{enrolled_courses}}}</h5><small>Courses</small></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 d-flex flex-row align-items-center">
+        <div class="stat-icon bg-success text-white me-3"><i class="bi bi-people"></i></div>
+        <div><h5 class="mb-0">{{{your_learners}}}</h5><small>Learners</small></div>
+        
+      </div>
+    </div>
+    <div class="col-md-3" data-url="{{{yet_to_grade_url}}}" id="yet_to_grade">
+      <div class="card p-3 d-flex flex-row align-items-center">
+        <div class="stat-icon bg-info text-white me-3"><i class="bi bi-cloud-check-fill"></i></div>
+        <div><h5 class="mb-0">{{{yet_to_grade}}}</h5><small>Awaiting Marking</small></div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card p-3 d-flex flex-row align-items-center">
+        <div class="stat-icon bg-warning text-white me-3"><i class="bi bi-activity"></i></div>
+        <div><h5 class="mb-0">{{{total_assignments}}}</h5><small>Total Assignments</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card-noborder p-3">
+        <div class="header-left">Total Learners</div>
+        <div id="activityChart"></div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card-noborder p-3">
+        
+        <div class="header-right">Learners with Overdue Assignments</div>
+        <div class="mt-4 px-3">
+          <div class="stat-row"><span>Overdue Assignments</span><div class="badge-circle"><a href="{{{overdue_url}}}" target="_blank" style="color:#fff">{{{overdue_assigns}}}</a></div></div>
+          <div class="stat-row"><span>Imminent Assignments</span><div class="badge-circle"><a href="{{{imm_url}}}" target="_blank" style="color:#fff">{{{imm_assigns}}}</a></div></div>
+           <div class="stat-row"><span>Awaiting Marking</span><div class="badge-circle"><a href="{{{yet_to_grade_url}}}" target="_blank" style="color:#fff">{{{yet_to_grade}}}</a></div></div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Bottom Section -->
+    <div class="row g-4">
+      <div class="col-12">
+        <div class="header-gradient">
+            <h3>Approved Programmes</h3>
+        </div>
+        <div class="content-box">
+            <div class="row table-header">
+                <div class="col-md-9">Type</div>
+                <div class="col-md-3 text-end">Caseload</div>
+            </div>
+            {{# courses}}
+            <div class="row programme-row">
+                <div class="col-md-9 programme-title">
+                    {{{coursename}}}
+                </div>
+                <div class="col-md-3 text-end">
+                    <div class="caseload-badge ms-auto">{{{caseload}}}</div>
+                </div>
+            </div>
+            {{/ courses}}
+        </div>
+        
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Working Activity
+// Data retrieved from https://netmarketshare.com/
+// Build the chart
+Highcharts.chart('activityChart', {
+    chart: {
+        plotBackgroundColor: null,
+        plotBorderWidth: null,
+        plotShadow: false,
+        type: 'pie'
+    },
+    title: {
+        text: ''
+    },
+    tooltip: {
+        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+    },
+    accessibility: {
+        point: {
+            valueSuffix: '%'
+        }
+    },
+    plotOptions: {
+        pie: {
+            allowPointSelect: true,
+            cursor: 'pointer',
+            dataLabels: {
+                enabled: false
+            },
+            showInLegend: true
+        }
+    },
+    series: [{
+        name: 'Percent',
+        colorByPoint: true,
+        data: [{
+            name: 'Learners ',
+            y: {{your_learners}},
+            sliced: true,
+            selected: true
+        },  {
+            name: 'Courses',
+            y: {{enrolled_courses}}
+        },  {
+            name: 'Graded',
+            y: {{graded}}
+           
+        }, {
+            name: 'Yet to Grade',
+            y: {{yet_to_grade}}
+        }]
+    }]
+});
+
+</script>
+<script>
+
+//
+
+    // For the anchor tag
+    // For the button (getting the URL from a data attribute)
+    $('#yet_to_grade').on('click', function(event) {
+        event.preventDefault();
+        var url = $(this).data('url');
+        window.open(url, '_blank');
+    });
+
+
+</script>
