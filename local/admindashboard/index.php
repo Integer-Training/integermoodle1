@@ -485,6 +485,54 @@ for ($m = 1; $m <= 12; $m++) {
 }
 
 // ============================================================
+// QUERY BLOCK F: Online Users (last 5 minutes)
+// ============================================================
+
+$online_threshold = time() - 300; // 5 minutes — standard Moodle "online" threshold.
+
+$online_users_raw = $DB->get_records_sql(
+    "SELECT u.id, u.firstname, u.lastname, u.lastaccess, u.email
+     FROM {user} u
+     WHERE u.lastaccess >= :threshold
+       AND u.deleted = 0 AND u.id > 2
+     ORDER BY u.lastaccess DESC",
+    ['threshold' => $online_threshold]
+);
+
+$online_users = [];
+$online_learner_count = 0;
+$online_tutor_count = 0;
+$online_admin_count = 0;
+
+foreach ($online_users_raw as $ou) {
+    if (is_siteadmin($ou->id)) {
+        $role_label = 'Admin';
+        $online_admin_count++;
+    } else if (isset($teacher_userids[$ou->id])) {
+        $role_label = 'Tutor';
+        $online_tutor_count++;
+    } else {
+        $role_label = 'Learner';
+        $online_learner_count++;
+    }
+
+    $ago = time() - $ou->lastaccess;
+    $time_ago = ($ago < 60) ? 'Just now' : round($ago / 60) . ' min ago';
+
+    $online_users[] = [
+        'fullname'   => fullname($ou),
+        'email'      => $ou->email,
+        'role_label' => $role_label,
+        'is_admin'   => ($role_label === 'Admin'),
+        'is_tutor'   => ($role_label === 'Tutor'),
+        'is_learner' => ($role_label === 'Learner'),
+        'time_ago'   => $time_ago,
+    ];
+}
+
+$online_count = count($online_users_raw);
+
+// ============================================================
 // ASSEMBLE TEMPLATE CONTEXT
 // ============================================================
 
@@ -520,6 +568,14 @@ $templatecontext = [
     'overdue_count'  => number_format($global_overdue),
     'imminent_count' => number_format($global_imminent),
     'wwwroot'        => $CFG->wwwroot,
+
+    // Online users.
+    'online_count'         => $online_count,
+    'online_learner_count' => $online_learner_count,
+    'online_tutor_count'   => $online_tutor_count,
+    'online_admin_count'   => $online_admin_count,
+    'online_users'         => $online_users,
+    'has_online_users'     => !empty($online_users),
 ];
 
 // Monthly enrollment data.
@@ -542,6 +598,9 @@ if ($learner_plugin_exists) {
     $templatecontext['learners_link'] = (new moodle_url('/admin/user.php'))->out();
     $templatecontext['tutors_link']   = (new moodle_url('/admin/user.php'))->out();
 }
+
+// Course list link.
+$templatecontext['courses_link'] = (new moodle_url('/course/index.php'))->out();
 
 // Marking link — check if local/tutors exists.
 $tutors_plugin_exists = file_exists($CFG->dirroot . '/local/tutors/view.php');

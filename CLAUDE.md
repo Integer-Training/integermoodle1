@@ -428,25 +428,32 @@ GROUP BY userid, assignment ORDER BY ag.timemodified ASC
 
 Standalone admin dashboard plugin providing comprehensive platform overview. Nearly identical to `local/learner/admindash.php` but packaged as a separate plugin.
 
-**Capability:** `local/admindashboard:view` (manager only)
+**Version:** 2026020200 (1.2.0) | **Capability:** `local/admindashboard:view` (manager only)
 
 #### Entry Point
 
 | File | URL | Purpose |
 |------|-----|---------|
-| `index.php` | `/local/admindashboard/index.php` | Full admin dashboard with KPI cards, tutor table, course table, charts |
+| `index.php` | `/local/admindashboard/index.php` | Full admin dashboard with KPI cards, tutor table, course table, charts, online users |
 
 #### Structure
 
-Uses `{table}` Moodle syntax for all queries. Contains 5 query blocks:
+Uses `{table}` Moodle syntax for all queries. Contains 6 query blocks:
 
 - **Block A:** Learner statistics (total, active, suspended, never-logged, inactive 30+)
 - **Block B:** Per-tutor statistics (caseload, awaiting overdue/ok, overdue, imminent, inactive, graded count, avg turnaround, pass rate)
 - **Block C:** Course statistics (enrolled, active, assignments, completion rate)
 - **Block D:** Global grading stats (awaiting, overdue, imminent)
 - **Block E:** Monthly enrollment trend (Highcharts column chart)
+- **Block F:** Online users (lastaccess within 5 minutes, role breakdown: Learner/Tutor/Admin)
 
 All grading queries follow the patterns in "Critical SQL Patterns for Dashboard Grading Queries" section. Template: `local_admindashboard/admindash`.
+
+#### Features (v1.2.0)
+
+- **Clickable KPI cards:** Total Learners → learner list, Total Tutors → tutor list, Active Courses → course index, Awaiting Marking → marking view
+- **Online Users section:** Green-header panel between charts and tutor table showing users active in last 5 minutes, with role-colored pills and DataTable
+- **Alert cards:** Inactive learners, overdue assignments, imminent deadlines — all clickable
 
 #### Relationship to `local/learner/admindash.php`
 

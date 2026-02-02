@@ -35,6 +35,7 @@
   <!-- ===== SECTION 1: KPI CARDS ===== -->
   <div class="admindash-kpis">
 
+    <a href="{{{learners_link}}}" class="admindash-kpi-link">
     <div class="admindash-kpi-card">
       <div class="admindash-kpi-top">
         <span class="admindash-kpi-icon admindash-kpi-icon--learners">
@@ -48,7 +49,9 @@
         <span class="admindash-chip admindash-chip--slate"><i class="bi bi-pause-circle-fill"></i> {{{suspended_learners}}} Suspended</span>
       </div>
     </div>
+    </a>
 
+    <a href="{{{tutors_link}}}" class="admindash-kpi-link">
     <div class="admindash-kpi-card admindash-kpi-card--warm">
       <div class="admindash-kpi-top">
         <span class="admindash-kpi-icon admindash-kpi-icon--tutors">
@@ -61,7 +64,9 @@
         <span class="admindash-chip admindash-chip--amber"><i class="bi bi-diagram-3-fill"></i> Avg {{{avg_caseload}}} learners / tutor</span>
       </div>
     </div>
+    </a>
 
+    <a href="{{{courses_link}}}" class="admindash-kpi-link">
     <div class="admindash-kpi-card admindash-kpi-card--cool">
       <div class="admindash-kpi-top">
         <span class="admindash-kpi-icon admindash-kpi-icon--courses">
@@ -71,10 +76,12 @@
       </div>
       <div class="admindash-kpi-value">{{{total_courses}}}</div>
       <div class="admindash-kpi-chips">
-        <a href="{{{learners_link}}}" class="admindash-chip admindash-chip--link"><i class="bi bi-box-arrow-up-right"></i> View all courses</a>
+        <span class="admindash-chip admindash-chip--link"><i class="bi bi-box-arrow-up-right"></i> View all courses</span>
       </div>
     </div>
+    </a>
 
+    <a href="{{{marking_link}}}" class="admindash-kpi-link">
     <div class="admindash-kpi-card admindash-kpi-card--deep">
       <div class="admindash-kpi-top">
         <span class="admindash-kpi-icon admindash-kpi-icon--marking">
@@ -88,6 +95,7 @@
         <span class="admindash-chip admindash-chip--teal"><i class="bi bi-clock-fill"></i> {{{global_imminent}}} Due Soon</span>
       </div>
     </div>
+    </a>
 
   </div>
 
@@ -110,6 +118,55 @@
       <div id="enrollmentChart" class="admindash-chart-body"></div>
     </div>
 
+  </div>
+
+  <!-- ===== SECTION 2B: ONLINE USERS ===== -->
+  <div class="admindash-panel">
+    <div class="admindash-panel-hdr admindash-panel-hdr--online">
+      <div>
+        <h3><i class="bi bi-broadcast"></i> Online Users <span class="admindash-online-badge">{{{online_count}}}</span></h3>
+        <p>Users active in the last 5 minutes</p>
+      </div>
+      <div class="admindash-online-chips">
+        <span class="admindash-chip admindash-chip--green"><i class="bi bi-mortarboard-fill"></i> {{{online_learner_count}}} Learners</span>
+        <span class="admindash-chip admindash-chip--amber"><i class="bi bi-person-workspace"></i> {{{online_tutor_count}}} Tutors</span>
+        <span class="admindash-chip admindash-chip--red"><i class="bi bi-shield-fill"></i> {{{online_admin_count}}} Admins</span>
+      </div>
+    </div>
+    <div class="admindash-panel-body">
+      {{#has_online_users}}
+      <table id="onlineTable" class="admindash-table display" style="width:100%">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Last Active</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#online_users}}
+          <tr>
+            <td class="admindash-cell-name">{{{fullname}}}</td>
+            <td class="admindash-cell-email">{{{email}}}</td>
+            <td class="text-center">
+              {{#is_admin}}<span class="admindash-pill admindash-pill--red">Admin</span>{{/is_admin}}
+              {{#is_tutor}}<span class="admindash-pill admindash-pill--amber">Tutor</span>{{/is_tutor}}
+              {{#is_learner}}<span class="admindash-pill admindash-pill--blue">Learner</span>{{/is_learner}}
+            </td>
+            <td class="text-center"><span class="admindash-online-time"><i class="bi bi-clock"></i> {{{time_ago}}}</span></td>
+          </tr>
+          {{/online_users}}
+        </tbody>
+      </table>
+      {{/has_online_users}}
+      {{^has_online_users}}
+      <div class="admindash-empty-state">
+        <i class="bi bi-wifi-off"></i>
+        <p>No users are currently online</p>
+      </div>
+      {{/has_online_users}}
+    </div>
   </div>
 
   <!-- ===== SECTION 3: TUTOR PERFORMANCE ===== -->
@@ -432,6 +489,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     $('#courseTable').DataTable(Object.assign({}, dtDefaults, { order: [[1, 'desc']] }));
+
+    // Online users table (no export buttons, compact).
+    if ($('#onlineTable').length) {
+        $('#onlineTable').DataTable({
+            dom: 'lfrtip',
+            lengthMenu: [[10, 25, -1], [10, 25, 'All']],
+            order: [[3, 'asc']],
+            language: { emptyTable: 'No users currently online' },
+            pageLength: 10
+        });
+    }
 });
 </script>
 
@@ -1093,5 +1161,73 @@ tr.shown .admindash-toggle-btn {
         box-shadow: none;
         border: 1px solid #ccc;
     }
+}
+
+/* ==========================================================================
+   CLICKABLE KPI CARDS
+   ========================================================================== */
+.admindash-kpi-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+.admindash-kpi-link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* ==========================================================================
+   ONLINE USERS SECTION
+   ========================================================================== */
+.admindash-panel-hdr--online {
+    background: linear-gradient(135deg, #059669 0%, #0ea5c6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.admindash-online-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 2px 12px;
+    border-radius: 20px;
+    margin-left: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.admindash-online-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.admindash-online-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #059669;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.admindash-pill--amber { background: #fef3c7; color: #92400e; }
+.admindash-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+}
+.admindash-empty-state i {
+    font-size: 36px;
+    margin-bottom: 12px;
+    display: block;
+}
+.admindash-empty-state p {
+    font-size: 14px;
+    font-style: italic;
+    margin: 0;
 }
 </style>
