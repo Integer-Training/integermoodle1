@@ -1,0 +1,1097 @@
+{{!
+    @template local_learner/admindash
+
+    Admin Dashboard template for site administrators.
+    Shows KPIs, charts, tutor performance, course overview, and alerts.
+
+    @package   local_learner
+    @copyright 2025 Gecko
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<div class="admindash-shell" id="admin-dashboard">
+
+  <!-- ===== HEADER BAR ===== -->
+  <div class="admindash-header">
+    <div class="admindash-header-inner">
+      <div>
+        <h1 class="admindash-title">Admin Dashboard</h1>
+        <p class="admindash-subtitle">Platform overview &middot; Epearl Academy</p>
+      </div>
+      <div class="admindash-header-actions">
+        <a href="{{{learners_link}}}" class="admindash-hdr-btn">
+          <i class="bi bi-people"></i> Learners
+        </a>
+        <a href="{{{tutors_link}}}" class="admindash-hdr-btn">
+          <i class="bi bi-person-workspace"></i> Tutors
+        </a>
+        <a href="{{{marking_link}}}" class="admindash-hdr-btn">
+          <i class="bi bi-journal-check"></i> Marking
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 1: KPI CARDS ===== -->
+  <div class="admindash-kpis">
+
+    <div class="admindash-kpi-card">
+      <div class="admindash-kpi-top">
+        <span class="admindash-kpi-icon admindash-kpi-icon--learners">
+          <i class="bi bi-people-fill"></i>
+        </span>
+        <span class="admindash-kpi-label">Total Learners</span>
+      </div>
+      <div class="admindash-kpi-value">{{{total_learners}}}</div>
+      <div class="admindash-kpi-chips">
+        <span class="admindash-chip admindash-chip--green"><i class="bi bi-check-circle-fill"></i> {{{active_learners}}} Active</span>
+        <span class="admindash-chip admindash-chip--slate"><i class="bi bi-pause-circle-fill"></i> {{{suspended_learners}}} Suspended</span>
+      </div>
+    </div>
+
+    <div class="admindash-kpi-card admindash-kpi-card--warm">
+      <div class="admindash-kpi-top">
+        <span class="admindash-kpi-icon admindash-kpi-icon--tutors">
+          <i class="bi bi-person-workspace"></i>
+        </span>
+        <span class="admindash-kpi-label">Total Tutors</span>
+      </div>
+      <div class="admindash-kpi-value">{{{total_tutors}}}</div>
+      <div class="admindash-kpi-chips">
+        <span class="admindash-chip admindash-chip--amber"><i class="bi bi-diagram-3-fill"></i> Avg {{{avg_caseload}}} learners / tutor</span>
+      </div>
+    </div>
+
+    <div class="admindash-kpi-card admindash-kpi-card--cool">
+      <div class="admindash-kpi-top">
+        <span class="admindash-kpi-icon admindash-kpi-icon--courses">
+          <i class="bi bi-journal-bookmark-fill"></i>
+        </span>
+        <span class="admindash-kpi-label">Active Courses</span>
+      </div>
+      <div class="admindash-kpi-value">{{{total_courses}}}</div>
+      <div class="admindash-kpi-chips">
+        <a href="{{{learners_link}}}" class="admindash-chip admindash-chip--link"><i class="bi bi-box-arrow-up-right"></i> View all courses</a>
+      </div>
+    </div>
+
+    <div class="admindash-kpi-card admindash-kpi-card--deep">
+      <div class="admindash-kpi-top">
+        <span class="admindash-kpi-icon admindash-kpi-icon--marking">
+          <i class="bi bi-clipboard2-check-fill"></i>
+        </span>
+        <span class="admindash-kpi-label">Awaiting Marking</span>
+      </div>
+      <div class="admindash-kpi-value">{{{global_awaiting}}}</div>
+      <div class="admindash-kpi-chips">
+        <span class="admindash-chip admindash-chip--red"><i class="bi bi-exclamation-triangle-fill"></i> {{{global_overdue}}} Overdue</span>
+        <span class="admindash-chip admindash-chip--teal"><i class="bi bi-clock-fill"></i> {{{global_imminent}}} Due Soon</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== SECTION 2: CHARTS ===== -->
+  <div class="admindash-charts">
+
+    <div class="admindash-chart-card">
+      <div class="admindash-chart-hdr">
+        <i class="bi bi-pie-chart-fill"></i>
+        <span>Learner Status Distribution</span>
+      </div>
+      <div id="learnerPieChart" class="admindash-chart-body"></div>
+    </div>
+
+    <div class="admindash-chart-card">
+      <div class="admindash-chart-hdr admindash-chart-hdr--alt">
+        <i class="bi bi-bar-chart-line-fill"></i>
+        <span>Monthly Enrollment Trend &middot; {{{currentyear}}}</span>
+      </div>
+      <div id="enrollmentChart" class="admindash-chart-body"></div>
+    </div>
+
+  </div>
+
+  <!-- ===== SECTION 3: TUTOR PERFORMANCE ===== -->
+  <div class="admindash-panel">
+    <div class="admindash-panel-hdr">
+      <div>
+        <h3><i class="bi bi-person-check-fill"></i> Tutor Performance</h3>
+        <p>Assignment marking, caseloads, and turnaround metrics</p>
+      </div>
+    </div>
+    <div class="admindash-panel-body">
+      <table id="tutorTable" class="admindash-table display" style="width:100%">
+        <thead>
+          <tr>
+            <th style="width:36px"></th>
+            <th>Tutor Name</th>
+            <th>Email</th>
+            <th>Learners</th>
+            <th>Awaiting Marking</th>
+            <th>Inactive</th>
+            <th>Avg Turn. (Days)</th>
+            <th>Pass Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#tutors}}
+          <tr data-details="{{detail_json}}">
+            <td class="admindash-toggle-cell"><span class="admindash-toggle-btn"><i class="bi bi-plus-circle"></i></span></td>
+            <td class="admindash-cell-name">{{{fullname}}}</td>
+            <td class="admindash-cell-email">{{{email}}}</td>
+            <td class="text-center"><span class="admindash-pill admindash-pill--blue">{{{learner_count}}}</span></td>
+            <td class="text-center">
+              {{#has_overdue}}
+                <span class="admindash-pill admindash-pill--red" title="Overdue (>72h)">{{{awaiting_overdue}}}</span>
+              {{/has_overdue}}
+              {{#has_ok}}
+                <span class="admindash-pill admindash-pill--green" title="Within time (≤72h)">{{{awaiting_ok}}}</span>
+              {{/has_ok}}
+              {{^has_overdue}}{{^has_ok}}
+                <span class="admindash-pill admindash-pill--green">0</span>
+              {{/has_ok}}{{/has_overdue}}
+            </td>
+            <td class="text-center">
+              {{#has_inactive}}
+                <span class="admindash-pill admindash-pill--red">{{{inactive_count}}}</span>
+              {{/has_inactive}}
+              {{^has_inactive}}
+                <span class="admindash-pill admindash-pill--green">0</span>
+              {{/has_inactive}}
+            </td>
+            <td class="text-center">{{{avg_turnaround}}}</td>
+            <td class="text-center"><strong>{{{pass_rate}}}</strong></td>
+          </tr>
+          {{/tutors}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 4: COURSE OVERVIEW ===== -->
+  <div class="admindash-panel">
+    <div class="admindash-panel-hdr admindash-panel-hdr--alt">
+      <div>
+        <h3><i class="bi bi-journal-bookmark-fill"></i> Course Overview</h3>
+        <p>Enrollment, activity, and completion metrics per course</p>
+      </div>
+    </div>
+    <div class="admindash-panel-body">
+      <table id="courseTable" class="admindash-table display" style="width:100%">
+        <thead>
+          <tr>
+            <th>Course Name</th>
+            <th>Enrolled</th>
+            <th>Active (30d)</th>
+            <th>Assignments</th>
+            <th>Completion</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#courses}}
+          <tr>
+            <td class="admindash-cell-name">{{{coursename}}}</td>
+            <td class="text-center">{{{enrolled}}}</td>
+            <td class="text-center">{{{active_learners}}}</td>
+            <td class="text-center">{{{assignments}}}</td>
+            <td>
+              <div class="admindash-completion">
+                <div class="admindash-completion-bar">
+                  <div class="admindash-completion-fill" style="width:{{{completion_pct}}}%"></div>
+                </div>
+                <span class="admindash-completion-text">{{{completion_rate}}}</span>
+              </div>
+            </td>
+          </tr>
+          {{/courses}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 5: ALERT CARDS ===== -->
+  <div class="admindash-alerts">
+
+    <a href="{{{inactive_link}}}" class="admindash-alert admindash-alert--danger">
+      <div class="admindash-alert-icon"><i class="bi bi-person-slash"></i></div>
+      <div class="admindash-alert-content">
+        <span class="admindash-alert-label">Inactive Learners (30+ days)</span>
+        <span class="admindash-alert-value">{{{inactive_count}}}</span>
+      </div>
+      <i class="bi bi-arrow-right admindash-alert-arrow"></i>
+    </a>
+
+    <a href="{{{overdue_link}}}" class="admindash-alert admindash-alert--warning">
+      <div class="admindash-alert-icon"><i class="bi bi-hourglass-bottom"></i></div>
+      <div class="admindash-alert-content">
+        <span class="admindash-alert-label">Overdue Assignments</span>
+        <span class="admindash-alert-value">{{{overdue_count}}}</span>
+      </div>
+      <i class="bi bi-arrow-right admindash-alert-arrow"></i>
+    </a>
+
+    <a href="{{{imminent_link}}}" class="admindash-alert admindash-alert--info">
+      <div class="admindash-alert-icon"><i class="bi bi-alarm"></i></div>
+      <div class="admindash-alert-content">
+        <span class="admindash-alert-label">Imminent Deadlines (3 days)</span>
+        <span class="admindash-alert-value">{{{imminent_count}}}</span>
+      </div>
+      <i class="bi bi-arrow-right admindash-alert-arrow"></i>
+    </a>
+
+  </div>
+
+</div>
+
+<!-- ===== CDN: DataTables Buttons ===== -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.6.2/css/buttons.dataTables.min.css">
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.print.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ===== HIGHCHARTS: Learner Status Pie =====
+    Highcharts.chart('learnerPieChart', {
+        chart: {
+            type: 'pie',
+            backgroundColor: 'transparent',
+            style: { fontFamily: "'Libre Baskerville', Georgia, serif" }
+        },
+        title: { text: '' },
+        tooltip: { pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b> ({point.y})' },
+        accessibility: { point: { valueSuffix: '%' } },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.y}',
+                    style: { fontSize: '12px', fontWeight: '400', color: '#3c4257' }
+                },
+                showInLegend: true
+            }
+        },
+        legend: {
+            itemStyle: { fontSize: '12px', fontWeight: '400', color: '#3c4257' }
+        },
+        colors: ['#3a5ba0', '#f7c873', '#2d1e2f', '#b0b8c1'],
+        series: [{
+            name: 'Learners',
+            colorByPoint: true,
+            data: [
+                { name: 'Active', y: {{pie_active}}, sliced: true, selected: true },
+                { name: 'Inactive (30+ days)', y: {{pie_inactive30}} },
+                { name: 'Suspended', y: {{pie_suspended}} },
+                { name: 'Never Logged In', y: {{pie_never}} }
+            ]
+        }],
+        credits: { enabled: false }
+    });
+
+    // ===== HIGHCHARTS: Monthly Enrollment Column =====
+    Highcharts.chart('enrollmentChart', {
+        chart: {
+            type: 'column',
+            backgroundColor: 'transparent',
+            style: { fontFamily: "'Libre Baskerville', Georgia, serif" }
+        },
+        title: { text: '' },
+        xAxis: {
+            categories: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+            crosshair: true,
+            labels: { style: { color: '#6b7280', fontSize: '11px' } }
+        },
+        yAxis: {
+            min: 0,
+            title: { text: 'New Enrollments', style: { color: '#6b7280' } },
+            gridLineColor: '#e5e7eb'
+        },
+        tooltip: {
+            headerFormat: '<span style="font-size:13px;font-weight:600">{point.key}</span><br>',
+            pointFormat: '<b>{point.y}</b> enrollments',
+            backgroundColor: '#1a2238',
+            borderColor: '#1a2238',
+            style: { color: '#fff' }
+        },
+        plotOptions: {
+            column: {
+                borderWidth: 0,
+                borderRadius: 5,
+                dataLabels: {
+                    enabled: true,
+                    style: { fontSize: '11px', fontWeight: '600', color: '#3a5ba0' }
+                },
+                color: {
+                    linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                    stops: [[0, '#3a5ba0'], [1, '#6ea3c1']]
+                }
+            }
+        },
+        series: [{
+            name: 'Enrollments',
+            data: [
+                {{enrol_month_1}}, {{enrol_month_2}}, {{enrol_month_3}},
+                {{enrol_month_4}}, {{enrol_month_5}}, {{enrol_month_6}},
+                {{enrol_month_7}}, {{enrol_month_8}}, {{enrol_month_9}},
+                {{enrol_month_10}}, {{enrol_month_11}}, {{enrol_month_12}}
+            ]
+        }],
+        legend: { enabled: false },
+        credits: { enabled: false }
+    });
+
+    // ===== DATATABLES =====
+    var dtDefaults = {
+        dom: 'Blfrtip',
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+        buttons: [
+            { extend: 'excel', className: 'admindash-dt-btn' },
+            { extend: 'pdf', className: 'admindash-dt-btn' }
+        ],
+        language: { emptyTable: 'No data available' },
+        pageLength: 10
+    };
+
+    // Tutor table with expandable detail rows.
+    var tutorTable = $('#tutorTable').DataTable(Object.assign({}, dtDefaults, {
+        order: [[3, 'desc']],
+        columnDefs: [{ orderable: false, targets: 0 }]
+    }));
+
+    // HTML-escape utility to prevent XSS in child row content.
+    function escHtml(str) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+
+    // Build child row HTML from detail JSON.
+    function formatTutorDetails(d) {
+        var html = '<div class="tutor-detail-grid">';
+
+        // Approved Programmes panel.
+        html += '<div class="tutor-detail-card">';
+        html += '<div class="tutor-detail-hdr"><i class="bi bi-journal-bookmark"></i> Approved Programmes</div>';
+        html += '<div class="tutor-detail-body">';
+        if (d.programmes && d.programmes.length > 0) {
+            html += '<div class="tutor-detail-table-hdr"><span>Type</span><span>Caseload</span></div>';
+            for (var i = 0; i < d.programmes.length; i++) {
+                html += '<div class="programme-row">';
+                html += '<span class="programme-title">' + escHtml(d.programmes[i].name) + '</span>';
+                html += '<span class="caseload-badge">' + d.programmes[i].caseload + '</span>';
+                html += '</div>';
+            }
+        } else {
+            html += '<div class="tutor-detail-empty">No programmes assigned</div>';
+        }
+        html += '</div></div>';
+
+        // Overdue / Stats panel.
+        html += '<div class="tutor-detail-card">';
+        html += '<div class="tutor-detail-hdr tutor-detail-hdr--alt"><i class="bi bi-exclamation-triangle"></i> Learners with Overdue Assignments</div>';
+        html += '<div class="tutor-detail-body">';
+        html += '<div class="stat-row"><span>Overdue Assignments</span><span class="badge-circle badge-circle--red">' + d.overdue + '</span></div>';
+        html += '<div class="stat-row"><span>Imminent Assignments</span><span class="badge-circle badge-circle--amber">' + d.imminent + '</span></div>';
+        html += '<div class="stat-row"><span>Awaiting Marking</span><span class="badge-circle badge-circle--blue">' + d.awaiting + '</span></div>';
+        html += '<div class="stat-row"><span>InActive Learners</span><span class="badge-circle badge-circle--slate">' + d.inactive + '</span></div>';
+        html += '</div></div>';
+
+        html += '</div>';
+        return html;
+    }
+
+    // Toggle child row on click.
+    $('#tutorTable tbody').on('click', '.admindash-toggle-btn', function() {
+        var tr = $(this).closest('tr');
+        var row = tutorTable.row(tr);
+        if (row.child.isShown()) {
+            row.child.hide();
+            tr.removeClass('shown');
+            $(this).find('i').removeClass('bi-dash-circle').addClass('bi-plus-circle');
+        } else {
+            try {
+                var details = JSON.parse(tr.attr('data-details'));
+                row.child(formatTutorDetails(details)).show();
+                tr.addClass('shown');
+                $(this).find('i').removeClass('bi-plus-circle').addClass('bi-dash-circle');
+            } catch(e) {
+                console.error('Failed to parse tutor details', e);
+            }
+        }
+    });
+
+    $('#courseTable').DataTable(Object.assign({}, dtDefaults, { order: [[1, 'desc']] }));
+});
+</script>
+
+<style>
+/* ==========================================================================
+   ADMIN DASHBOARD — Editorial Aesthetic
+   Font: Libre Baskerville | Palette: Deep Blue / Gold / Teal
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* --- Reset within dashboard scope --- */
+#admin-dashboard *,
+#admin-dashboard *::before,
+#admin-dashboard *::after {
+    box-sizing: border-box;
+}
+
+.admindash-shell {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    color: #1a2238;
+    max-width: 100%;
+    padding: 0;
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.admindash-header {
+    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 60%, #6ea3c1 100%);
+    border-radius: 10px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+.admindash-header::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(247,200,115,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.admindash-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 32px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.admindash-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+.admindash-subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    margin: 4px 0 0;
+    font-style: italic;
+}
+.admindash-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.admindash-hdr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+.admindash-hdr-btn:hover {
+    background: rgba(255,255,255,0.22);
+    border-color: rgba(255,255,255,0.4);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   KPI CARDS — 4 across using CSS grid (no Bootstrap col clash with sidebar)
+   ========================================================================== */
+.admindash-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+@media (max-width: 1100px) {
+    .admindash-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .admindash-kpis { grid-template-columns: 1fr; }
+}
+
+.admindash-kpi-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    padding: 22px 24px 18px;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+.admindash-kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #3a5ba0;
+}
+.admindash-kpi-card--warm::after { background: #f7c873; }
+.admindash-kpi-card--cool::after { background: #6ea3c1; }
+.admindash-kpi-card--deep::after { background: linear-gradient(90deg, #3a5ba0, #2d1e2f); }
+
+.admindash-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26,34,56,0.10);
+}
+.admindash-kpi-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.admindash-kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.admindash-kpi-icon--learners { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.admindash-kpi-icon--tutors { background: rgba(247,200,115,0.2); color: #92400e; }
+.admindash-kpi-icon--courses { background: rgba(110,163,193,0.15); color: #0e7490; }
+.admindash-kpi-icon--marking { background: rgba(45,30,47,0.08); color: #2d1e2f; }
+
+.admindash-kpi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+}
+.admindash-kpi-value {
+    font-size: 38px;
+    font-weight: 700;
+    color: #1a2238;
+    line-height: 1.1;
+    margin-bottom: 10px;
+}
+.admindash-kpi-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.admindash-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.admindash-chip--green { background: #dcfce7; color: #166534; }
+.admindash-chip--slate { background: #f1f5f9; color: #475569; }
+.admindash-chip--amber { background: #fef3c7; color: #92400e; }
+.admindash-chip--red { background: #fee2e2; color: #991b1b; }
+.admindash-chip--teal { background: #ccfbf1; color: #115e59; }
+.admindash-chip--link {
+    background: rgba(58,91,160,0.08);
+    color: #3a5ba0;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+}
+.admindash-chip--link:hover { background: rgba(58,91,160,0.15); text-decoration: none; color: #3a5ba0; }
+
+/* ==========================================================================
+   CHARTS — 2-up grid
+   ========================================================================== */
+.admindash-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+@media (max-width: 900px) {
+    .admindash-charts { grid-template-columns: 1fr; }
+}
+
+.admindash-chart-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.admindash-chart-hdr {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #3a5ba0, #6ea3c1);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+}
+.admindash-chart-hdr--alt {
+    background: linear-gradient(135deg, #6ea3c1, #f7c873);
+    color: #1a2238;
+}
+.admindash-chart-body {
+    height: 340px;
+    padding: 12px 16px;
+}
+
+/* ==========================================================================
+   PANELS (Tutor Performance / Course Overview)
+   ========================================================================== */
+.admindash-panel {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 28px;
+}
+.admindash-panel-hdr {
+    padding: 20px 28px;
+    background: linear-gradient(135deg, #3a5ba0 0%, #6ea3c1 100%);
+    color: #fff;
+}
+.admindash-panel-hdr--alt {
+    background: linear-gradient(135deg, #6ea3c1 0%, #f7c873 100%);
+    color: #1a2238;
+}
+.admindash-panel-hdr h3 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.admindash-panel-hdr p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.8;
+    font-style: italic;
+}
+.admindash-panel-body {
+    padding: 20px 24px;
+}
+
+/* ==========================================================================
+   TABLES — explicit header styling to override DataTables defaults
+   ========================================================================== */
+.admindash-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+.admindash-table thead th {
+    background: #1a2238 !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 14px !important;
+    border: none !important;
+    white-space: nowrap;
+}
+.admindash-table thead th:first-child {
+    border-radius: 6px 0 0 0;
+}
+.admindash-table thead th:last-child {
+    border-radius: 0 6px 0 0;
+}
+.admindash-table tbody td {
+    font-size: 13px;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    vertical-align: middle;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.admindash-table tbody tr:hover td {
+    background: #f8fafc !important;
+}
+.admindash-cell-name {
+    font-weight: 600;
+    color: #1a2238;
+}
+.admindash-cell-email {
+    color: #6b7280;
+    font-size: 12px !important;
+}
+
+/* Pills */
+.admindash-pill {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.admindash-pill--blue { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.admindash-pill--red { background: #fee2e2; color: #991b1b; }
+.admindash-pill--green { background: #dcfce7; color: #166534; }
+
+/* Completion bar */
+.admindash-completion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+}
+.admindash-completion-bar {
+    width: 80px;
+    height: 7px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.admindash-completion-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #3a5ba0, #6ea3c1);
+    transition: width 0.4s ease;
+}
+.admindash-completion-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3a5ba0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* DataTables overrides */
+.admindash-panel-body .dataTables_wrapper .dataTables_length,
+.admindash-panel-body .dataTables_wrapper .dataTables_filter,
+.admindash-panel-body .dataTables_wrapper .dataTables_info,
+.admindash-panel-body .dataTables_wrapper .dataTables_paginate {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: #6b7280;
+}
+.admindash-panel-body .dataTables_filter input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.admindash-panel-body .dataTables_filter input:focus {
+    border-color: #3a5ba0;
+    box-shadow: 0 0 0 3px rgba(58,91,160,0.1);
+}
+.admindash-panel-body .dataTables_length select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+.admindash-dt-btn,
+.admindash-panel-body .dt-button {
+    background: #f8fafc !important;
+    color: #3a5ba0 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    padding: 6px 14px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-weight: 600 !important;
+    transition: background 0.2s !important;
+}
+.admindash-panel-body .dt-button:hover {
+    background: #3a5ba0 !important;
+    color: #fff !important;
+}
+.admindash-panel-body .dataTables_paginate .paginate_button {
+    border-radius: 6px !important;
+    border: 1px solid #e5e7eb !important;
+    font-size: 12px !important;
+}
+.admindash-panel-body .dataTables_paginate .paginate_button.current {
+    background: #3a5ba0 !important;
+    color: #fff !important;
+    border-color: #3a5ba0 !important;
+}
+
+/* ==========================================================================
+   ALERT CARDS
+   ========================================================================== */
+.admindash-alerts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+@media (max-width: 900px) {
+    .admindash-alerts { grid-template-columns: 1fr; }
+}
+
+.admindash-alert {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 22px;
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #1a2238;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+.admindash-alert::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+.admindash-alert--danger::before { background: #dc2626; }
+.admindash-alert--warning::before { background: #f7c873; }
+.admindash-alert--info::before { background: #3a5ba0; }
+
+.admindash-alert:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,34,56,0.08);
+    text-decoration: none;
+    color: #1a2238;
+}
+.admindash-alert-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.admindash-alert--danger .admindash-alert-icon { background: #fee2e2; color: #dc2626; }
+.admindash-alert--warning .admindash-alert-icon { background: #fef3c7; color: #92400e; }
+.admindash-alert--info .admindash-alert-icon { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+
+.admindash-alert-content {
+    flex: 1;
+    min-width: 0;
+}
+.admindash-alert-label {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin-bottom: 2px;
+}
+.admindash-alert-value {
+    display: block;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.admindash-alert-arrow {
+    color: #b0b8c1;
+    font-size: 18px;
+    transition: transform 0.2s;
+}
+.admindash-alert:hover .admindash-alert-arrow {
+    transform: translateX(4px);
+    color: #3a5ba0;
+}
+
+/* ==========================================================================
+   TUTOR DETAIL CHILD ROWS (Expandable Programmes & Overdue Stats)
+   ========================================================================== */
+.admindash-toggle-cell {
+    text-align: center;
+    cursor: pointer;
+    width: 36px;
+}
+.admindash-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(58,91,160,0.08);
+    color: #3a5ba0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    font-size: 16px;
+}
+.admindash-toggle-btn:hover {
+    background: rgba(58,91,160,0.18);
+    transform: scale(1.1);
+}
+tr.shown .admindash-toggle-btn {
+    background: #3a5ba0;
+    color: #fff;
+}
+
+.tutor-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 20px 12px;
+    background: #f8fafc;
+}
+@media (max-width: 900px) {
+    .tutor-detail-grid { grid-template-columns: 1fr; }
+}
+
+.tutor-detail-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.tutor-detail-hdr {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    background: linear-gradient(90deg, #0ea5c6, #8fb28a);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: 'Libre Baskerville', Georgia, serif;
+}
+.tutor-detail-hdr--alt {
+    background: linear-gradient(90deg, #1aa3d9, #79b07a);
+}
+.tutor-detail-body {
+    padding: 16px 20px;
+}
+.tutor-detail-table-hdr {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 10px;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #e6e9ec;
+    color: #4a5f7a;
+    font-weight: 600;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.programme-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+.programme-row:last-child {
+    border-bottom: none;
+}
+.programme-title {
+    font-size: 14px;
+    color: #4a5f7a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    flex: 1;
+    padding-right: 12px;
+}
+.caseload-badge {
+    width: 44px;
+    height: 44px;
+    background: #cbd63a;
+    color: #fff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 15px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    flex-shrink: 0;
+}
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 15px;
+    color: #4a5f7a;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.stat-row:last-child {
+    border-bottom: none;
+}
+.badge-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    flex-shrink: 0;
+}
+.badge-circle--red { background: #e55a5a; }
+.badge-circle--amber { background: #f7c873; color: #1a2238; }
+.badge-circle--blue { background: #3a5ba0; }
+.badge-circle--slate { background: #6b7280; }
+.tutor-detail-empty {
+    text-align: center;
+    color: #9ca3af;
+    font-style: italic;
+    padding: 20px 0;
+    font-size: 14px;
+}
+
+/* ==========================================================================
+   HIGHCHARTS CLEANUP
+   ========================================================================== */
+.highcharts-a11y-proxy-element { display: none !important; }
+.highcharts-credits { display: none !important; }
+.highcharts-button-box { display: none !important; }
+.highcharts-no-tooltip.highcharts-button.highcharts-contextbutton.highcharts-button-normal { display: none !important; }
+
+/* ==========================================================================
+   PRINT STYLES
+   ========================================================================== */
+@media print {
+    .admindash-header-actions { display: none; }
+    .admindash-kpi-card, .admindash-chart-card, .admindash-panel, .admindash-alert {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
+</style>

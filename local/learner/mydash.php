@@ -148,7 +148,7 @@ $sql = "SELECT
 		        @prev_month := DATE_FORMAT(FROM_UNIXTIME(timecreated), '%m'),
 		        @prev_time := timecreated
 
-		    FROM r6ua_logstore_standard_log
+		    FROM mdl_logstore_standard_log
 		    CROSS JOIN (SELECT @prev_user := NULL, @prev_month := NULL, @prev_time := NULL) vars
 
 		    WHERE component = 'mod_hvp'

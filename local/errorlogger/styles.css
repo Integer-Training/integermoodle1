@@ -1,0 +1,361 @@
+/* ============================================================
+   Error Logger — Dashboard Styles
+   Matches the Admin Dashboard (local/learner) aesthetic:
+   Libre Baskerville headings, system-font body, navy-blue palette
+   ============================================================ */
+
+/* Google Font loaded via <link> in template, not @import (breaks Moodle CSS concat). */
+
+/* ---------- Shell ---------- */
+.el-shell {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    color: #1a2238;
+    max-width: 100%;
+    padding: 0;
+}
+.el-shell * { box-sizing: border-box; }
+
+/* ---------- Header ---------- */
+.el-header {
+    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 60%, #6ea3c1 100%);
+    border-radius: 10px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+.el-header::before {
+    content: '';
+    position: absolute;
+    top: -40%; right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(247,200,115,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.el-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 32px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.el-header-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+.el-header-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    margin: 4px 0 0;
+    font-style: italic;
+}
+.el-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.el-hdr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+.el-hdr-btn:hover {
+    background: rgba(255,255,255,0.22);
+    border-color: rgba(255,255,255,0.4);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ---------- KPI Cards ---------- */
+.el-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+@media (max-width: 1100px) { .el-kpis { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px)  { .el-kpis { grid-template-columns: 1fr; } }
+
+.el-kpi-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    padding: 22px 24px 18px;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+.el-kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+}
+.el-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26,34,56,0.10);
+}
+
+.el-kpi-card--critical::after { background: #dc2626; }
+.el-kpi-card--warning::after  { background: #f7c873; }
+.el-kpi-card--notice::after   { background: #6ea3c1; }
+.el-kpi-card--last24::after   { background: linear-gradient(90deg, #3a5ba0, #2d1e2f); }
+
+.el-kpi-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.el-kpi-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.el-kpi-icon--critical { background: #fee2e2; color: #dc2626; }
+.el-kpi-icon--warning  { background: rgba(247,200,115,0.2); color: #92400e; }
+.el-kpi-icon--notice   { background: rgba(110,163,193,0.15); color: #0e7490; }
+.el-kpi-icon--last24   { background: rgba(45,30,47,0.08); color: #2d1e2f; }
+
+.el-kpi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.el-kpi-value {
+    font-size: 38px;
+    font-weight: 700;
+    color: #1a2238;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+
+/* ---------- Panel (filter + table wrapper) ---------- */
+.el-panel {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 28px;
+}
+.el-panel-hdr {
+    padding: 20px 28px;
+    background: linear-gradient(135deg, #3a5ba0 0%, #6ea3c1 100%);
+    color: #fff;
+}
+.el-panel-hdr h3 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.el-panel-hdr p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.8;
+    font-style: italic;
+}
+.el-panel-body {
+    padding: 20px 24px;
+}
+
+/* ---------- Filters ---------- */
+.el-filters {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+}
+.el-filters label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.el-filters .form-control-sm {
+    font-size: 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.el-filters .form-control-sm:focus {
+    border-color: #3a5ba0;
+    box-shadow: 0 0 0 3px rgba(58,91,160,0.1);
+}
+.el-filters .btn-primary {
+    background: #3a5ba0;
+    border-color: #3a5ba0;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 600;
+}
+.el-filters .btn-primary:hover {
+    background: #2e4a85;
+    border-color: #2e4a85;
+}
+.el-filters .btn-outline-danger {
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-weight: 600;
+    border-radius: 6px;
+}
+
+/* ---------- DataTable ---------- */
+.el-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+.el-table thead th {
+    background: #1a2238 !important;
+    color: #fff !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 14px !important;
+    border: none !important;
+    white-space: nowrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.el-table thead th:first-child { border-radius: 6px 0 0 0; }
+.el-table thead th:last-child  { border-radius: 0 6px 0 0; }
+
+.el-table tbody td {
+    font-size: 13px;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    vertical-align: middle;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.el-table tbody tr:hover td {
+    background: #f8fafc !important;
+}
+
+/* Severity pills */
+.el-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+}
+.el-pill--danger   { background: #fee2e2; color: #991b1b; }
+.el-pill--warning  { background: #fef3c7; color: #92400e; }
+.el-pill--info     { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.el-pill--secondary { background: #f1f5f9; color: #475569; }
+
+/* Explanation column */
+.el-explain-cell {
+    color: #6b7280 !important;
+    font-size: 12px !important;
+    line-height: 1.5;
+    font-style: italic;
+}
+
+/* Message column */
+.el-msg-cell {
+    max-width: 280px;
+    word-break: break-word;
+    line-height: 1.4;
+    color: #1a2238;
+}
+
+/* Action button */
+.el-table .btn-outline-primary {
+    border-color: #3a5ba0;
+    color: #3a5ba0;
+    border-radius: 6px;
+}
+.el-table .btn-outline-primary:hover {
+    background: #3a5ba0;
+    color: #fff;
+}
+
+/* ---------- DataTables integration ---------- */
+.el-panel-body .dataTables_wrapper .dataTables_length,
+.el-panel-body .dataTables_wrapper .dataTables_filter,
+.el-panel-body .dataTables_wrapper .dataTables_info,
+.el-panel-body .dataTables_wrapper .dataTables_paginate {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: #6b7280;
+}
+.el-panel-body .dataTables_filter input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.el-panel-body .dataTables_filter input:focus {
+    border-color: #3a5ba0;
+    box-shadow: 0 0 0 3px rgba(58,91,160,0.1);
+}
+.el-panel-body .dataTables_length select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+.el-panel-body .dataTables_paginate .paginate_button {
+    border-radius: 6px !important;
+    border: 1px solid #e5e7eb !important;
+    font-size: 12px !important;
+}
+.el-panel-body .dataTables_paginate .paginate_button.current {
+    background: #3a5ba0 !important;
+    color: #fff !important;
+    border-color: #3a5ba0 !important;
+}
+.el-panel-body .dataTables_paginate .paginate_button:hover {
+    background: #f8fafc !important;
+    color: #3a5ba0 !important;
+    border-color: #3a5ba0 !important;
+}
+
+/* ---------- Detail page ---------- */
+.el-detail-wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+.el-detail-pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    max-height: 500px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}

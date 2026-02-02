@@ -1400,6 +1400,13 @@ class core_renderer extends \core_renderer {
                 }
             }
             if(is_siteadmin($USER)){
+                $admindash_link = new moodle_url('/local/learner/admindash.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$admindash_link.'" id="itemAdminDash" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                                <span class="rui-sidebar-nav-text">Admin Dashboard</span>
+                            </a>
+                        </li>';
                 $tutor_link = new moodle_url('/local/learner/tutor.php', array('contextid' => 1));
                 $mark_history = new moodle_url('/local/tutors/view.php', array('contextid' => 1));
                 $reassign_link = new moodle_url('/local/tutors/reassign.php', array('contextid' => 1));

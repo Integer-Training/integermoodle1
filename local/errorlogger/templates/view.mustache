@@ -1,0 +1,138 @@
+{{!
+    @template local_errorlogger/view
+
+    Error Logger dashboard — matches Admin Dashboard aesthetic.
+
+    @package   local_errorlogger
+    @copyright 2026 Epearl Academy
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+<div class="el-shell">
+
+  <!-- Header -->
+  <div class="el-header">
+    <div class="el-header-inner">
+      <div>
+        <h1 class="el-header-title"><i class="fa fa-exclamation-triangle"></i> {{#str}}pluginname, local_errorlogger{{/str}}</h1>
+        <p class="el-header-sub">System error monitoring &middot; Epearl Academy</p>
+      </div>
+      <div class="el-header-actions">
+        <a href="{{{settings_url}}}" class="el-hdr-btn"><i class="fa fa-cog"></i> {{#str}}settings{{/str}}</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="el-kpis">
+    <div class="el-kpi-card el-kpi-card--critical">
+      <div class="el-kpi-top">
+        <span class="el-kpi-icon el-kpi-icon--critical"><i class="fa fa-times-circle"></i></span>
+        <span class="el-kpi-label">{{#str}}severity_critical, local_errorlogger{{/str}}</span>
+      </div>
+      <div class="el-kpi-value">{{critical_count}}</div>
+    </div>
+    <div class="el-kpi-card el-kpi-card--warning">
+      <div class="el-kpi-top">
+        <span class="el-kpi-icon el-kpi-icon--warning"><i class="fa fa-exclamation-circle"></i></span>
+        <span class="el-kpi-label">{{#str}}severity_warning, local_errorlogger{{/str}}</span>
+      </div>
+      <div class="el-kpi-value">{{warning_count}}</div>
+    </div>
+    <div class="el-kpi-card el-kpi-card--notice">
+      <div class="el-kpi-top">
+        <span class="el-kpi-icon el-kpi-icon--notice"><i class="fa fa-info-circle"></i></span>
+        <span class="el-kpi-label">{{#str}}severity_notice, local_errorlogger{{/str}}</span>
+      </div>
+      <div class="el-kpi-value">{{notice_count}}</div>
+    </div>
+    <div class="el-kpi-card el-kpi-card--last24">
+      <div class="el-kpi-top">
+        <span class="el-kpi-icon el-kpi-icon--last24"><i class="fa fa-clock-o"></i></span>
+        <span class="el-kpi-label">{{#str}}last24h, local_errorlogger{{/str}}</span>
+      </div>
+      <div class="el-kpi-value">{{last24_count}}</div>
+    </div>
+  </div>
+
+  <!-- Table Panel -->
+  <div class="el-panel">
+    <div class="el-panel-hdr">
+      <h3><i class="fa fa-list-alt"></i> {{#str}}viewlogs, local_errorlogger{{/str}}</h3>
+      <p>Filter, search, and inspect captured errors and warnings</p>
+    </div>
+
+    <!-- Filters -->
+    <div class="el-filters">
+      <div class="row align-items-end">
+        <div class="col-md-2 mb-2">
+          <label>{{#str}}type, local_errorlogger{{/str}}</label>
+          <select id="el-filter-type" class="form-control form-control-sm">
+            <option value="">{{#str}}all, local_errorlogger{{/str}}</option>
+            <option value="error">Error</option>
+            <option value="exception">Exception</option>
+            <option value="warning">Warning</option>
+            <option value="notice">Notice</option>
+            <option value="debug">Debug</option>
+            <option value="task_failure">Task Failure</option>
+            <option value="conversion_failure">Conversion Failure</option>
+          </select>
+        </div>
+        <div class="col-md-2 mb-2">
+          <label>{{#str}}severity, local_errorlogger{{/str}}</label>
+          <select id="el-filter-severity" class="form-control form-control-sm">
+            <option value="">{{#str}}all, local_errorlogger{{/str}}</option>
+            <option value="1">{{#str}}severity_critical, local_errorlogger{{/str}}</option>
+            <option value="2">{{#str}}severity_warning, local_errorlogger{{/str}}</option>
+            <option value="3">{{#str}}severity_notice, local_errorlogger{{/str}}</option>
+            <option value="4">{{#str}}severity_debug, local_errorlogger{{/str}}</option>
+          </select>
+        </div>
+        <div class="col-md-2 mb-2">
+          <label>{{#str}}datefrom, local_errorlogger{{/str}}</label>
+          <input type="date" id="el-filter-datefrom" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2 mb-2">
+          <label>{{#str}}dateto, local_errorlogger{{/str}}</label>
+          <input type="date" id="el-filter-dateto" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2 mb-2">
+          <button type="button" id="el-apply-filters" class="btn btn-primary btn-sm btn-block">
+            <i class="fa fa-filter"></i> {{#str}}applyfilters, local_errorlogger{{/str}}
+          </button>
+        </div>
+        <div class="col-md-2 mb-2">
+          <button type="button" id="el-clear-all" class="btn btn-outline-danger btn-sm btn-block"
+                  data-url="{{{clear_url}}}"
+                  data-confirm="{{#str}}confirmclear, local_errorlogger{{/str}}">
+            <i class="fa fa-trash"></i> {{#str}}clearall, local_errorlogger{{/str}}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- DataTable -->
+    <div class="el-panel-body">
+      <table id="errorlog-table" class="el-table display" style="width:100%">
+        <thead>
+          <tr>
+            <th>{{#str}}time, local_errorlogger{{/str}}</th>
+            <th>{{#str}}severity, local_errorlogger{{/str}}</th>
+            <th>{{#str}}type, local_errorlogger{{/str}}</th>
+            <th>{{#str}}message, local_errorlogger{{/str}}</th>
+            <th>{{#str}}explanation, local_errorlogger{{/str}}</th>
+            <th>{{#str}}component, local_errorlogger{{/str}}</th>
+            <th>{{#str}}user, local_errorlogger{{/str}}</th>
+            <th>{{#str}}actions, local_errorlogger{{/str}}</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

@@ -46,11 +46,23 @@
         <div><h5 class="mb-0">{{{yet_to_grade}}}</h5><small>Awaiting Marking</small></div>
       </div>
     </div>
+    <div class="col-md-3" data-url="{{{resubmissions_url}}}" id="resubmissions_card">
+      <div class="card p-3 d-flex flex-row align-items-center">
+        <div class="stat-icon text-white me-3" style="background:#e88a2d"><i class="bi bi-arrow-repeat"></i></div>
+        <div><h5 class="mb-0">{{{resubmissions}}}</h5><small>Resubmissions</small></div>
+      </div>
+    </div>
     <div class="col-md-3">
       <div class="card p-3 d-flex flex-row align-items-center">
         <div class="stat-icon bg-warning text-white me-3"><i class="bi bi-activity"></i></div>
         <div><h5 class="mb-0">{{{total_assignments}}}</h5><small>Total Assignments</small></div>
       </div>
+    </div>
+    <div class="col-md-3">
+      <a href="{{{progressions_url}}}" class="card p-3 d-flex flex-row align-items-center text-decoration-none" style="border-left:4px solid #3a5ba0;">
+        <div class="stat-icon text-white me-3" style="background:#3a5ba0"><i class="bi bi-graph-up"></i></div>
+        <div><h5 class="mb-0" style="color:#3a5ba0">View</h5><small>Learner Progressions</small></div>
+      </a>
     </div>
   </div>
 
@@ -70,6 +82,7 @@
           <div class="stat-row"><span>Overdue Assignments</span><div class="badge-circle"><a href="{{{overdue_url}}}" target="_blank" style="color:#fff">{{{overdue_assigns}}}</a></div></div>
           <div class="stat-row"><span>Imminent Assignments</span><div class="badge-circle"><a href="{{{imm_url}}}" target="_blank" style="color:#fff">{{{imm_assigns}}}</a></div></div>
            <div class="stat-row"><span>Awaiting Marking</span><div class="badge-circle"><a href="{{{yet_to_grade_url}}}" target="_blank" style="color:#fff">{{{yet_to_grade}}}</a></div></div>
+           <div class="stat-row"><span>Resubmissions Awaiting Review</span><div class="badge-circle" style="background:#e88a2d"><a href="{{{resubmissions_url}}}" target="_blank" style="color:#fff">{{{resubmissions}}}</a></div></div>
            <div class="stat-row"><span>InActive Learners</span><div class="badge-circle"><a href="{{{inactive_learners_link}}}" target="_blank" style="color:#fff">{{{inactive_learners}}}</a></div></div>
       </div>
     </div>
@@ -166,6 +179,11 @@ Highcharts.chart('activityChart', {
     // For the anchor tag
     // For the button (getting the URL from a data attribute)
     $('#yet_to_grade').on('click', function(event) {
+        event.preventDefault();
+        var url = $(this).data('url');
+        window.open(url, '_blank');
+    });
+    $('#resubmissions_card').on('click', function(event) {
         event.preventDefault();
         var url = $(this).data('url');
         window.open(url, '_blank');

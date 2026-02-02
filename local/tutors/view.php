@@ -169,15 +169,15 @@ if($fromform && !$action){
                             )
                         ) AS grade_label,
                         FROM_UNIXTIME(ag.timemodified) AS graded_on
-                    FROM r6ua_assign_grades ag
-                    JOIN r6ua_user t ON t.id = ag.grader          -- TUTOR
-                    JOIN r6ua_user su ON su.id = ag.userid        -- STUDENT
-                    JOIN r6ua_assign a ON a.id = ag.assignment
-                    JOIN r6ua_grade_items gi ON gi.iteminstance = a.id
+                    FROM mdl_assign_grades ag
+                    JOIN mdl_user t ON t.id = ag.grader          -- TUTOR
+                    JOIN mdl_user su ON su.id = ag.userid        -- STUDENT
+                    JOIN mdl_assign a ON a.id = ag.assignment
+                    JOIN mdl_grade_items gi ON gi.iteminstance = a.id
                         AND gi.itemmodule = "assign"
-                    JOIN r6ua_grade_grades gg ON gg.itemid = gi.id
+                    JOIN mdl_grade_grades gg ON gg.itemid = gi.id
                         AND gg.userid = ag.userid
-                    JOIN r6ua_scale sc ON sc.id = gi.scaleid
+                    JOIN mdl_scale sc ON sc.id = gi.scaleid
                     WHERE gg.finalgrade IS NOT NULL AND su.id = '.$record->userid.'
                     AND a.id = '.$assign_obj->id.'                                                                                                                                  
                     ORDER BY su.id,a.id';
@@ -297,15 +297,15 @@ if($fromform && !$action){
                             )
                         ) AS grade_label,
                         FROM_UNIXTIME(ag.timemodified) AS graded_on
-                    FROM r6ua_assign_grades ag
-                    JOIN r6ua_user t ON t.id = ag.grader          -- TUTOR
-                    JOIN r6ua_user su ON su.id = ag.userid        -- STUDENT
-                    JOIN r6ua_assign a ON a.id = ag.assignment
-                    JOIN r6ua_grade_items gi ON gi.iteminstance = a.id
+                    FROM mdl_assign_grades ag
+                    JOIN mdl_user t ON t.id = ag.grader          -- TUTOR
+                    JOIN mdl_user su ON su.id = ag.userid        -- STUDENT
+                    JOIN mdl_assign a ON a.id = ag.assignment
+                    JOIN mdl_grade_items gi ON gi.iteminstance = a.id
                         AND gi.itemmodule = "assign"
-                    JOIN r6ua_grade_grades gg ON gg.itemid = gi.id
+                    JOIN mdl_grade_grades gg ON gg.itemid = gi.id
                         AND gg.userid = ag.userid
-                    JOIN r6ua_scale sc ON sc.id = gi.scaleid
+                    JOIN mdl_scale sc ON sc.id = gi.scaleid
                     WHERE gg.finalgrade IS NOT NULL AND su.id = '.$record->userid.'
                     AND a.id = '.$assign_obj->id.'                                                                                                                                  
                     ORDER BY su.id,a.id';

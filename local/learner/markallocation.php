@@ -50,6 +50,7 @@ $PAGE->requires->jquery('ui');
 $PAGE->requires->js('/local/learner/js/jquery.dataTables.min.js',true);
 $PAGE->requires->css('/local/learner/js/jquery.dataTables.min.css',true);
 //
+$prefix = $CFG->prefix;
 $result = '';
 $table = new html_table();
 $table->id = "learners";
@@ -63,37 +64,108 @@ if($action == 'mark'){
         'Tutor',
     );
     $mark_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id
-            FROM r6ua_groups_members gm_t
-            JOIN r6ua_groups g
+            FROM {$prefix}groups_members gm_t
+            JOIN {$prefix}groups g
                 ON g.id = gm_t.groupid
-            JOIN r6ua_groups_members gm_s
+            JOIN {$prefix}groups_members gm_s
                 ON gm_s.groupid = g.id
                 AND gm_s.userid <> gm_t.userid
-            JOIN r6ua_role_assignments ra
+            JOIN {$prefix}role_assignments ra
                 ON ra.userid = gm_s.userid
-            JOIN r6ua_context ctx
+            JOIN {$prefix}context ctx
                 ON ctx.id = ra.contextid
                 AND ctx.contextlevel = 50
                 AND ctx.instanceid = g.courseid
-            JOIN r6ua_role r
+            JOIN {$prefix}role r
                 ON r.id = ra.roleid
                 AND r.shortname = 'student'
-            JOIN r6ua_assign a
+            JOIN {$prefix}user u
+                ON u.id = gm_s.userid
+                AND u.suspended = 0
+                AND u.deleted = 0
+            JOIN {$prefix}assign a
                 ON a.course = g.courseid
-            JOIN r6ua_assign_submission sub
+            JOIN {$prefix}modules mod_m
+                ON mod_m.name = 'assign'
+            JOIN {$prefix}course_modules cm
+                ON cm.instance = a.id
+                AND cm.course = a.course
+                AND cm.module = mod_m.id
+                AND cm.visible = 1
+            JOIN {$prefix}assign_submission sub
                 ON sub.assignment = a.id
                 AND sub.userid = gm_s.userid
                 AND sub.status = 'submitted'
-            LEFT JOIN r6ua_assign_grades gr
+                AND sub.latest = 1
+                AND sub.attemptnumber = 0
+            LEFT JOIN {$prefix}assign_grades gr
                 ON gr.assignment = a.id
                 AND gr.userid = gm_s.userid
+                AND gr.attemptnumber = sub.attemptnumber
             WHERE
-                gm_t.userid = ".$USER->id."
+                gm_t.userid = ".(int)$USER->id."
                 AND a.name NOT LIKE '%IAG%'
-                AND (gr.id IS NULL OR gr.grade IS NULL)";
+                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
 //
     $results = $DB->get_recordset_sql($mark_sql);
-    //print_object($results);die;
+
+}else if($action == 'resub'){
+    // Resubmissions Awaiting Review — attemptnumber > 0.
+    $table->head = array(
+        'Learner Name',
+        'Course Title',
+        'Assignment Name',
+        'Submission Date',
+        'Grade',
+        'Tutor',
+    );
+    $resub_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id
+            FROM {$prefix}groups_members gm_t
+            JOIN {$prefix}groups g
+                ON g.id = gm_t.groupid
+            JOIN {$prefix}groups_members gm_s
+                ON gm_s.groupid = g.id
+                AND gm_s.userid <> gm_t.userid
+            JOIN {$prefix}role_assignments ra
+                ON ra.userid = gm_s.userid
+            JOIN {$prefix}context ctx
+                ON ctx.id = ra.contextid
+                AND ctx.contextlevel = 50
+                AND ctx.instanceid = g.courseid
+            JOIN {$prefix}role r
+                ON r.id = ra.roleid
+                AND r.shortname = 'student'
+            JOIN {$prefix}user u
+                ON u.id = gm_s.userid
+                AND u.suspended = 0
+                AND u.deleted = 0
+            JOIN {$prefix}assign a
+                ON a.course = g.courseid
+            JOIN {$prefix}modules mod_r
+                ON mod_r.name = 'assign'
+            JOIN {$prefix}course_modules cm_r
+                ON cm_r.instance = a.id
+                AND cm_r.course = a.course
+                AND cm_r.module = mod_r.id
+                AND cm_r.visible = 1
+            JOIN {$prefix}assign_submission sub
+                ON sub.assignment = a.id
+                AND sub.userid = gm_s.userid
+                AND sub.status = 'submitted'
+                AND sub.latest = 1
+                AND sub.attemptnumber > 0
+            LEFT JOIN {$prefix}assign_grades gr
+                ON gr.assignment = a.id
+                AND gr.userid = gm_s.userid
+                AND gr.attemptnumber = sub.attemptnumber
+            WHERE
+                gm_t.userid = ".(int)$USER->id."
+                AND a.name NOT LIKE '%IAG%'
+                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
+//
+    $results = $DB->get_recordset_sql($resub_sql);
 
 }else if($action == 'overdue'){
     $table->head = array(
@@ -106,40 +178,48 @@ if($action == 'mark'){
     );
     $o_sql = "SELECT
                sub.id as submision_id,sub.userid,a.course,a.id as assign_id
-            FROM r6ua_groups_members gm_t
-            JOIN r6ua_groups g
+            FROM {$prefix}groups_members gm_t
+            JOIN {$prefix}groups g
                 ON g.id = gm_t.groupid
-            -- students in teacher’s groups
-            JOIN r6ua_groups_members gm_s
+            JOIN {$prefix}groups_members gm_s
                 ON gm_s.groupid = g.id
                 AND gm_s.userid <> gm_t.userid
-            JOIN r6ua_user u
+            JOIN {$prefix}user u
                 ON u.id = gm_s.userid
-            -- ensure STUDENT role in COURSE context
-            JOIN r6ua_role_assignments ra
+                AND u.suspended = 0
+                AND u.deleted = 0
+            JOIN {$prefix}role_assignments ra
                 ON ra.userid = u.id
-            JOIN r6ua_context ctx
+            JOIN {$prefix}context ctx
                 ON ctx.id = ra.contextid
                 AND ctx.contextlevel = 50
                 AND ctx.instanceid = g.courseid
-            JOIN r6ua_role r
+            JOIN {$prefix}role r
                 ON r.id = ra.roleid
                 AND r.shortname = 'student'
-            -- assignments with passed due date
-            JOIN r6ua_assign a
+            JOIN {$prefix}assign a
                 ON a.course = g.courseid
-            -- ONLY submitted attempts cancel overdue
-            JOIN r6ua_assign_submission sub
+            JOIN {$prefix}modules mod_o
+                ON mod_o.name = 'assign'
+            JOIN {$prefix}course_modules cm_o
+                ON cm_o.instance = a.id
+                AND cm_o.course = a.course
+                AND cm_o.module = mod_o.id
+                AND cm_o.visible = 1
+            JOIN {$prefix}assign_submission sub
                 ON sub.assignment = a.id
                 AND sub.userid = u.id
-            LEFT  JOIN r6ua_assign_grades gr
+                AND sub.latest = 1
+            LEFT JOIN {$prefix}assign_grades gr
                 ON gr.assignment = a.id
-                AND gr.userid = gm_s.userid  AND sub.userid = gr.userid
+                AND gr.userid = gm_s.userid
+                AND gr.attemptnumber = sub.attemptnumber
             WHERE
-                gm_t.userid = ".$USER->id."
+                gm_t.userid = ".(int)$USER->id."
                 AND sub.status = 'submitted'
                 AND a.name NOT LIKE '%IAG%'
-                AND (gr.id IS  NULL OR gr.grade IS  NULL)
+                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
                 AND sub.timemodified > 0 AND sub.timemodified IS NOT NULL
                 AND sub.timemodified <= ".strtotime('now')."";
     $results = $DB->get_recordset_sql($o_sql);
@@ -161,37 +241,43 @@ if($action == 'mark'){
     }
     $m_sql = "SELECT
                 a.course,a.id as assign_id,u.id as userid
-                FROM r6ua_groups_members gm_t
-                JOIN r6ua_groups g
+                FROM {$prefix}groups_members gm_t
+                JOIN {$prefix}groups g
                     ON g.id = gm_t.groupid
-                -- students in teacher’s groups
-                JOIN r6ua_groups_members gm_s
+                JOIN {$prefix}groups_members gm_s
                     ON gm_s.groupid = g.id
                     AND gm_s.userid <> gm_t.userid
-                JOIN r6ua_user u
+                JOIN {$prefix}user u
                     ON u.id = gm_s.userid
-                -- ensure STUDENT role in COURSE context
-                JOIN r6ua_role_assignments ra
+                    AND u.suspended = 0
+                    AND u.deleted = 0
+                JOIN {$prefix}role_assignments ra
                     ON ra.userid = u.id
-                JOIN r6ua_context ctx
+                JOIN {$prefix}context ctx
                     ON ctx.id = ra.contextid
                     AND ctx.contextlevel = 50
                     AND ctx.instanceid = g.courseid
-                JOIN r6ua_role r
+                JOIN {$prefix}role r
                     ON r.id = ra.roleid
                     AND r.shortname = 'student'
-                -- assignments with passed due date
-                JOIN  r6ua_assign a
+                JOIN {$prefix}assign a
                  ON a.course = g.courseid
+                JOIN {$prefix}modules mod_i
+                    ON mod_i.name = 'assign'
+                JOIN {$prefix}course_modules cm_i
+                    ON cm_i.instance = a.id
+                    AND cm_i.course = a.course
+                    AND cm_i.module = mod_i.id
+                    AND cm_i.visible = 1
                 WHERE
-                 gm_t.userid = ".$USER->id." AND 
+                 gm_t.userid = ".(int)$USER->id." AND
                 a.course in (".implode(',',$allcourses).")
                 AND a.duedate > 0 AND a.duedate IS NOT NULL
                 AND a.name NOT LIKE '%IAG%'
+                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
                 AND a.duedate <= ".strtotime("+3 days")."
                 AND a.duedate >= ".strtotime('now')."";
     $results = $DB->get_recordset_sql($m_sql);
-    //print_object($results);die;
 }else{
     throw_error('Invalid Request...');
 }
@@ -206,18 +292,20 @@ if($results){
         $row['assignmentname'] =  $DB->get_field('assign','name',['id'=>$record->assign_id]);
         //
         $assign_obj = $DB->get_record('assign',['id'=>$record->assign_id]);
-        $course_obj = $DB->get_record('course',['id'=>$assign_obj->course]);
-        $cm_obj = $DB->get_record('course_modules',['instance'=>$assign_obj->id,'course'=>$assign_obj->course,'module'=>1]);
-        if(!$cm_obj->visible && $cm_obj->visible != 1){
+        // Visibility and suspended filters are now handled in SQL.
+        // Get course_module using modules table for correct module ID.
+        $mod_id = $DB->get_field('modules', 'id', ['name' => 'assign']);
+        $cm_obj = $DB->get_record('course_modules',['instance'=>$assign_obj->id,'course'=>$assign_obj->course,'module'=>$mod_id]);
+        if(!$cm_obj || !$cm_obj->visible){
             continue;
         }
         $user_object = $DB->get_record('user',['id'=>$record->userid]);
-        if($user_object->suspended){
+        if(!$user_object || $user_object->suspended || $user_object->deleted){
             continue;
         }
-        if($action == 'mark'){
+        if($action == 'mark' || $action == 'resub'){
             $row['submission_date'] = date('d-m-Y',$DB->get_field('assign_submission','timemodified',['id'=>$record->submision_id]));
-            $cm = $DB->get_record('course_modules',['course'=>$record->course,'instance'=>$record->assign_id,'module'=>1]);
+            $cm = $DB->get_record('course_modules',['course'=>$record->course,'instance'=>$record->assign_id,'module'=>$mod_id]);
             $url = new moodle_url('/mod/assign/view.php',['action'=>'grader','userid'=>$record->userid,'id'=>$cm->id]);
 
            $row['grade'] = '<a href="'.$url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
@@ -248,6 +336,8 @@ $records = $DB->get_records_sql($sql);
 $count_recs = count($records);
 if($action == 'mark'){
    echo '<h2>Awaiting Marking</h2>';
+}else if($action == 'resub'){
+   echo '<h2>Resubmissions Awaiting Review</h2>';
 }else if($action == 'overdue'){
     echo '<h2>Overdue Assignments</h2>';
 }else if($action == 'imm'){

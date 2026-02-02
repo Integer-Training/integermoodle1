@@ -87,6 +87,10 @@ if ($mform->is_cancelled()) {
 
       // Force password change on first login
       set_user_preference('auth_forcepasswordchange', 1, $newuserobj->id);
+
+      // Trigger user_created event for plugins (e.g. Twilio SMS).
+      \core\event\user_created::create_from_userid($newuserobj->id)->trigger();
+
       //$updateuser = core_user::get_user_by_username($fromform->username);
        //print_object(implode(',',$fromform->courses));die;
        if($fromform->courses){

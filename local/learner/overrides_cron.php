@@ -58,7 +58,7 @@ foreach($records as $rec){
             WHERE uu.id=".$rec->id."  AND en.enrol='manual' AND c.visible=1";
     $enrol_courses = $DB->get_records_sql($sql);
     foreach($enrol_courses as $course){
-        $sql = "SELECT *  FROM r6ua_course_modules WHERE course = ".$course->id." and module =1 and visible=1 order by instance";
+        $sql = "SELECT *  FROM mdl_course_modules WHERE course = ".$course->id." and module =1 and visible=1 order by instance";
         $course_modules_list = $DB->get_records_sql($sql);
         //
         //print_object($course_modules_list);die;

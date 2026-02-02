@@ -72,24 +72,24 @@ if($fromform){
                 s.email,
                 s.lastaccess,
                 FROM_UNIXTIME(s.lastaccess) AS last_access
-            FROM r6ua_groups_members gm_teacher
-            JOIN r6ua_groups g 
+            FROM mdl_groups_members gm_teacher
+            JOIN mdl_groups g 
                 ON g.id = gm_teacher.groupid
-            JOIN r6ua_course c 
+            JOIN mdl_course c 
                 ON c.id = g.courseid
 
             -- students in same group
-            JOIN r6ua_groups_members gm_students 
+            JOIN mdl_groups_members gm_students 
                 ON gm_students.groupid = g.id
-            JOIN r6ua_user s 
+            JOIN mdl_user s 
                 ON s.id = gm_students.userid
 
             -- student role check
-            JOIN r6ua_role_assignments ra 
+            JOIN mdl_role_assignments ra 
                 ON ra.userid = s.id
-            JOIN r6ua_context ctx 
+            JOIN mdl_context ctx 
                 ON ctx.id = ra.contextid
-            JOIN r6ua_role r 
+            JOIN mdl_role r 
                 ON r.id = ra.roleid
         WHERE
             gm_teacher.userid = ".$USER->id."
@@ -163,7 +163,7 @@ if($fromform){
                                 @prev_user := userid,
                                 @prev_time := timecreated
 
-                            FROM r6ua_logstore_standard_log
+                            FROM mdl_logstore_standard_log
                             CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
 
                             WHERE courseid IN (".implode(',',$timespent).")
@@ -212,24 +212,24 @@ if($fromform){
                 s.email,
                 s.lastaccess,
                 FROM_UNIXTIME(s.lastaccess) AS last_access
-            FROM r6ua_groups_members gm_teacher
-            JOIN r6ua_groups g 
+            FROM mdl_groups_members gm_teacher
+            JOIN mdl_groups g 
                 ON g.id = gm_teacher.groupid
-            JOIN r6ua_course c 
+            JOIN mdl_course c 
                 ON c.id = g.courseid
 
             -- students in same group
-            JOIN r6ua_groups_members gm_students 
+            JOIN mdl_groups_members gm_students 
                 ON gm_students.groupid = g.id
-            JOIN r6ua_user s 
+            JOIN mdl_user s 
                 ON s.id = gm_students.userid
 
             -- student role check
-            JOIN r6ua_role_assignments ra 
+            JOIN mdl_role_assignments ra 
                 ON ra.userid = s.id
-            JOIN r6ua_context ctx 
+            JOIN mdl_context ctx 
                 ON ctx.id = ra.contextid
-            JOIN r6ua_role r 
+            JOIN mdl_role r 
                 ON r.id = ra.roleid
         WHERE
             gm_teacher.userid = ".$USER->id."
@@ -303,7 +303,7 @@ if($fromform){
                                 @prev_user := userid,
                                 @prev_time := timecreated
 
-                            FROM r6ua_logstore_standard_log
+                            FROM mdl_logstore_standard_log
                             CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
 
                             WHERE courseid IN (".implode(',',$timespent).")

@@ -1,0 +1,942 @@
+{{!
+    @template local_learner/progressions
+
+    Learner Progressions — shows current progression per learner
+    with expandable unit-wise (per-course + per-assignment) breakdown.
+
+    @package   local_learner
+    @copyright 2026 Epearl Academy
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<div class="prog-shell" id="learner-progressions">
+
+  <!-- ===== HEADER BAR ===== -->
+  <div class="prog-header">
+    <div class="prog-header-inner">
+      <div>
+        <h1 class="prog-title">Learner Progressions</h1>
+        <p class="prog-subtitle">Progression tracking with unit-wise breakdown &middot; Epearl Academy</p>
+      </div>
+      {{#is_manager}}
+      <div class="prog-header-actions">
+        <a href="{{{wwwroot}}}/local/learner/view.php" class="prog-hdr-btn">
+          <i class="bi bi-people"></i> Learners
+        </a>
+        <a href="{{{wwwroot}}}/local/learner/admindash.php" class="prog-hdr-btn">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+      </div>
+      {{/is_manager}}
+    </div>
+  </div>
+
+  <!-- ===== KPI CARDS ===== -->
+  <div class="prog-kpis">
+
+    <div class="prog-kpi-card">
+      <div class="prog-kpi-top">
+        <span class="prog-kpi-icon prog-kpi-icon--learners">
+          <i class="bi bi-people-fill"></i>
+        </span>
+        <span class="prog-kpi-label">Total Learners</span>
+      </div>
+      <div class="prog-kpi-value">{{{total_learners_count}}}</div>
+    </div>
+
+    <div class="prog-kpi-card prog-kpi-card--green">
+      <div class="prog-kpi-top">
+        <span class="prog-kpi-icon prog-kpi-icon--active">
+          <i class="bi bi-check-circle-fill"></i>
+        </span>
+        <span class="prog-kpi-label">Active</span>
+      </div>
+      <div class="prog-kpi-value">{{{active_count}}}</div>
+    </div>
+
+    <div class="prog-kpi-card prog-kpi-card--amber">
+      <div class="prog-kpi-top">
+        <span class="prog-kpi-icon prog-kpi-icon--inactive">
+          <i class="bi bi-clock-history"></i>
+        </span>
+        <span class="prog-kpi-label">Inactive (30+ Days)</span>
+      </div>
+      <div class="prog-kpi-value">{{{inactive_count}}}</div>
+    </div>
+
+    <div class="prog-kpi-card prog-kpi-card--blue">
+      <div class="prog-kpi-top">
+        <span class="prog-kpi-icon prog-kpi-icon--created">
+          <i class="bi bi-person-plus-fill"></i>
+        </span>
+        <span class="prog-kpi-label">Created (Never Logged In)</span>
+      </div>
+      <div class="prog-kpi-value">{{{created_count}}}</div>
+    </div>
+
+    <div class="prog-kpi-card prog-kpi-card--grey">
+      <div class="prog-kpi-top">
+        <span class="prog-kpi-icon prog-kpi-icon--suspended">
+          <i class="bi bi-person-slash"></i>
+        </span>
+        <span class="prog-kpi-label">Suspended</span>
+      </div>
+      <div class="prog-kpi-value">{{{suspended_count}}}</div>
+    </div>
+
+  </div>
+
+  <!-- ===== MAIN TABLE ===== -->
+  <div class="prog-panel">
+    <div class="prog-panel-hdr">
+      <div>
+        <h3><i class="bi bi-bar-chart-steps"></i> Learner Progression Details</h3>
+        <p>Click the + icon to expand unit-wise breakdown per learner</p>
+      </div>
+    </div>
+    <div class="prog-panel-body">
+      <!-- Filter Bar -->
+      <div class="prog-filter-bar">
+        <div class="prog-filter-group">
+          <label class="prog-filter-label" for="progFilterActivity">Activity Status</label>
+          <select id="progFilterActivity" class="prog-filter-select">
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Created">Created</option>
+          </select>
+        </div>
+        <div class="prog-filter-group">
+          <label class="prog-filter-label" for="progFilterProgress">Progression</label>
+          <select id="progFilterProgress" class="prog-filter-select">
+            <option value="">All</option>
+            <option value="0-25">0 – 25%</option>
+            <option value="26-50">26 – 50%</option>
+            <option value="51-75">51 – 75%</option>
+            <option value="76-100">76 – 100%</option>
+          </select>
+        </div>
+        <button id="progFilterReset" class="prog-filter-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset Filters</button>
+      </div>
+
+      <table id="progTable" class="prog-table display" style="width:100%">
+        <thead>
+          <tr>
+            <th style="width:36px"></th>
+            <th>Learner Name</th>
+            <th>Start Date</th>
+            <th>Activity</th>
+            <th>Current %</th>
+            <th style="text-align:center">Submitted / Total</th>
+            <th style="text-align:center">Passed / Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#learners}}
+          <tr class="prog-learner-row" data-details="{{detail_json}}">
+            <td class="prog-toggle-cell"><span class="prog-toggle-btn"><i class="bi bi-plus-circle"></i></span></td>
+            <td class="prog-cell-name">{{{fullname}}}</td>
+            <td class="prog-cell-date">{{{start_date}}}</td>
+            <td class="prog-cell-activity">{{{activity_status}}}</td>
+            <td>
+              <div class="prog-bar-wrap">
+                <div class="prog-bar prog-bar--default" style="width:{{overall_current}}%"></div>
+              </div>
+              <span class="prog-bar-label">{{overall_current}}%</span>
+            </td>
+            <td class="text-center">
+              <span class="prog-pill prog-pill--submitted">{{{submitted_assignments}}} / {{{total_assignments}}}</span>
+            </td>
+            <td class="text-center">
+              <span class="prog-pill">{{{passed_assignments}}} / {{{total_assignments}}}</span>
+            </td>
+          </tr>
+          {{/learners}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== CDN: DataTables Buttons ===== -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.6.2/css/buttons.dataTables.min.css">
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.print.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ===== DATATABLES =====
+    var progTable = $('#progTable').DataTable({
+        dom: 'Blfrtip',
+        lengthMenu: [[10, 25, 50, -1], [10, 25, 50, 'All']],
+        buttons: [
+            { extend: 'excel', className: 'prog-dt-btn', title: 'Learner_Progressions' },
+            { extend: 'pdf', className: 'prog-dt-btn', title: 'Learner_Progressions' }
+        ],
+        language: { emptyTable: 'No learners found' },
+        pageLength: 25,
+        order: [[4, 'desc']],
+        columnDefs: [{ orderable: false, targets: 0 }],
+        // Render Activity column as badge
+        createdRow: function(row, data, dataIndex) {
+            var $actCell = $('td.prog-cell-activity', row);
+            var val = $.trim($actCell.text());
+            if (val === 'Active') {
+                $actCell.html('<span class="prog-activity-badge prog-activity--active">Active</span>');
+            } else if (val === 'Inactive') {
+                $actCell.html('<span class="prog-activity-badge prog-activity--inactive">Inactive</span>');
+            } else if (val === 'Created') {
+                $actCell.html('<span class="prog-activity-badge prog-activity--created">Created</span>');
+            }
+        }
+    });
+
+    // ===== CUSTOM FILTERS =====
+
+    // Activity status filter (column 3).
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (settings.nTable.id !== 'progTable') return true;
+        var filterVal = $('#progFilterActivity').val();
+        if (!filterVal) return true;
+        var cellVal = $.trim(data[3]);
+        return cellVal === filterVal;
+    });
+
+    // Progression range filter (column 4 = Current %).
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (settings.nTable.id !== 'progTable') return true;
+        var filterVal = $('#progFilterProgress').val();
+        if (!filterVal) return true;
+        var pct = parseInt(data[4], 10) || 0;
+        var parts = filterVal.split('-');
+        var lo = parseInt(parts[0], 10);
+        var hi = parseInt(parts[1], 10);
+        return pct >= lo && pct <= hi;
+    });
+
+    // Wire up filter controls.
+    $('#progFilterActivity, #progFilterProgress').on('change', function() {
+        progTable.draw();
+    });
+    $('#progFilterReset').on('click', function() {
+        $('#progFilterActivity').val('');
+        $('#progFilterProgress').val('');
+        progTable.draw();
+    });
+
+    // HTML-escape utility.
+    function escHtml(str) {
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(str));
+        return d.innerHTML;
+    }
+
+    // Build expandable child row: courses with assignments listed under each.
+    function formatProgDetails(courses) {
+        var html = '<div class="prog-detail-wrap">';
+
+        for (var i = 0; i < courses.length; i++) {
+            var c = courses[i];
+            var cPct = c.current;
+
+            // Course header row.
+            html += '<div class="prog-course-block">';
+            html += '<div class="prog-course-header">';
+            html += '<div class="prog-course-name"><i class="bi bi-journal-bookmark"></i> ' + escHtml(c.name) + '</div>';
+            html += '<div class="prog-course-stats">';
+            html += '<span class="prog-pill" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff">Submitted: ' + c.submitted + ' / ' + c.total + '</span>';
+            html += '<span class="prog-pill" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff">Passed: ' + c.passed + ' / ' + c.total + '</span>';
+            html += '<div class="prog-bar-wrap" style="width:100px;margin-left:8px"><div class="prog-bar prog-bar--default" style="width:' + cPct + '%"></div></div>';
+            html += '<span class="prog-bar-label">' + cPct + '%</span>';
+            html += '</div></div>';
+
+            // Assignment rows under this course.
+            html += '<table class="prog-unit-table">';
+            html += '<thead><tr><th style="text-align:center">Assignment / Unit</th><th style="text-align:center">Status</th></tr></thead>';
+            html += '<tbody>';
+            if (c.assignments && c.assignments.length > 0) {
+                for (var j = 0; j < c.assignments.length; j++) {
+                    var a = c.assignments[j];
+                    var statusClass = 'prog-unit-status--notsubmitted';
+                    if (a.status === 'Pass') statusClass = 'prog-unit-status--pass';
+                    else if (a.status === 'Refer') statusClass = 'prog-unit-status--refer';
+                    else if (a.status === 'Pending Grading') statusClass = 'prog-unit-status--pending';
+                    else if (a.status === 'Submitted') statusClass = 'prog-unit-status--submitted';
+
+                    html += '<tr>';
+                    html += '<td class="prog-unit-name" style="text-align:center">' + escHtml(a.name) + '</td>';
+                    html += '<td style="text-align:center"><span class="prog-unit-status ' + statusClass + '">' + escHtml(a.status) + '</span></td>';
+                    html += '</tr>';
+                }
+            } else {
+                html += '<tr><td colspan="2" class="prog-unit-empty">No assignments</td></tr>';
+            }
+            html += '</tbody></table>';
+            html += '</div>';
+        }
+
+        if (courses.length === 0) {
+            html += '<div class="prog-unit-empty" style="padding:20px;text-align:center">No course data available</div>';
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    // Toggle child row on click.
+    $('#progTable tbody').on('click', '.prog-toggle-btn', function() {
+        var tr = $(this).closest('tr');
+        var row = progTable.row(tr);
+        if (row.child.isShown()) {
+            row.child.hide();
+            tr.removeClass('shown');
+            $(this).find('i').removeClass('bi-dash-circle').addClass('bi-plus-circle');
+        } else {
+            try {
+                var details = JSON.parse(tr.attr('data-details'));
+                row.child(formatProgDetails(details)).show();
+                tr.addClass('shown');
+                $(this).find('i').removeClass('bi-plus-circle').addClass('bi-dash-circle');
+            } catch(e) {
+                console.error('Failed to parse progression details', e);
+            }
+        }
+    });
+
+});
+</script>
+
+<style>
+/* ==========================================================================
+   LEARNER PROGRESSIONS — Editorial Aesthetic (prog- namespace)
+   Font: Libre Baskerville | Palette: Deep Blue / Gold / Teal
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+#learner-progressions *,
+#learner-progressions *::before,
+#learner-progressions *::after {
+    box-sizing: border-box;
+}
+
+.prog-shell {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    color: #1a2238;
+    max-width: 100%;
+    padding: 0;
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.prog-header {
+    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 60%, #6ea3c1 100%);
+    border-radius: 10px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+.prog-header::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(247,200,115,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.prog-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 32px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.prog-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+.prog-subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    margin: 4px 0 0;
+    font-style: italic;
+}
+.prog-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.prog-hdr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+.prog-hdr-btn:hover {
+    background: rgba(255,255,255,0.22);
+    border-color: rgba(255,255,255,0.4);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   KPI CARDS
+   ========================================================================== */
+.prog-kpis {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+@media (max-width: 1100px) {
+    .prog-kpis { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 600px) {
+    .prog-kpis { grid-template-columns: 1fr; }
+}
+
+.prog-kpi-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    padding: 22px 24px 18px;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+.prog-kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: #3a5ba0;
+}
+.prog-kpi-card--green::after { background: #166534; }
+.prog-kpi-card--amber::after { background: #d97706; }
+.prog-kpi-card--blue::after { background: #3a5ba0; }
+.prog-kpi-card--grey::after { background: #6b7280; }
+
+.prog-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26,34,56,0.10);
+}
+.prog-kpi-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.prog-kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.prog-kpi-icon--learners { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.prog-kpi-icon--active { background: #dcfce7; color: #166534; }
+.prog-kpi-icon--inactive { background: #fef3c7; color: #d97706; }
+.prog-kpi-icon--created { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.prog-kpi-icon--suspended { background: #f3f4f6; color: #6b7280; }
+
+.prog-kpi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+}
+.prog-kpi-value {
+    font-size: 38px;
+    font-weight: 700;
+    color: #1a2238;
+    line-height: 1.1;
+}
+
+/* ==========================================================================
+   PANEL
+   ========================================================================== */
+.prog-panel {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 28px;
+}
+.prog-panel-hdr {
+    padding: 20px 28px;
+    background: linear-gradient(135deg, #3a5ba0 0%, #6ea3c1 100%);
+    color: #fff;
+}
+.prog-panel-hdr h3 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.prog-panel-hdr p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.8;
+    font-style: italic;
+}
+.prog-panel-body {
+    padding: 20px 24px;
+}
+
+/* ==========================================================================
+   TABLE
+   ========================================================================== */
+.prog-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+.prog-table thead th {
+    background: #1a2238 !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 14px !important;
+    border: none !important;
+    white-space: nowrap;
+}
+.prog-table thead th:first-child { border-radius: 6px 0 0 0; }
+.prog-table thead th:last-child { border-radius: 0 6px 0 0; }
+.prog-table tbody td {
+    font-size: 13px;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    vertical-align: middle;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.prog-table tbody tr:hover td {
+    background: #f8fafc !important;
+}
+
+/* Learner row */
+.prog-learner-row {
+    border-left: 4px solid transparent;
+}
+
+.prog-cell-name {
+    font-weight: 600;
+    color: #1a2238;
+}
+.prog-cell-date {
+    font-size: 12px !important;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+/* Progress bars */
+.prog-bar-wrap {
+    width: 100%;
+    max-width: 140px;
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 4px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+}
+.prog-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    min-width: 0;
+}
+.prog-bar--default {
+    background: linear-gradient(90deg, #15803d, #166534);
+}
+.prog-bar-label {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3a5ba0;
+    margin-left: 8px;
+    vertical-align: middle;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Badges */
+.prog-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+}
+
+/* Pills */
+.prog-pill {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: rgba(58,91,160,0.1);
+    color: #3a5ba0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.prog-pill--submitted {
+    background: rgba(30,64,175,0.1);
+    color: #1e40af;
+}
+
+/* Toggle button */
+.prog-toggle-cell {
+    text-align: center;
+    cursor: pointer;
+    width: 36px;
+}
+.prog-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(58,91,160,0.08);
+    color: #3a5ba0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    font-size: 16px;
+}
+.prog-toggle-btn:hover {
+    background: rgba(58,91,160,0.18);
+    transform: scale(1.1);
+}
+tr.shown .prog-toggle-btn {
+    background: #3a5ba0;
+    color: #fff;
+}
+
+/* ==========================================================================
+   EXPANDABLE CHILD ROW — Course blocks with assignment tables
+   ========================================================================== */
+.prog-detail-wrap {
+    padding: 16px 12px;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Course block */
+.prog-course-block {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.prog-course-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 14px 20px;
+    background: linear-gradient(90deg, #3a5ba0, #6ea3c1);
+    color: #fff;
+}
+.prog-course-name {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+.prog-course-stats {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.prog-course-stats .prog-badge {
+    font-size: 10px;
+    padding: 2px 10px;
+}
+.prog-course-stats .prog-pill {
+    font-size: 11px;
+    padding: 2px 10px;
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+}
+.prog-course-stats .prog-bar-wrap {
+    height: 6px;
+    background: rgba(255,255,255,0.25);
+}
+.prog-course-stats .prog-bar-label {
+    color: #fff;
+    font-size: 11px;
+    margin-left: 6px;
+}
+
+/* Assignment table within course block */
+.prog-unit-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.prog-unit-table thead th {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 8px 20px !important;
+    border: none !important;
+    border-bottom: 1px solid #e3eaf2 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.prog-unit-table tbody td {
+    font-size: 13px;
+    padding: 8px 20px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.prog-unit-table tbody tr:last-child td {
+    border-bottom: none;
+}
+.prog-unit-table tbody tr:hover td {
+    background: #fafafa;
+}
+.prog-unit-name {
+    color: #374151;
+}
+.prog-unit-status {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.prog-unit-status--pass {
+    background: #dcfce7;
+    color: #166534;
+}
+.prog-unit-status--refer {
+    background: #fef3c7;
+    color: #92400e;
+}
+.prog-unit-status--pending {
+    background: #dbeafe;
+    color: #1e40af;
+}
+.prog-unit-status--submitted {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+.prog-unit-status--notsubmitted {
+    background: #f1f5f9;
+    color: #6b7280;
+}
+.prog-unit-empty {
+    text-align: center;
+    color: #9ca3af;
+    font-style: italic;
+    padding: 16px;
+    font-size: 13px;
+}
+
+/* ==========================================================================
+   DATATABLES OVERRIDES
+   ========================================================================== */
+.prog-panel-body .dataTables_wrapper .dataTables_length,
+.prog-panel-body .dataTables_wrapper .dataTables_filter,
+.prog-panel-body .dataTables_wrapper .dataTables_info,
+.prog-panel-body .dataTables_wrapper .dataTables_paginate {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: #6b7280;
+}
+.prog-panel-body .dataTables_filter input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.prog-panel-body .dataTables_filter input:focus {
+    border-color: #3a5ba0;
+    box-shadow: 0 0 0 3px rgba(58,91,160,0.1);
+}
+.prog-panel-body .dataTables_length select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+.prog-dt-btn,
+.prog-panel-body .dt-button {
+    background: #f8fafc !important;
+    color: #3a5ba0 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    padding: 6px 14px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-weight: 600 !important;
+    transition: background 0.2s !important;
+}
+.prog-panel-body .dt-button:hover {
+    background: #3a5ba0 !important;
+    color: #fff !important;
+}
+.prog-panel-body .dataTables_paginate .paginate_button {
+    border-radius: 6px !important;
+    border: 1px solid #e5e7eb !important;
+    font-size: 12px !important;
+}
+.prog-panel-body .dataTables_paginate .paginate_button.current {
+    background: #3a5ba0 !important;
+    color: #fff !important;
+    border-color: #3a5ba0 !important;
+}
+
+/* ==========================================================================
+   FILTER BAR
+   ========================================================================== */
+.prog-filter-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border: 1px solid #e3eaf2;
+    border-radius: 8px;
+}
+.prog-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.prog-filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.prog-filter-select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1a2238;
+    background: #fff;
+    min-width: 150px;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+}
+.prog-filter-select:focus {
+    border-color: #3a5ba0;
+    box-shadow: 0 0 0 3px rgba(58,91,160,0.1);
+}
+.prog-filter-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.prog-filter-reset:hover {
+    background: #3a5ba0;
+    color: #fff;
+    border-color: #3a5ba0;
+}
+
+/* ==========================================================================
+   ACTIVITY BADGES
+   ========================================================================== */
+.prog-cell-activity {
+    text-align: center;
+}
+.prog-activity-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+}
+.prog-activity--active {
+    background: #dcfce7;
+    color: #166534;
+}
+.prog-activity--inactive {
+    background: #fef3c7;
+    color: #92400e;
+}
+.prog-activity--created {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* ==========================================================================
+   PRINT STYLES
+   ========================================================================== */
+@media print {
+    .prog-header-actions, .prog-filter-bar { display: none; }
+    .prog-kpi-card, .prog-panel {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
+</style>

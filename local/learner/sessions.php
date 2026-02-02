@@ -66,50 +66,58 @@ if ($mform->is_cancelled()) {
 }
 $result = '';
 if($fromform){
-    //print_object($fromform);die;
     $cms = $fromform->cms;
     $cid = ($cid)?$cid:$fromform->cid;
     $result = '';
     if($cms){
         $table = new html_table();
         $table->id = "sessions";
-        $table->head = array('Student Name','Activity Name','Date','Session Time');
+        $table->head = array('Student Name','Activity Name','Date','Session Time','Total Learning Time');
         $table->data = array();
-        //get course users first or group users
+        // Get course users first or group users.
         $course_context = context_course::instance($cid);
         $groups = $DB->get_records('groups_members',['userid'=>$USER->id]);
         $actual_course_group = [];
         foreach($groups as $rec){
-            $actual_course_group[] = $DB->get_record('groups',['id'=>$rec->groupid,'courseid'=>$cid]);
+            $grp = $DB->get_record('groups',['id'=>$rec->groupid,'courseid'=>$cid]);
+            if ($grp) {
+                $actual_course_group[] = $grp;
+            }
         }
- 
+
         $gm = array();
         foreach($actual_course_group as $group){
-             $gm[] = $DB->get_records('groups_members',['groupid'=>$group->id]);;
+             $gm[] = $DB->get_records('groups_members',['groupid'=>$group->id]);
         }
         $act_gm = [];
         foreach($gm as $grp_mem){
             foreach($grp_mem as $res){
               if($res->userid == $USER->id)
                 continue;
-
                 $act_gm[] = $res->userid;
             }
         }
         if($act_gm){
-            //print_object()
-            
-            if(is_array($fromform->users)){
-               $userids = implode(',',$fromform->users);
+            // Determine which users to query.
+            if(!empty($fromform->users) && is_array($fromform->users)){
+               $selected_users = array_map('intval', $fromform->users);
             }else{
-                $userids = implode(',',$act_gm);
+                $selected_users = array_map('intval', $act_gm);
             }
-           $sql = 'SELECT 
+
+            // Use {table} syntax so prefix works on both local (mdl_) and production (r6ua_).
+            $prefix = $CFG->prefix;
+            list($userinsql, $userparams) = $DB->get_in_or_equal($selected_users, SQL_PARAMS_NAMED, 'u');
+            $cmsid = (int)$fromform->cms;
+
+            // Per-day session query using MySQL session variables.
+            $sql = "SELECT
                     userid,
                     log_day,
-                    SEC_TO_TIME(SUM(diff_seconds)) AS total_time
+                    SEC_TO_TIME(SUM(diff_seconds)) AS total_time,
+                    SUM(diff_seconds) AS total_seconds
                     FROM (
-                        SELECT 
+                        SELECT
                             userid,
                             DATE(FROM_UNIXTIME(timecreated)) AS log_day,
                             IF(@prev_user = userid AND @prev_day = DATE(FROM_UNIXTIME(timecreated)),
@@ -119,35 +127,63 @@ if($fromform){
                             @prev_user := userid,
                             @prev_day := DATE(FROM_UNIXTIME(timecreated)),
                             @prev_time := timecreated
-                        FROM r6ua_logstore_standard_log, 
+                        FROM {$prefix}logstore_standard_log,
                              (SELECT @prev_user := NULL, @prev_day := NULL, @prev_time := NULL) vars
-                             WHERE  objectid='.$fromform->cms.' AND component = "mod_hvp" and userid in ('.$userids.')
+                             WHERE objectid = {$cmsid} AND component = 'mod_hvp' AND userid {$userinsql}
                         ORDER BY userid, timecreated
                     ) t
-
                     GROUP BY userid, log_day
-                    ORDER BY  log_day DESC';
+                    ORDER BY log_day DESC";
+
+            $records_result = $DB->get_recordset_sql($sql, $userparams);
+
+            // Build per-user totals in a first pass, and collect rows.
+            $rows = [];
+            $user_totals = []; // userid => total seconds.
+            foreach($records_result as $rec){
+                $rows[] = clone $rec;
+                if (!isset($user_totals[$rec->userid])) {
+                    $user_totals[$rec->userid] = 0;
+                }
+                $user_totals[$rec->userid] += (int)$rec->total_seconds;
+            }
+            $records_result->close();
+
+            // Cache lookups.
+            $assignment = $DB->get_record('hvp', ['course' => $cid, 'id' => $cmsid]);
+            $user_cache = [];
+
+            foreach($rows as $rec){
+                if (!isset($user_cache[$rec->userid])) {
+                    $user_cache[$rec->userid] = $DB->get_record('user', ['id' => $rec->userid], 'id,firstname,lastname');
+                }
+                $u = $user_cache[$rec->userid];
+                $row = array();
+                $row['studentname'] = $u->firstname . ' ' . $u->lastname;
+                $row['activityname'] = $assignment ? $assignment->name : '';
+                $row['date'] = $rec->log_day;
+                $row['session_time'] = $rec->total_time;
+
+                // Total Learning Time badge.
+                $total_secs = $user_totals[$rec->userid];
+                $hours = floor($total_secs / 3600);
+                $mins  = floor(($total_secs % 3600) / 60);
+                $secs  = $total_secs % 60;
+                $total_formatted = sprintf('%02d:%02d:%02d', $hours, $mins, $secs);
+                $row['total_learning_time'] = '<span class="session-total-badge">'
+                    . '<i class="fa fa-clock-o"></i> ' . $total_formatted
+                    . '</span>';
+
+                $table->data[] = $row;
+            }
         }
-        //echo $sql;die;
-        $records_result = $DB->get_recordset_sql($sql);
-        //get teachers list hers
-        $i = 1;
-        foreach($records_result as $rec){
-            $assignment = $DB->get_record('hvp', ['course' => $fromform->cid,'id'=>$fromform->cms]);
-            $courselist = $DB->get_record('course', ['id' => $fromform->cms]);
-            $row = array();
-            $row['studentname'] = $DB->get_field('user','firstname',['id'=>$rec->userid]).' '.$DB->get_field('user','lastname',['id'=>$rec->userid]);
-            //$row['coursename'] = $courselist->fullname;
-            $row['activityname'] =  $assignment->name;
-            
-            $row['date'] = $rec->log_day;
-            $row['session_time'] = $rec->total_time;
-            $table->data[] = $row;
-            $i++;
+        if (!empty($table->data)) {
+            $result .= html_writer::table($table);
+        } else {
+            $result .= '<div class="alert alert-warning" align="center">No session data found for this activity.</div>';
         }
-        $result .= html_writer::table($table);
     }else{
-        $result .= '<div class=" alert alert-danger alert-block fade in" align="center">No records available</div>';
+        $result .= '<div class="alert alert-danger alert-block fade in" align="center">No records available</div>';
     }
 }
 echo $OUTPUT->header();
@@ -250,5 +286,21 @@ echo html_writer::script('$("#id_courses").change(function(){
 echo '<style>
          .dataTables_length{
             float:right !important;
+        }
+        .session-total-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #7c3aed;
+            color: #fff;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .session-total-badge .fa-clock-o {
+            font-size: 14px;
+            opacity: 0.9;
         }
      </style>';

@@ -1,0 +1,78 @@
+{{!
+    @template local_errorlogger/detail
+
+    Single error log entry detail view.
+
+    @package   local_errorlogger
+    @copyright 2026 Epearl Academy
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<div class="el-shell el-detail-wrap">
+
+  <!-- Back link -->
+  <div class="mb-3">
+    <a href="{{{back_url}}}" class="el-hdr-btn" style="color:#3a5ba0;border-color:#3a5ba0;">
+      <i class="fa fa-arrow-left"></i> {{#str}}back, local_errorlogger{{/str}}
+    </a>
+  </div>
+
+  <!-- Detail panel -->
+  <div class="el-panel">
+    <div class="el-panel-hdr">
+      <h3><i class="fa fa-exclamation-circle"></i> {{#str}}logdetail, local_errorlogger{{/str}} #{{id}}</h3>
+      <p><span class="el-pill el-pill--{{sev_class}}">{{severity}}</span></p>
+    </div>
+    <div class="el-panel-body">
+      <table class="table table-sm table-borderless mb-0">
+        <tbody>
+          <tr>
+            <th class="text-muted" style="width:130px;">{{#str}}type, local_errorlogger{{/str}}</th>
+            <td><code>{{type}}</code></td>
+          </tr>
+          <tr>
+            <th class="text-muted">{{#str}}severity, local_errorlogger{{/str}}</th>
+            <td><span class="el-pill el-pill--{{sev_class}}">{{severity}}</span></td>
+          </tr>
+          <tr>
+            <th class="text-muted">{{#str}}component, local_errorlogger{{/str}}</th>
+            <td>{{component}}</td>
+          </tr>
+          <tr>
+            <th class="text-muted">{{#str}}message, local_errorlogger{{/str}}</th>
+            <td style="word-break:break-word;">{{message}}</td>
+          </tr>
+          <tr>
+            <th class="text-muted">URL</th>
+            <td style="word-break:break-all;">{{url}}</td>
+          </tr>
+          <tr>
+            <th class="text-muted">{{#str}}user, local_errorlogger{{/str}}</th>
+            <td>{{username}} (ID: {{userid}})</td>
+          </tr>
+          <tr>
+            <th class="text-muted">IP</th>
+            <td>{{ipaddress}}</td>
+          </tr>
+          <tr>
+            <th class="text-muted">{{#str}}time, local_errorlogger{{/str}}</th>
+            <td>{{timecreated}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Details / Backtrace -->
+  {{#has_details}}
+  <div class="el-panel">
+    <div class="el-panel-hdr" style="background:linear-gradient(135deg,#1a2238 0%,#3a5ba0 100%);">
+      <h3><i class="fa fa-code"></i> {{#str}}details, local_errorlogger{{/str}}</h3>
+    </div>
+    <div style="padding:0;">
+      <pre class="el-detail-pre mb-0">{{details}}</pre>
+    </div>
+  </div>
+  {{/has_details}}
+
+</div>

@@ -209,7 +209,7 @@ if($fromform && !$action){
                                 @prev_user := userid,
                                 @prev_time := timecreated
 
-                            FROM r6ua_logstore_standard_log
+                            FROM mdl_logstore_standard_log
                             CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
 
                             WHERE courseid IN (".implode(',',$timespent).")
@@ -227,15 +227,19 @@ if($fromform && !$action){
 
             //status changed on conditons
             $lastaccess = $record->lastaccess;
-            if($lastaccess && !$record->suspended){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Active';
-            }else if($record->suspended){
-                $row['lastlogin'] = 0;
+            $thirty_days_ago = time() - (30 * 86400);
+            if($record->suspended){
+                $row['lastlogin'] = ($lastaccess) ? date('d-m-Y h:i A', $lastaccess) : 0;
                 $row['status'] = 'Suspended';
             }else if(!$record->lastaccess && !$record->firstaccess){
                 $row['lastlogin'] = 0;
                 $row['status'] = 'Created';
+            }else if($lastaccess && $lastaccess >= $thirty_days_ago){
+                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
+                $row['status'] = 'Active';
+            }else if($lastaccess && $lastaccess < $thirty_days_ago){
+                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
+                $row['status'] = 'Inactive';
             }
 
             //
@@ -359,7 +363,7 @@ if($fromform && !$action){
                                 @prev_user := userid,
                                 @prev_time := timecreated
 
-                            FROM r6ua_logstore_standard_log
+                            FROM mdl_logstore_standard_log
                             CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
 
                             WHERE courseid IN (".implode(',',$timespent).")
@@ -378,15 +382,19 @@ if($fromform && !$action){
             }
             //status changed on conditons
             $lastaccess = $record->lastaccess;
-            if($lastaccess && !$record->suspended){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Active';
-            }else if($record->suspended){
-                $row['lastlogin'] = 0;
+            $thirty_days_ago = time() - (30 * 86400);
+            if($record->suspended){
+                $row['lastlogin'] = ($lastaccess) ? date('d-m-Y h:i A', $lastaccess) : 0;
                 $row['status'] = 'Suspended';
             }else if(!$record->lastaccess && !$record->firstaccess){
                 $row['lastlogin'] = 0;
                 $row['status'] = 'Created';
+            }else if($lastaccess && $lastaccess >= $thirty_days_ago){
+                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
+                $row['status'] = 'Active';
+            }else if($lastaccess && $lastaccess < $thirty_days_ago){
+                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
+                $row['status'] = 'Inactive';
             }
             //$row['status'] =  (!$record->suspended)?'Active':'Inactive';
             $edit_url = new moodle_url('/local/learner/edit.php',['id'=>$record->id]);
@@ -488,7 +496,7 @@ if($fromform && !$action){
                                 @prev_user := userid,
                                 @prev_time := timecreated
 
-                            FROM r6ua_logstore_standard_log
+                            FROM mdl_logstore_standard_log
                             CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
 
                             WHERE courseid IN (".implode(',',$timespent).")
@@ -507,15 +515,19 @@ if($fromform && !$action){
             }
             //status changed on conditons
             $lastaccess = $record->lastaccess;
-            if($lastaccess && !$record->suspended){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Active';
-            }else if($record->suspended){
-                $row['lastlogin'] = 0;
+            $thirty_days_ago = time() - (30 * 86400);
+            if($record->suspended){
+                $row['lastlogin'] = ($lastaccess) ? date('d-m-Y h:i A', $lastaccess) : 0;
                 $row['status'] = 'Suspended';
             }else if(!$record->lastaccess && !$record->firstaccess){
                 $row['lastlogin'] = 0;
                 $row['status'] = 'Created';
+            }else if($lastaccess && $lastaccess >= $thirty_days_ago){
+                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
+                $row['status'] = 'Active';
+            }else if($lastaccess && $lastaccess < $thirty_days_ago){
+                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
+                $row['status'] = 'Inactive';
             }
             //$row['status'] =  (!$record->suspended)?'Active':'Inactive';
             $edit_url = new moodle_url('/local/learner/edit.php',['id'=>$record->id]);

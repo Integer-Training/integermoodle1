@@ -127,16 +127,16 @@ if($records){
                     g.name AS groupname,
                     CONCAT(s.firstname, ' ', s.lastname) AS studentname,
                     s.email
-                FROM r6ua_groups_members gm_teacher
-                JOIN r6ua_groups g ON g.id = gm_teacher.groupid
-                JOIN r6ua_course c ON c.id = g.courseid
+                FROM mdl_groups_members gm_teacher
+                JOIN mdl_groups g ON g.id = gm_teacher.groupid
+                JOIN mdl_course c ON c.id = g.courseid
                 -- teacher
-                JOIN r6ua_user t ON t.id = ".$record->id."
-                JOIN r6ua_groups_members gm_students ON gm_students.groupid = g.id
-                JOIN r6ua_user s ON s.id = gm_students.userid
-                JOIN r6ua_role_assignments ra ON ra.userid = s.id
-                JOIN r6ua_context ctx ON ctx.id = ra.contextid
-                JOIN r6ua_role r ON r.id = ra.roleid
+                JOIN mdl_user t ON t.id = ".$record->id."
+                JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
+                JOIN mdl_user s ON s.id = gm_students.userid
+                JOIN mdl_role_assignments ra ON ra.userid = s.id
+                JOIN mdl_context ctx ON ctx.id = ra.contextid
+                JOIN mdl_role r ON r.id = ra.roleid
                 WHERE
                     gm_teacher.userid = ".$record->id."
                     AND ctx.contextlevel = 50

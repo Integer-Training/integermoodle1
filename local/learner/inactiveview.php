@@ -217,7 +217,7 @@ if($fromform && !$action){
                                 @prev_user := userid,
                                 @prev_time := timecreated
 
-                            FROM r6ua_logstore_standard_log
+                            FROM mdl_logstore_standard_log
                             CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
 
                             WHERE courseid IN (".implode(',',$timespent).")
@@ -354,7 +354,7 @@ if($fromform && !$action){
                                 @prev_user := userid,
                                 @prev_time := timecreated
 
-                            FROM r6ua_logstore_standard_log
+                            FROM mdl_logstore_standard_log
                             CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
 
                             WHERE courseid IN (".implode(',',$timespent).")

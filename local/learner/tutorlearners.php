@@ -60,16 +60,16 @@ $result = '';
 //print_object($contextparam);die;
 if($action == 'inactive'){
     $sql = "SELECT s.* 
-                FROM r6ua_groups_members gm_teacher
-                JOIN r6ua_groups g ON g.id = gm_teacher.groupid
-                JOIN r6ua_course c ON c.id = g.courseid
+                FROM mdl_groups_members gm_teacher
+                JOIN mdl_groups g ON g.id = gm_teacher.groupid
+                JOIN mdl_course c ON c.id = g.courseid
                 -- teacher
-                JOIN r6ua_user t ON t.id = ".$id."
-                JOIN r6ua_groups_members gm_students ON gm_students.groupid = g.id
-                JOIN r6ua_user s ON s.id = gm_students.userid
-                JOIN r6ua_role_assignments ra ON ra.userid = s.id
-                JOIN r6ua_context ctx ON ctx.id = ra.contextid
-                JOIN r6ua_role r ON r.id = ra.roleid
+                JOIN mdl_user t ON t.id = ".$id."
+                JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
+                JOIN mdl_user s ON s.id = gm_students.userid
+                JOIN mdl_role_assignments ra ON ra.userid = s.id
+                JOIN mdl_context ctx ON ctx.id = ra.contextid
+                JOIN mdl_role r ON r.id = ra.roleid
                 WHERE
                     gm_teacher.userid = ".$id."
                     AND ctx.contextlevel = 50
@@ -83,16 +83,16 @@ if($action == 'inactive'){
     $records = $DB->get_records_sql($sql);
 }else{
    $sql = "SELECT s.* 
-                FROM r6ua_groups_members gm_teacher
-                JOIN r6ua_groups g ON g.id = gm_teacher.groupid
-                JOIN r6ua_course c ON c.id = g.courseid
+                FROM mdl_groups_members gm_teacher
+                JOIN mdl_groups g ON g.id = gm_teacher.groupid
+                JOIN mdl_course c ON c.id = g.courseid
                 -- teacher
-                JOIN r6ua_user t ON t.id = ".$id."
-                JOIN r6ua_groups_members gm_students ON gm_students.groupid = g.id
-                JOIN r6ua_user s ON s.id = gm_students.userid
-                JOIN r6ua_role_assignments ra ON ra.userid = s.id
-                JOIN r6ua_context ctx ON ctx.id = ra.contextid
-                JOIN r6ua_role r ON r.id = ra.roleid
+                JOIN mdl_user t ON t.id = ".$id."
+                JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
+                JOIN mdl_user s ON s.id = gm_students.userid
+                JOIN mdl_role_assignments ra ON ra.userid = s.id
+                JOIN mdl_context ctx ON ctx.id = ra.contextid
+                JOIN mdl_role r ON r.id = ra.roleid
                 WHERE
                     gm_teacher.userid = ".$id."
                     AND ctx.contextlevel = 50
@@ -169,7 +169,7 @@ if($records){
                             @prev_user := userid,
                             @prev_time := timecreated
 
-                        FROM r6ua_logstore_standard_log
+                        FROM mdl_logstore_standard_log
                         CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
 
                         WHERE courseid IN (".implode(',',$timespent).")

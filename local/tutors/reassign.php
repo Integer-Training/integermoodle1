@@ -67,18 +67,18 @@ if($action == 'store' && $action){
         //
        // print_object($object_data);
         $sql = "SELECT gm_students.id as gmid,gm_students.userid as studentid
-                FROM r6ua_groups_members gm_teacher
-                JOIN r6ua_groups g ON g.id = gm_teacher.groupid
-                JOIN r6ua_course c ON c.id = g.courseid
+                FROM mdl_groups_members gm_teacher
+                JOIN mdl_groups g ON g.id = gm_teacher.groupid
+                JOIN mdl_course c ON c.id = g.courseid
                 -- teacher
-                JOIN r6ua_user t ON t.id = ".$object_data['tutor']."
+                JOIN mdl_user t ON t.id = ".$object_data['tutor']."
                 -- students in SAME group
-                JOIN r6ua_groups_members gm_students ON gm_students.groupid = g.id
-                JOIN r6ua_user s ON s.id = gm_students.userid
+                JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
+                JOIN mdl_user s ON s.id = gm_students.userid
                 -- student role check
-                JOIN r6ua_role_assignments ra ON ra.userid = s.id
-                JOIN r6ua_context ctx ON ctx.id = ra.contextid
-                JOIN r6ua_role r ON r.id = ra.roleid
+                JOIN mdl_role_assignments ra ON ra.userid = s.id
+                JOIN mdl_context ctx ON ctx.id = ra.contextid
+                JOIN mdl_role r ON r.id = ra.roleid
                 WHERE ctx.contextlevel = 50
                     AND ctx.instanceid = c.id
                     AND c.id = ".$object_data['course']."
@@ -94,20 +94,20 @@ if($action == 'store' && $action){
             $sql = "SELECT 
                         g.id AS groupid,
                         g.name AS groupname
-                    FROM r6ua_groups_members gm_teacher
-                    JOIN r6ua_groups g ON g.id = gm_teacher.groupid
-                    JOIN r6ua_course c ON c.id = g.courseid
+                    FROM mdl_groups_members gm_teacher
+                    JOIN mdl_groups g ON g.id = gm_teacher.groupid
+                    JOIN mdl_course c ON c.id = g.courseid
                     -- teacher
-                    JOIN r6ua_user t ON t.id = ".$object_data['reassigntutor']."
+                    JOIN mdl_user t ON t.id = ".$object_data['reassigntutor']."
 
                     -- students in SAME group
-                    JOIN r6ua_groups_members gm_students ON gm_students.groupid = g.id
-                    JOIN r6ua_user s ON s.id = gm_students.userid
+                    JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
+                    JOIN mdl_user s ON s.id = gm_students.userid
 
                     -- student role check
-                    JOIN r6ua_role_assignments ra ON ra.userid = s.id
-                    JOIN r6ua_context ctx ON ctx.id = ra.contextid
-                    JOIN r6ua_role r ON r.id = ra.roleid
+                    JOIN mdl_role_assignments ra ON ra.userid = s.id
+                    JOIN mdl_context ctx ON ctx.id = ra.contextid
+                    JOIN mdl_role r ON r.id = ra.roleid
 
                     WHERE ctx.contextlevel = 50
                         AND ctx.instanceid = c.id
@@ -149,21 +149,21 @@ if($fromform){
             gm_teacher.userid as teacherid,
 		    CONCAT(s.firstname, ' ', s.lastname) AS studentname,
 		    s.email
-		FROM r6ua_groups_members gm_teacher
-		JOIN r6ua_groups g ON g.id = gm_teacher.groupid
-		JOIN r6ua_course c ON c.id = g.courseid
+		FROM mdl_groups_members gm_teacher
+		JOIN mdl_groups g ON g.id = gm_teacher.groupid
+		JOIN mdl_course c ON c.id = g.courseid
 
 		-- teacher
-	    JOIN r6ua_user t ON t.id = ".$fromform->tutor."
+	    JOIN mdl_user t ON t.id = ".$fromform->tutor."
 
 		-- students in SAME group
-		JOIN r6ua_groups_members gm_students ON gm_students.groupid = g.id
-		JOIN r6ua_user s ON s.id = gm_students.userid
+		JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
+		JOIN mdl_user s ON s.id = gm_students.userid
 
 		-- student role check
-		JOIN r6ua_role_assignments ra ON ra.userid = s.id
-		JOIN r6ua_context ctx ON ctx.id = ra.contextid
-		JOIN r6ua_role r ON r.id = ra.roleid
+		JOIN mdl_role_assignments ra ON ra.userid = s.id
+		JOIN mdl_context ctx ON ctx.id = ra.contextid
+		JOIN mdl_role r ON r.id = ra.roleid
 
 		WHERE ctx.contextlevel = 50
 		    AND ctx.instanceid = c.id
