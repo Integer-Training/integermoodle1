@@ -1,0 +1,835 @@
+{{!
+    @template local_learner/view
+
+    Learner Management — main admin view with KPI cards, filters,
+    DataTable with expandable course details, and action buttons.
+
+    @package   local_learner
+    @copyright 2026 Epearl Academy
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<div class="lv-shell" id="learner-view">
+
+  <!-- ===== HEADER BAR ===== -->
+  <div class="lv-header">
+    <div class="lv-header-inner">
+      <div>
+        <h1 class="lv-title">Learner Management</h1>
+        <p class="lv-subtitle">Manage all learners &middot; Epearl Academy</p>
+      </div>
+      <div class="lv-header-actions">
+        <a href="{{{new_learner_url}}}" target="_blank" class="lv-hdr-btn lv-hdr-btn--success">
+          <i class="bi bi-person-plus-fill"></i> New Learner
+        </a>
+        <a href="{{{inactive_url}}}" class="lv-hdr-btn lv-hdr-btn--warning">
+          <i class="bi bi-person-x-fill"></i> Inactive Learners
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== KPI CARDS ===== -->
+  <div class="lv-kpis">
+
+    <div class="lv-kpi-card">
+      <div class="lv-kpi-top">
+        <span class="lv-kpi-icon lv-kpi-icon--learners">
+          <i class="bi bi-people-fill"></i>
+        </span>
+        <span class="lv-kpi-label">Total Learners</span>
+      </div>
+      <div class="lv-kpi-value">{{{total_count}}}</div>
+    </div>
+
+    <div class="lv-kpi-card lv-kpi-card--green">
+      <div class="lv-kpi-top">
+        <span class="lv-kpi-icon lv-kpi-icon--active">
+          <i class="bi bi-check-circle-fill"></i>
+        </span>
+        <span class="lv-kpi-label">Active</span>
+      </div>
+      <div class="lv-kpi-value">{{{active_count}}}</div>
+    </div>
+
+    <div class="lv-kpi-card lv-kpi-card--amber">
+      <div class="lv-kpi-top">
+        <span class="lv-kpi-icon lv-kpi-icon--inactive">
+          <i class="bi bi-clock-history"></i>
+        </span>
+        <span class="lv-kpi-label">Inactive (30+ Days)</span>
+      </div>
+      <div class="lv-kpi-value">{{{inactive_count}}}</div>
+    </div>
+
+    <div class="lv-kpi-card lv-kpi-card--blue">
+      <div class="lv-kpi-top">
+        <span class="lv-kpi-icon lv-kpi-icon--created">
+          <i class="bi bi-person-plus-fill"></i>
+        </span>
+        <span class="lv-kpi-label">Created (Never Logged In)</span>
+      </div>
+      <div class="lv-kpi-value">{{{created_count}}}</div>
+    </div>
+
+    <div class="lv-kpi-card lv-kpi-card--grey">
+      <div class="lv-kpi-top">
+        <span class="lv-kpi-icon lv-kpi-icon--suspended">
+          <i class="bi bi-person-slash"></i>
+        </span>
+        <span class="lv-kpi-label">Suspended</span>
+      </div>
+      <div class="lv-kpi-value">{{{suspended_count}}}</div>
+    </div>
+
+  </div>
+
+  <!-- ===== MAIN TABLE ===== -->
+  <div class="lv-panel">
+    <div class="lv-panel-hdr">
+      <div>
+        <h3><i class="bi bi-people"></i> Learner Details</h3>
+        <p>Click the + icon to expand course details per learner</p>
+      </div>
+    </div>
+    <div class="lv-panel-body">
+      <!-- Filter Bar -->
+      <div class="lv-filter-bar">
+        <div class="lv-filter-group">
+          <label class="lv-filter-label" for="lvFilterActivity">Activity Status</label>
+          <select id="lvFilterActivity" class="lv-filter-select">
+            <option value="">All</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+            <option value="Created">Created</option>
+            <option value="Suspended">Suspended</option>
+          </select>
+        </div>
+        <div class="lv-filter-group">
+          <label class="lv-filter-label" for="lvFilterCourse">Course</label>
+          <select id="lvFilterCourse" class="lv-filter-select">
+            <option value="">All Courses</option>
+            {{#course_list}}
+            <option value="{{name}}">{{name}}</option>
+            {{/course_list}}
+          </select>
+        </div>
+        <button id="lvFilterReset" class="lv-filter-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset Filters</button>
+      </div>
+
+      <table id="learnerTable" class="lv-table display" style="width:100%">
+        <thead>
+          <tr>
+            <th style="width:36px"></th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Tutor</th>
+            <th>Courses</th>
+            <th>Time Spent</th>
+            <th>Last Login</th>
+            <th>Status</th>
+            <th style="width:180px">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#learners}}
+          <tr class="lv-learner-row" data-courses='{{{courses_json}}}' data-course-names="{{course_names}}">
+            <td class="lv-toggle-cell"><span class="lv-toggle-btn"><i class="bi bi-plus-circle"></i></span></td>
+            <td class="lv-cell-name">{{{firstname}}} {{{lastname}}}</td>
+            <td class="lv-cell-email">{{{email}}}</td>
+            <td class="lv-cell-tutor">{{{tutor_name}}}</td>
+            <td class="lv-cell-courses text-center">{{{course_count}}}</td>
+            <td class="lv-cell-time" data-order="{{{time_spent_seconds}}}">{{{time_spent}}}</td>
+            <td class="lv-cell-login" data-order="{{{last_login_ts}}}">{{{last_login}}}</td>
+            <td class="lv-cell-status">{{{status}}}</td>
+            <td class="lv-cell-actions">
+              <a href="{{{edit_url}}}" class="lv-action-btn lv-action-btn--edit" title="Edit"><i class="bi bi-pencil-square"></i></a>
+              <a href="{{{loginas_url}}}" target="_blank" class="lv-action-btn lv-action-btn--login" title="Login As"><i class="bi bi-box-arrow-in-right"></i></a>
+              <a href="{{{sendlogin_url}}}" class="lv-action-btn lv-action-btn--email" title="Send Login"><i class="bi bi-envelope-fill"></i></a>
+              {{#is_suspended}}
+              <a href="#" class="lv-action-btn lv-action-btn--activate" data-userid="{{id}}" title="Activate"><i class="bi bi-toggle-off"></i></a>
+              {{/is_suspended}}
+              {{^is_suspended}}
+              <a href="#" class="lv-action-btn lv-action-btn--deactivate" data-userid="{{id}}" title="Deactivate"><i class="bi bi-toggle-on"></i></a>
+              {{/is_suspended}}
+            </td>
+          </tr>
+          {{/learners}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== CDN: DataTables Buttons ===== -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.6.2/css/buttons.dataTables.min.css">
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.print.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ===== COLUMN INDICES =====
+    var COL_TOGGLE   = 0;
+    var COL_NAME     = 1;
+    var COL_EMAIL    = 2;
+    var COL_TUTOR    = 3;
+    var COL_COURSES  = 4;
+    var COL_TIME     = 5;
+    var COL_LOGIN    = 6;
+    var COL_STATUS   = 7;
+    var COL_ACTIONS  = 8;
+
+    // ===== DATATABLES =====
+    var lvTable = $('#learnerTable').DataTable({
+        dom: 'Blfrtip',
+        lengthMenu: [[15, 25, 50, 100, -1], [15, 25, 50, 100, 'All']],
+        buttons: [
+            { extend: 'excel', className: 'lv-dt-btn', title: 'Learner_Management' },
+            { extend: 'pdf', className: 'lv-dt-btn', title: 'Learner_Management' }
+        ],
+        language: { emptyTable: 'No learners found' },
+        pageLength: 25,
+        order: [[COL_NAME, 'asc']],
+        columnDefs: [
+            { orderable: false, targets: [COL_TOGGLE, COL_ACTIONS] }
+        ],
+        createdRow: function(row, data, dataIndex) {
+            var $statusCell = $('td.lv-cell-status', row);
+            var val = $.trim($statusCell.text());
+            var cls = 'lv-status--active';
+            if (val === 'Inactive') cls = 'lv-status--inactive';
+            else if (val === 'Created') cls = 'lv-status--created';
+            else if (val === 'Suspended') cls = 'lv-status--suspended';
+            $statusCell.html('<span class="lv-status-badge ' + cls + '">' + val + '</span>');
+        }
+    });
+
+    // ===== CUSTOM FILTERS =====
+
+    // Activity status filter.
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (settings.nTable.id !== 'learnerTable') return true;
+        var filterVal = $('#lvFilterActivity').val();
+        if (!filterVal) return true;
+        return $.trim(data[COL_STATUS]) === filterVal;
+    });
+
+    // Course filter — checks data-course-names attribute on <tr>.
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (settings.nTable.id !== 'learnerTable') return true;
+        var filterVal = $('#lvFilterCourse').val();
+        if (!filterVal) return true;
+        var row = lvTable.row(dataIndex).node();
+        var courseNames = $(row).attr('data-course-names') || '';
+        return courseNames.split('||').indexOf(filterVal) !== -1;
+    });
+
+    // Filter change handlers.
+    $('#lvFilterActivity, #lvFilterCourse').on('change', function() {
+        lvTable.draw();
+    });
+
+    // Reset.
+    $('#lvFilterReset').on('click', function() {
+        $('#lvFilterActivity').val('');
+        $('#lvFilterCourse').val('');
+        lvTable.draw();
+    });
+
+    // ===== URL-BASED FILTER PRESET =====
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('action') === 'inactive') {
+        $('#lvFilterActivity').val('Inactive');
+        lvTable.draw();
+    }
+
+    // ===== EXPANDABLE CHILD ROWS =====
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatLearnerCourses(coursesJson, wwwroot) {
+        var courses = [];
+        try {
+            courses = JSON.parse(coursesJson);
+        } catch(e) {
+            return '<div class="lv-detail-wrap"><p class="lv-detail-empty">No course data available</p></div>';
+        }
+        if (!courses.length) {
+            return '<div class="lv-detail-wrap"><p class="lv-detail-empty">No courses enrolled</p></div>';
+        }
+        var html = '<div class="lv-detail-wrap">';
+        for (var i = 0; i < courses.length; i++) {
+            var c = courses[i];
+            html += '<div class="lv-course-block">';
+            html += '<div class="lv-course-header">';
+            html += '<span class="lv-course-name"><i class="bi bi-journal-bookmark"></i> ';
+            html += '<a href="' + escHtml(wwwroot) + '/course/view.php?id=' + c.id + '" class="lv-course-link">' + escHtml(c.name) + '</a>';
+            html += '</span>';
+            html += '</div>';
+            html += '</div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    var wwwroot = '{{wwwroot}}';
+
+    $('#learnerTable tbody').on('click', 'td.lv-toggle-cell', function() {
+        var tr = $(this).closest('tr');
+        var row = lvTable.row(tr);
+        if (row.child.isShown()) {
+            row.child.hide();
+            tr.removeClass('shown');
+            tr.find('.lv-toggle-btn i').removeClass('bi-dash-circle').addClass('bi-plus-circle');
+        } else {
+            var coursesJson = tr.attr('data-courses') || '[]';
+            row.child(formatLearnerCourses(coursesJson, wwwroot)).show();
+            tr.addClass('shown');
+            tr.find('.lv-toggle-btn i').removeClass('bi-plus-circle').addClass('bi-dash-circle');
+        }
+    });
+
+    // ===== ACTION HANDLERS =====
+    var sesskey = '{{sesskey}}';
+    var processUrl = wwwroot + '/local/learner/process.php';
+
+    // Activate.
+    $('#learnerTable').on('click', '.lv-action-btn--activate', function(e) {
+        e.preventDefault();
+        var userid = $(this).data('userid');
+        Swal.fire({
+            title: 'Activate Learner?',
+            text: 'This will re-enable the learner account.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3a5ba0',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Activate'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    type: 'POST',
+                    url: processUrl,
+                    data: { userid: userid, action: 'active', sesskey: sesskey },
+                    dataType: 'json',
+                    success: function(r) {
+                        location.reload(true);
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Could not activate learner.', 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    // Deactivate.
+    $('#learnerTable').on('click', '.lv-action-btn--deactivate', function(e) {
+        e.preventDefault();
+        var userid = $(this).data('userid');
+        Swal.fire({
+            title: 'Deactivate Learner?',
+            text: 'This will suspend the learner account.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Deactivate'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    type: 'POST',
+                    url: processUrl,
+                    data: { userid: userid, action: 'deactive', sesskey: sesskey },
+                    dataType: 'json',
+                    success: function(r) {
+                        location.reload(true);
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Could not deactivate learner.', 'error');
+                    }
+                });
+            }
+        });
+    });
+});
+</script>
+
+<style>
+/* ==========================================================================
+   LEARNER VIEW — lv- namespace
+   Matches editorial design system: Libre Baskerville + navy/blue/teal/gold
+   ========================================================================== */
+
+/* Shell */
+.lv-shell {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 16px 40px;
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.lv-header {
+    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 100%);
+    border-radius: 12px;
+    padding: 2px;
+    margin-bottom: 24px;
+}
+.lv-header-inner {
+    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 100%);
+    border-radius: 10px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.lv-title {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 4px;
+}
+.lv-subtitle {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    margin: 0;
+}
+.lv-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.lv-hdr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.lv-hdr-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+    text-decoration: none;
+    color: #fff;
+}
+.lv-hdr-btn--success {
+    background: rgba(34,197,94,0.25);
+    border-color: rgba(34,197,94,0.5);
+}
+.lv-hdr-btn--warning {
+    background: rgba(245,158,11,0.25);
+    border-color: rgba(245,158,11,0.5);
+}
+
+/* ==========================================================================
+   KPI CARDS
+   ========================================================================== */
+.lv-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.lv-kpi-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    padding: 20px;
+    transition: box-shadow 0.2s, transform 0.15s;
+    border-top: 3px solid #3a5ba0;
+}
+.lv-kpi-card:hover {
+    box-shadow: 0 4px 20px rgba(26,34,56,0.1);
+    transform: translateY(-2px);
+}
+.lv-kpi-card--green { border-top-color: #22c55e; }
+.lv-kpi-card--amber { border-top-color: #f59e0b; }
+.lv-kpi-card--blue  { border-top-color: #3b82f6; }
+.lv-kpi-card--grey  { border-top-color: #9ca3af; }
+
+.lv-kpi-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.lv-kpi-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-size: 16px;
+}
+.lv-kpi-icon--learners  { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.lv-kpi-icon--active    { background: rgba(34,197,94,0.1);  color: #22c55e; }
+.lv-kpi-icon--inactive  { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.lv-kpi-icon--created   { background: rgba(59,130,246,0.1); color: #3b82f6; }
+.lv-kpi-icon--suspended { background: rgba(156,163,175,0.1);color: #9ca3af; }
+
+.lv-kpi-label {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+}
+.lv-kpi-value {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a2238;
+    line-height: 1;
+}
+
+/* ==========================================================================
+   PANEL (Table container)
+   ========================================================================== */
+.lv-panel {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.lv-panel-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e3eaf2;
+    background: linear-gradient(90deg, #1a2238, #3a5ba0);
+    color: #fff;
+}
+.lv-panel-hdr h3 {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.lv-panel-hdr p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.lv-panel-body {
+    padding: 20px 24px;
+}
+
+/* ==========================================================================
+   FILTER BAR
+   ========================================================================== */
+.lv-filter-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: #f8fafc;
+    border: 1px solid #e3eaf2;
+    border-radius: 8px;
+}
+.lv-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.lv-filter-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.lv-filter-select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1a2238;
+    background: #fff;
+    min-width: 170px;
+    outline: none;
+    transition: border-color 0.2s;
+    cursor: pointer;
+}
+.lv-filter-select:focus {
+    border-color: #3a5ba0;
+    box-shadow: 0 0 0 3px rgba(58,91,160,0.1);
+}
+.lv-filter-reset {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.lv-filter-reset:hover {
+    background: #f1f5f9;
+    color: #1a2238;
+}
+
+/* ==========================================================================
+   TABLE
+   ========================================================================== */
+.lv-table thead th {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 10px 14px !important;
+    border: none !important;
+    border-bottom: 2px solid #e3eaf2 !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.lv-table tbody td {
+    font-size: 13px;
+    padding: 10px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.lv-table tbody tr:hover td {
+    background: #fafafa;
+}
+.lv-cell-name {
+    font-weight: 600;
+    color: #1a2238;
+}
+.lv-cell-email {
+    color: #64748b;
+    font-size: 12px;
+}
+.lv-cell-tutor {
+    color: #475569;
+    font-size: 12px;
+}
+
+/* Status badges */
+.lv-status-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    white-space: nowrap;
+}
+.lv-status--active    { background: #dcfce7; color: #166534; }
+.lv-status--inactive  { background: #fef3c7; color: #92400e; }
+.lv-status--created   { background: #dbeafe; color: #1e40af; }
+.lv-status--suspended { background: #f1f5f9; color: #6b7280; }
+
+/* Toggle button */
+.lv-toggle-cell {
+    text-align: center;
+    cursor: pointer;
+    width: 36px;
+}
+.lv-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(58,91,160,0.08);
+    color: #3a5ba0;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+    font-size: 16px;
+}
+.lv-toggle-btn:hover {
+    background: rgba(58,91,160,0.18);
+    transform: scale(1.1);
+}
+tr.shown .lv-toggle-btn {
+    background: #3a5ba0;
+    color: #fff;
+}
+
+/* Action buttons */
+.lv-cell-actions {
+    white-space: nowrap;
+}
+.lv-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 14px;
+    text-decoration: none;
+    transition: opacity 0.2s, transform 0.15s;
+    margin-right: 4px;
+}
+.lv-action-btn:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+    text-decoration: none;
+}
+.lv-action-btn--edit       { background: rgba(59,130,246,0.12); color: #3b82f6; }
+.lv-action-btn--login      { background: rgba(58,91,160,0.12);  color: #3a5ba0; }
+.lv-action-btn--email      { background: rgba(34,197,94,0.12);  color: #22c55e; }
+.lv-action-btn--activate   { background: rgba(34,197,94,0.12);  color: #22c55e; }
+.lv-action-btn--deactivate { background: rgba(239,68,68,0.12);  color: #ef4444; }
+
+/* ==========================================================================
+   EXPANDABLE CHILD ROW
+   ========================================================================== */
+.lv-detail-wrap {
+    padding: 16px 12px;
+    background: #f8fafc;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.lv-detail-empty {
+    text-align: center;
+    color: #9ca3af;
+    font-style: italic;
+    padding: 16px;
+    font-size: 13px;
+}
+.lv-course-block {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.lv-course-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 20px;
+    background: linear-gradient(90deg, #3a5ba0, #6ea3c1);
+    color: #fff;
+}
+.lv-course-name {
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.lv-course-link {
+    color: #fff;
+    text-decoration: none;
+}
+.lv-course-link:hover {
+    text-decoration: underline;
+    color: #fff;
+}
+
+/* ==========================================================================
+   DATATABLES OVERRIDES
+   ========================================================================== */
+.lv-panel-body .dataTables_wrapper .dataTables_length,
+.lv-panel-body .dataTables_wrapper .dataTables_filter,
+.lv-panel-body .dataTables_wrapper .dataTables_info,
+.lv-panel-body .dataTables_wrapper .dataTables_paginate {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    color: #6b7280;
+}
+.lv-panel-body .dataTables_filter input {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.lv-panel-body .dataTables_filter input:focus {
+    border-color: #3a5ba0;
+    box-shadow: 0 0 0 3px rgba(58,91,160,0.1);
+}
+.lv-panel-body .dataTables_length select {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+}
+.lv-dt-btn,
+.lv-panel-body .dt-button {
+    background: #f8fafc !important;
+    color: #3a5ba0 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 6px !important;
+    font-size: 12px !important;
+    padding: 6px 14px !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+    font-weight: 600 !important;
+    transition: background 0.2s !important;
+}
+.lv-panel-body .dt-button:hover {
+    background: #3a5ba0 !important;
+    color: #fff !important;
+}
+.lv-panel-body .dataTables_paginate .paginate_button {
+    border-radius: 6px !important;
+    border: 1px solid #e5e7eb !important;
+    font-size: 12px !important;
+}
+.lv-panel-body .dataTables_paginate .paginate_button.current {
+    background: #3a5ba0 !important;
+    color: #fff !important;
+    border-color: #3a5ba0 !important;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 768px) {
+    .lv-header-inner { flex-direction: column; text-align: center; }
+    .lv-kpis { grid-template-columns: 1fr 1fr; }
+    .lv-filter-bar { flex-direction: column; align-items: stretch; }
+    .lv-filter-select { min-width: 100%; }
+}
+</style>

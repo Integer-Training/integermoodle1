@@ -248,7 +248,7 @@ Plugin `lib.php` navigation hooks still exist for compatibility with other theme
 
 The primary custom plugin. Manages learner accounts, tutor caseloads, user registration, and activity tracking.
 
-**Version:** 2025101001 | **Capability:** `local/learner:view` (manager only)
+**Version:** 2026020202 (1.1.0) | **Capability:** `local/learner:view` (manager only)
 
 #### Database Tables
 
@@ -264,8 +264,8 @@ The primary custom plugin. Manages learner accounts, tutor caseloads, user regis
 
 | File | URL | Purpose |
 |------|-----|---------|
-| `view.php` | `/local/learner/view.php` | Main learner list with DataTable (filter by course/name/email/status) |
-| `view.php?action=inactive` | Same | Inactive learners (no login 30+ days) |
+| `view.php` | `/local/learner/view.php` | Main learner list with KPI cards, filters, DataTable + expandable course details |
+| `view.php?action=inactive` | Same | Pre-filtered to show inactive learners (auto-selects Inactive status filter) |
 | `users.php` | `/local/learner/users.php` | Register new user (creates account, enrolls in courses, sends welcome email) |
 | `edit.php?id={userid}` | `/local/learner/edit.php` | Edit extended learner profile + view status/activity logs |
 | `tutor.php` | `/local/learner/tutor.php` | List all tutors (teacher role) with caseload counts |
@@ -362,9 +362,30 @@ Platform-wide dashboard for managers. Uses `{table}` Moodle syntax. Requires `lo
 
 All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading Queries" section.
 
+#### Features (v1.1.0)
+
+- **Complete view.php rewrite:** Replaced 814-line inline HTML/CSS/JS with ~278 lines PHP + Mustache template (`templates/view.mustache`)
+- **Security fixes:** `process.php` now requires `require_login()`, `require_sesskey()`, `require_capability()`, uses `required_param()`/`optional_param()` instead of `$_REQUEST`
+- **SQL injection eliminated:** All 3 duplicate code paths consolidated into single parameterized query path using `{table}` syntax and `$DB->get_in_or_equal()`
+- **5 KPI cards:** Total Learners, Active, Inactive (30+ days), Created (never logged in), Suspended
+- **Client-side filters:** Activity Status dropdown, Course dropdown, Reset button (via `$.fn.dataTable.ext.search`)
+- **Expandable child rows:** Click toggle to see per-course list with links
+- **Batch queries:** Per-learner courses (Query 2), time spent via streaming logstore (Query 3), tutor lookup via group membership (Query 4) — eliminates N+1 pattern
+- **Editorial design system:** `lv-` CSS namespace, Libre Baskerville headings, navy/blue/teal palette, matches admindashboard and learnerprogression
+- **Backward compatibility:** `?action=inactive` URL auto-selects Inactive filter; `filter_form.php` kept but unused
+
+#### Data Queries (v1.1.0 — 4 queries total)
+
+| Query | Source | Purpose |
+|-------|--------|---------|
+| 1 | `{user}` + `{role_assignments}` | Main learner list (exclude staff roles) |
+| 2 | `{user_enrolments}` + `{enrol}` + `{course}` | Batch course list per learner |
+| 3 | `{logstore_standard_log}` streaming | Time spent (30-min idle cap, current year) |
+| 4 | `{groups_members}` + `{role_assignments}` + `{role}` | Tutor lookup via group membership |
+
 #### External Libraries (CDN-loaded)
 
-- jQuery 3.7.1, DataTables with Excel/PDF export, Select2 4.1.0, Highcharts, Chart.js, SweetAlert2, Font Awesome, Ionic Icons
+- jQuery 3.7.1, DataTables with Excel/PDF export, Select2 4.1.0, Highcharts, Chart.js, SweetAlert2, Font Awesome, Ionic Icons, Bootstrap Icons (via Alpha theme)
 
 ---
 

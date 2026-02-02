@@ -15,799 +15,263 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * phpcs:disable moodle.Files.RequireLogin.Missing
- *
- * index file
- *
- * introduced 23/05/17 17:59
+ * Learner management view — main list with KPI cards, filters, and expandable details.
  *
  * @package   local_learner
- * @copyright 2025 shiva@gecko
+ * @copyright 2026 Epearl Academy
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require_once("../../config.php");
-require_once("filter_form.php");
-global $DB,$CFG;
+require_once('../../config.php');
+
+global $DB, $CFG, $PAGE, $OUTPUT, $USER;
 
 require_login();
-$action = optional_param('action','',PARAM_RAW);
-
 $context = context_system::instance();
 require_capability('local/learner:view', $context);
-echo '<link href="https://gecko.atomlms.co.uk/scripts/css/font-awesome/css/font-awesome.min.css" rel=stylesheet>';
-echo '<link href="https://gecko.atomlms.co.uk/scripts/scss/icons/font-awesome/css/font-awesome.min.css" rel=stylesheet>';
-echo '<link href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel=stylesheet>';
-echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
-//
-$PAGE->set_url(new moodle_url('/local/learner/index.php'));
+
+$PAGE->set_url(new moodle_url('/local/learner/view.php'));
 $PAGE->set_context($context);
-$PAGE->set_title('Learners');
-
-//$PAGE->navbar->add('Learners');
-$PAGE->set_context(context_system::instance()); 
+$PAGE->set_title(get_string('learnermanagement', 'local_learner'));
 $PAGE->requires->jquery();
-$PAGE->requires->jquery('ui');
-//
-$PAGE->requires->js('/local/learner/js/jquery.dataTables.min.js',true);
-$PAGE->requires->css('/local/learner/js/jquery.dataTables.min.css',true);
+$PAGE->requires->js('/local/learner/js/jquery.dataTables.min.js', true);
+$PAGE->requires->css('/local/learner/js/jquery.dataTables.min.css');
 
-if($action){
-   $post_url = new moodle_url('/local/learner/view.php?action=inactive');
-}else{
-   $post_url = new moodle_url('/local/learner/view.php');
+// ===================================================================
+// QUERY 1: Main learner list — all non-staff users.
+// ===================================================================
+
+// Get role IDs for staff roles to exclude.
+$staff_roles = $DB->get_records_list('role', 'shortname', ['teacher', 'editingteacher', 'manager']);
+$staff_roleids = array_keys($staff_roles);
+
+$exclude_sql = '';
+$params = [];
+if (!empty($staff_roleids)) {
+    list($in_sql, $in_params) = $DB->get_in_or_equal($staff_roleids, SQL_PARAMS_NAMED, 'sr');
+    $exclude_sql = "AND u.id NOT IN (
+        SELECT DISTINCT ra.userid FROM {role_assignments} ra WHERE ra.roleid {$in_sql}
+    )";
+    $params = $in_params;
 }
-$mform = new filter_form($post_url,[]);
-if ($mform->is_cancelled() && !$action) {
-    redirect(new moodle_url('/local/learner/view.php'));
-} else if ($mform->is_cancelled() && $action) {
-    redirect(new moodle_url('/local/learner/view.php?action=inactive'));
-}else {
-    $fromform = data_submitted(); 
-}
-$result = '';
-if($fromform && !$action){
-    //print_r($fromform);die;
-    if($fromform->courses && !$fromform->firstname && !$fromform->email){
-        $sql = "SELECT uu.*
-                    FROM {user_enrolments} ue
-                    JOIN {enrol} en ON ue.enrolid = en.id
-                    JOIN {course} c ON c.id = en.courseid
-                    JOIN {user} uu ON uu.id = ue.userid
-                    WHERE c.id=".$fromform->courses."  AND en.enrol='manual' AND c.visible=1 AND uu.id>2";
-        if($fromform->isactive || !$fromform->isactive){
-            $active = ($fromform->isactive)?0:1;
-            $sql .= "  AND uu.suspended =".$active;
-        } 
-        $records = $DB->get_records_sql($sql);
-    }else if($fromform->courses && ($fromform->firstname || $fromform->email)){
-        $sql = "SELECT uu.*
-                    FROM {user_enrolments} ue
-                    JOIN {enrol} en ON ue.enrolid = en.id
-                    JOIN {course} c ON c.id = en.courseid
-                    JOIN {user} uu ON uu.id = ue.userid
-                    WHERE c.id=".$fromform->courses."  AND en.enrol='manual' AND c.visible=1 AND uu.id>2";
-        if($fromform->firstname){
-           $sql .= "  AND uu.firstname LIKE '%".$fromform->firstname."%'";
+
+$learners = $DB->get_records_sql(
+    "SELECT u.id, u.firstname, u.lastname, u.email, u.lastaccess, u.firstaccess, u.suspended
+     FROM {user} u
+     WHERE u.id > 2 AND u.deleted = 0 {$exclude_sql}
+     ORDER BY u.lastname, u.firstname",
+    $params
+);
+
+$learner_ids = array_keys($learners);
+
+// ===================================================================
+// QUERY 2: Per-learner course list (batch).
+// ===================================================================
+
+$learner_courses = [];  // userid => [['id' => courseid, 'name' => fullname], ...]
+$all_course_names = []; // Unique course names for filter dropdown.
+
+if (!empty($learner_ids)) {
+    list($uid_sql, $uid_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'uid');
+    $course_rows = $DB->get_records_sql(
+        "SELECT CONCAT(ue.userid, '-', c.id) AS rowkey, ue.userid, c.id AS courseid, c.fullname
+         FROM {user_enrolments} ue
+         JOIN {enrol} en ON en.id = ue.enrolid AND en.enrol = 'manual'
+         JOIN {course} c ON c.id = en.courseid AND c.visible = 1
+         WHERE ue.userid {$uid_sql}
+         ORDER BY ue.userid, c.fullname",
+        $uid_params
+    );
+    foreach ($course_rows as $cr) {
+        if (!isset($learner_courses[$cr->userid])) {
+            $learner_courses[$cr->userid] = [];
         }
-        if($fromform->email){
-            $sql .= "  AND uu.email LIKE '%".$fromform->email."%'";
-        }
-        if($fromform->isactive || !$fromform->isactive){
-            $active = ($fromform->isactive)?0:1;
-            $sql .= "  AND uu.suspended =".$active;
-        } 
-        $records = $DB->get_records_sql($sql);
-    }else{
-        $sql = "SELECT *  FROM {user} u ";
-        $sql .= " WHERE u.id>2"; 
-        if($fromform->firstname){
-           $sql .= "  AND u.firstname LIKE '%".$fromform->firstname."%'";
-        }
-        //
-        if($fromform->email){
-            $sql .= "  AND u.email LIKE '%".$fromform->email."%'";
-        }
-        //
-        if($fromform->isactive || !$fromform->isactive){
-            $active = ($fromform->isactive)?0:1;
-            $sql .= "  AND u.suspended =".$active;
-        } 
-         $records = $DB->get_records_sql($sql);
+        $learner_courses[$cr->userid][] = ['id' => (int) $cr->courseid, 'name' => $cr->fullname];
+        $all_course_names[$cr->fullname] = true;
     }
-    
-    
-    //echo $sql;die;
-    //print_object($records);die;
-   
-    $result = '';
-    if($records){
-        //$count_recs = count($records);
-        $table = new html_table();
-        $table->id = "learners";
-        $table->head = array(
-            get_string('firstname', 'local_learner'),
-            get_string('lastname', 'local_learner'),
-            get_string('email', 'local_learner'),
-            get_string('lc', 'local_learner'),
-            get_string('sup', 'local_learner'),
-             'Courses',
-             'Time Spent',
-             'Last Login',
-            get_string('status', 'local_learner'),
-            get_string('edit', 'local_learner'),
-            get_string('loginas', 'local_learner'),
-            get_string('sendlogin', 'local_learner'),
-            get_string('active', 'local_learner'),  
-        );
-        $table->data = array();
-        //get teachers list hers
-        $role_id = 4;
-        $role_users = $DB->get_records('role_assignments',['roleid'=>$role_id]);
-        $role_arr = [];
-        foreach($role_users as $users){
-             $role_arr[]  = $users->userid;
-        }
-       // print_object($role_arr);die;
-        foreach($records as $record){
-            if(in_array($record->id,$role_arr)){
-                 continue;
-            }
-            $count_recs_arr[] = $record->id;
-            $row = array();
-            $row['firstname'] = $record->firstname;
-            $row['lastname'] = $record->lastname;
-            $row['email'] =  $record->email;
-            $row['lc'] = 'Gecko';
-            $row['sup'] = 'Gecko (Integer)';
-            //
-            if($fromform->courses){
-                $sql = "SELECT c.id,c.fullname
-                        FROM {course} c
-                        WHERE c.id=".$fromform->courses." AND c.visible=1";
-            }else if(!$fromform->courses){
-                $sql = "SELECT c.id,c.fullname
-                    FROM {user_enrolments} ue
-                    JOIN {enrol} en ON ue.enrolid = en.id
-                    JOIN {course} c ON c.id = en.courseid
-                    JOIN {user} uu ON uu.id = ue.userid
-                    WHERE uu.id=".$record->id."  AND en.enrol='manual' AND c.visible=1";
-            }
-            //echo $sql;
-            //
-            if(!$fromform->courses){
-                $enrol_courses = $DB->get_records_sql($sql);
-                $timespent = array();
-                foreach($enrol_courses as $val){
-                    $recs = array();
-                    $recs  = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$val->id.'">'.$val->fullname.' </a>';
-                    $import_arr[] = $recs;
-                    $timespent[] = $val->id;
+}
+
+// ===================================================================
+// QUERY 3: Time spent (streaming logstore + PHP session calculation).
+// ===================================================================
+
+$time_spent = []; // userid => total_seconds
+
+if (!empty($learner_ids)) {
+    list($uid2_sql, $uid2_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'lu');
+    $yearstart = mktime(0, 0, 0, 1, 1, (int) date('Y'));
+    $uid2_params['yearstart'] = $yearstart;
+
+    $log_events = $DB->get_recordset_sql(
+        "SELECT userid, timecreated
+         FROM {logstore_standard_log}
+         WHERE userid {$uid2_sql}
+           AND timecreated >= :yearstart
+         ORDER BY userid, timecreated ASC",
+        $uid2_params
+    );
+
+    $prev_uid = null;
+    $prev_time = null;
+    $idle_cap = 1800; // 30-minute idle cap.
+
+    foreach ($log_events as $ev) {
+        $uid = (int) $ev->userid;
+        $tc = (int) $ev->timecreated;
+
+        if ($uid === $prev_uid && $prev_time !== null) {
+            $gap = $tc - $prev_time;
+            if ($gap > 0 && $gap <= $idle_cap) {
+                if (!isset($time_spent[$uid])) {
+                    $time_spent[$uid] = 0;
                 }
-                $row['Courses'] = count($enrol_courses)?implode('<br><br>',$import_arr):'N/A';
-            }else{
-                $enrol_course = $DB->get_record_sql($sql);
-                $row['Courses'] = $enrol_course->fullname;
+                $time_spent[$uid] += $gap;
             }
-            
-            //print_object($import_arr);die;
-           
-            //
-            if($enrol_courses && $record->id){
-                $sql = "SELECT 
-                        userid,
-                        TIME_FORMAT(SEC_TO_TIME(SUM(diff_seconds)), '%H:%i') AS total_time
-                        FROM (
-                            SELECT 
-                                userid,
-                                IF(
-                                    @prev_user = userid,
-                                    timecreated - @prev_time,
-                                    0
-                                ) AS diff_seconds,
-
-                                @prev_user := userid,
-                                @prev_time := timecreated
-
-                            FROM mdl_logstore_standard_log
-                            CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
-
-                            WHERE courseid IN (".implode(',',$timespent).")
-                              AND component = 'mod_hvp'
-                              AND userid = ".$record->id."
-                            ORDER BY userid, timecreated
-                        ) t
-                        GROUP BY userid";
-                        //echo $sql;die;
-                $recordset = $DB->get_record_sql($sql);
-                $row['timespent'] = ($recordset->total_time)?$recordset->total_time:'00:00';
-            }else{
-                $row['timespent'] = '00:00';
-            }
-
-            //status changed on conditons
-            $lastaccess = $record->lastaccess;
-            $thirty_days_ago = time() - (30 * 86400);
-            if($record->suspended){
-                $row['lastlogin'] = ($lastaccess) ? date('d-m-Y h:i A', $lastaccess) : 0;
-                $row['status'] = 'Suspended';
-            }else if(!$record->lastaccess && !$record->firstaccess){
-                $row['lastlogin'] = 0;
-                $row['status'] = 'Created';
-            }else if($lastaccess && $lastaccess >= $thirty_days_ago){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Active';
-            }else if($lastaccess && $lastaccess < $thirty_days_ago){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Inactive';
-            }
-
-            //
-            //$row['status'] =  (!$record->suspended)?'Active':'Inactive';
-            $edit_url = new moodle_url('/local/learner/edit.php',['id'=>$record->id]);
-            $login_as = new moodle_url('/course/loginas.php',['id'=>1,'user'=>$record->id,'sesskey'=>\sesskey()]);
-            $send_login = new moodle_url('/local/learner/email.php',['id'=>$record->id]);
-
-            $row['edit'] =  '<a href="'.$edit_url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
-            $row['loginas'] =  '<a href="'.$login_as.'" target="_blank" class="btn btn-primary login_as"><i class="ionicons ionicons ion-log-in"></i></a>';
-            $row['sendlogin'] =  '<a href="'.$send_login.'" class="btn btn-success btn-labeled login_as"><span class="fa fa-envelope"></span> </a>';
-            if($record->suspended){
-                $row['active'] = '<a href="#" class="btn btn-danger" onclick="return activate('.$record->id.')" title="Not active"> <i class="fa fa-minus fa-fw"></i></a>';
-            }else{
-                $row['active'] =  '<a href="#" class="btn btn-success login_as" onclick="return deactivate('.$record->id.')" title="Active"><i class="fa fa-check fa-fw"></i></a>';
-            }
-            
-            //
-            //print_object($row);die;
-            $table->data[] = $row;
         }
-        $result .= html_writer::table($table);
-    }else{
-        $result .= '<div class=" alert alert-danger alert-block fade in" align="center">No records available</div>';
+        $prev_uid = $uid;
+        $prev_time = $tc;
     }
-}else if($action == 'inactive'){
-    $sql = 'select s.* from {user} s  where id>2
-            AND (
-                s.lastaccess IS NOT NULL AND s.lastaccess!=0
-                AND s.lastaccess < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 DAY))
-            )
-            AND s.deleted = 0';
-    if($fromform->firstname){
-        $sql .= "  AND s.firstname LIKE '%".$fromform->firstname."%'";
-    }
-    //
-    if($fromform->email){
-        $sql .= "  AND s.email LIKE '%".$fromform->email."%'";
-    }
-    //
-    if($fromform->isactive || !$fromform->isactive){
-        $active = ($fromform->isactive)?1:0;
-        $sql .= "  AND s.suspended =".$active;
-    }
-    $records = $DB->get_records_sql($sql);
+    $log_events->close();
+}
 
-    $result = '';
-     //get teachers list hers
-        $role_id = 4;
-        $role_users = $DB->get_records('role_assignments',['roleid'=>$role_id]);
-        $role_arr = [];
-        foreach($role_users as $users){
-             $role_arr[]  = $users->userid;
-        }
-        //print_object($role_arr);die;
-    if($records){
-        
-        $table = new html_table();
-        $table->id = "learners";
-        $table->head = array(
-            get_string('firstname', 'local_learner'),
-            get_string('lastname', 'local_learner'),
-            get_string('email', 'local_learner'),
-            get_string('lc', 'local_learner'),
-            get_string('sup', 'local_learner'),
-             'Courses',
-             'Time Spent',
-             'Last Login',
-            get_string('status', 'local_learner'),
-            get_string('edit', 'local_learner'),
-            get_string('loginas', 'local_learner'),
-            get_string('sendlogin', 'local_learner'),
-            get_string('active', 'local_learner'),  
-        );
-        $table->data = array();
-        foreach($records as $record){
-            if(in_array($record->id,$role_arr)){
-                 continue;
-            }
-            $count_recs_arr[] = $record->id;
-            $row = array();
-            $row['firstname'] = $record->firstname;
-            $row['lastname'] = $record->lastname;
-            $row['email'] =  $record->email;
-            $row['lc'] = 'Gecko';
-            $row['sup'] = 'Gecko (Integer)';
-            //
-            $sql = "SELECT c.id,c.fullname
-                    FROM {user_enrolments} ue
-                    JOIN {enrol} en ON ue.enrolid = en.id
-                    JOIN {course} c ON c.id = en.courseid
-                    JOIN {user} uu ON uu.id = ue.userid
-                    WHERE uu.id=".$record->id."  AND en.enrol='manual' AND c.visible=1";
-            //
-            $enrol_courses = $DB->get_records_sql($sql);
-            $import_arr = array();
-             $timespent = array();
-            foreach($enrol_courses as $val){
-                $recs = array();
-                $recs  = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$val->id.'">'.$val->fullname.' </a>';
-                $import_arr[] = $recs;
-                $timespent[] = $val->id;
-            }
-            //print_object(implode('<br>',$import_arr));die;
-            $row['Courses'] = count($enrol_courses)?implode('<br><br>',$import_arr):'N/A';
-            //
-            
-            if($enrol_courses && $record->id){
-                $sql = "SELECT 
-                        userid,
-                        TIME_FORMAT(SEC_TO_TIME(SUM(diff_seconds)), '%H:%i') AS total_time
-                        FROM (
-                            SELECT 
-                                userid,
-                                IF(
-                                    @prev_user = userid,
-                                    timecreated - @prev_time,
-                                    0
-                                ) AS diff_seconds,
+// ===================================================================
+// QUERY 4: Tutor lookup (group membership).
+// ===================================================================
 
-                                @prev_user := userid,
-                                @prev_time := timecreated
+$tutor_map = []; // learner_userid => tutor_fullname
 
-                            FROM mdl_logstore_standard_log
-                            CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
-
-                            WHERE courseid IN (".implode(',',$timespent).")
-                              AND component = 'mod_hvp'
-                              AND userid = ".$record->id."
-                              AND YEAR(FROM_UNIXTIME(timecreated)) = YEAR(CURDATE())
-
-                            ORDER BY userid, timecreated
-                        ) t
-                        GROUP BY userid";
-                        //echo $sql;die;
-                $recordset = $DB->get_record_sql($sql);
-                $row['timespent'] = ($recordset->total_time)?$recordset->total_time:'00:00';
-            }else{
-                $row['timespent'] = '00:00';
-            }
-            //status changed on conditons
-            $lastaccess = $record->lastaccess;
-            $thirty_days_ago = time() - (30 * 86400);
-            if($record->suspended){
-                $row['lastlogin'] = ($lastaccess) ? date('d-m-Y h:i A', $lastaccess) : 0;
-                $row['status'] = 'Suspended';
-            }else if(!$record->lastaccess && !$record->firstaccess){
-                $row['lastlogin'] = 0;
-                $row['status'] = 'Created';
-            }else if($lastaccess && $lastaccess >= $thirty_days_ago){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Active';
-            }else if($lastaccess && $lastaccess < $thirty_days_ago){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Inactive';
-            }
-            //$row['status'] =  (!$record->suspended)?'Active':'Inactive';
-            $edit_url = new moodle_url('/local/learner/edit.php',['id'=>$record->id]);
-            $login_as = new moodle_url('/course/loginas.php',['id'=>1,'user'=>$record->id,'sesskey'=>\sesskey()]);
-            $send_login = new moodle_url('/local/learner/email.php',['id'=>$record->id]);
-
-            $row['edit'] =  '<a href="'.$edit_url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
-            $row['loginas'] =  '<a href="'.$login_as.'" target="_blank" class="btn btn-primary login_as"><i class="ionicons ionicons ion-log-in"></i></a>';
-            $row['sendlogin'] =  '<a href="'.$send_login.'" class="btn btn-success btn-labeled login_as"><span class="fa fa-envelope"></span> </a>';
-            if($record->suspended){
-                $row['active'] = '<a href="#" class="btn btn-danger" onclick="return activate('.$record->id.')" title="Not active"> <i class="fa fa-minus fa-fw"></i></a>';
-            }else{
-                $row['active'] =  '<a href="#" class="btn btn-success login_as" onclick="return deactivate('.$record->id.')" title="Active"><i class="fa fa-check fa-fw"></i></a>';
-            }
-           
-            //
-            $table->data[] = $row;
-        }
-        $result .= html_writer::table($table);
-    }
-}else{
-    $sql = 'select * from {user} where id>2';
-    $records = $DB->get_records_sql($sql);
-
-    $result = '';
-     //get teachers list hers
-        $role_id = 4;
-        $role_users = $DB->get_records('role_assignments',['roleid'=>$role_id]);
-        $role_arr = [];
-        foreach($role_users as $users){
-             $role_arr[]  = $users->userid;
-        }
-        //print_object($role_arr);die;
-    if($records){
-        
-        $table = new html_table();
-        $table->id = "learners";
-        $table->head = array(
-            get_string('firstname', 'local_learner'),
-            get_string('lastname', 'local_learner'),
-            get_string('email', 'local_learner'),
-            get_string('lc', 'local_learner'),
-            get_string('sup', 'local_learner'),
-             'Courses',
-             'Time Spent',
-             'Last Login',
-            get_string('status', 'local_learner'),
-            get_string('edit', 'local_learner'),
-            get_string('loginas', 'local_learner'),
-            get_string('sendlogin', 'local_learner'),
-            get_string('active', 'local_learner'),  
-        );
-        $table->data = array();
-        foreach($records as $record){
-            if(in_array($record->id,$role_arr)){
-                 continue;
-            }
-            $count_recs_arr[] = $record->id;
-            $row = array();
-            $row['firstname'] = $record->firstname;
-            $row['lastname'] = $record->lastname;
-            $row['email'] =  $record->email;
-            $row['lc'] = 'Gecko';
-            $row['sup'] = 'Gecko (Integer)';
-            //
-            $sql = "SELECT c.id,c.fullname
-                    FROM {user_enrolments} ue
-                    JOIN {enrol} en ON ue.enrolid = en.id
-                    JOIN {course} c ON c.id = en.courseid
-                    JOIN {user} uu ON uu.id = ue.userid
-                    WHERE uu.id=".$record->id."  AND en.enrol='manual' AND c.visible=1";
-            //
-            $enrol_courses = $DB->get_records_sql($sql);
-            $import_arr = array();
-             $timespent = array();
-            foreach($enrol_courses as $val){
-                $recs = array();
-                $recs  = '<a href="'.$CFG->wwwroot.'/course/view.php?id='.$val->id.'">'.$val->fullname.' </a>';
-                $import_arr[] = $recs;
-                $timespent[] = $val->id;
-            }
-            //print_object(implode('<br>',$import_arr));die;
-            $row['Courses'] = count($enrol_courses)?implode('<br><br>',$import_arr):'N/A';
-            //
-            
-            if($enrol_courses && $record->id){
-                $sql = "SELECT 
-                        userid,
-                        TIME_FORMAT(SEC_TO_TIME(SUM(diff_seconds)), '%H:%i') AS total_time
-                        FROM (
-                            SELECT 
-                                userid,
-                                IF(
-                                    @prev_user = userid,
-                                    timecreated - @prev_time,
-                                    0
-                                ) AS diff_seconds,
-
-                                @prev_user := userid,
-                                @prev_time := timecreated
-
-                            FROM mdl_logstore_standard_log
-                            CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
-
-                            WHERE courseid IN (".implode(',',$timespent).")
-                              AND component = 'mod_hvp'
-                              AND userid = ".$record->id."
-                              AND YEAR(FROM_UNIXTIME(timecreated)) = YEAR(CURDATE())
-
-                            ORDER BY userid, timecreated
-                        ) t
-                        GROUP BY userid";
-                        //echo $sql;die;
-                $recordset = $DB->get_record_sql($sql);
-                $row['timespent'] = ($recordset->total_time)?$recordset->total_time:'00:00';
-            }else{
-                $row['timespent'] = '00:00';
-            }
-            //status changed on conditons
-            $lastaccess = $record->lastaccess;
-            $thirty_days_ago = time() - (30 * 86400);
-            if($record->suspended){
-                $row['lastlogin'] = ($lastaccess) ? date('d-m-Y h:i A', $lastaccess) : 0;
-                $row['status'] = 'Suspended';
-            }else if(!$record->lastaccess && !$record->firstaccess){
-                $row['lastlogin'] = 0;
-                $row['status'] = 'Created';
-            }else if($lastaccess && $lastaccess >= $thirty_days_ago){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Active';
-            }else if($lastaccess && $lastaccess < $thirty_days_ago){
-                $row['lastlogin'] = date('d-m-Y h:i A',$lastaccess);
-                $row['status'] = 'Inactive';
-            }
-            //$row['status'] =  (!$record->suspended)?'Active':'Inactive';
-            $edit_url = new moodle_url('/local/learner/edit.php',['id'=>$record->id]);
-            $login_as = new moodle_url('/local/learner/loginasfun.php',['id'=>$record->id]);
-            $send_login = new moodle_url('/local/learner/email.php',['id'=>$record->id]);
-
-            $row['edit'] =  '<a href="'.$edit_url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
-            $row['loginas'] =  '<a href="'.$login_as.'" target="_blank" class="btn btn-primary login_as"><i class="ionicons ionicons ion-log-in"></i></a>';
-            $row['sendlogin'] =  '<a href="'.$send_login.'" class="btn btn-success btn-labeled login_as"><span class="fa fa-envelope"></span> </a>';
-            if($record->suspended){
-                $row['active'] = '<a href="#" class="btn btn-danger" onclick="return activate('.$record->id.')" title="Not active"> <i class="fa fa-minus fa-fw"></i></a>';
-            }else{
-                $row['active'] =  '<a href="#" class="btn btn-success login_as" onclick="return deactivate('.$record->id.')" title="Active"><i class="fa fa-check fa-fw"></i></a>';
-            }
-           
-            //
-            $table->data[] = $row;
-        }
-        $result .= html_writer::table($table);
+if (!empty($learner_ids)) {
+    list($uid3_sql, $uid3_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'gm');
+    $tutor_rows = $DB->get_records_sql(
+        "SELECT gm_s.userid AS learner_id,
+                MIN(CONCAT(tu.firstname, ' ', tu.lastname)) AS tutor_name
+         FROM {groups_members} gm_s
+         JOIN {groups_members} gm_t ON gm_t.groupid = gm_s.groupid AND gm_t.userid != gm_s.userid
+         JOIN {role_assignments} ra ON ra.userid = gm_t.userid
+         JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'teacher'
+         JOIN {user} tu ON tu.id = gm_t.userid
+         WHERE gm_s.userid {$uid3_sql}
+         GROUP BY gm_s.userid",
+        $uid3_params
+    );
+    foreach ($tutor_rows as $tr) {
+        $tutor_map[$tr->learner_id] = $tr->tutor_name;
     }
 }
+
+// ===================================================================
+// Build template context.
+// ===================================================================
+
+$thirty_days_ago = time() - (30 * 86400);
+$total_count = 0;
+$active_count = 0;
+$inactive_count = 0;
+$created_count = 0;
+$suspended_count = 0;
+$learner_rows = [];
+
+foreach ($learners as $u) {
+    $total_count++;
+
+    // Determine status.
+    if ($u->suspended) {
+        $status = 'Suspended';
+        $suspended_count++;
+    } else if (!$u->lastaccess && !$u->firstaccess) {
+        $status = 'Created';
+        $created_count++;
+    } else if ($u->lastaccess && $u->lastaccess >= $thirty_days_ago) {
+        $status = 'Active';
+        $active_count++;
+    } else {
+        $status = 'Inactive';
+        $inactive_count++;
+    }
+
+    // Format time spent.
+    $secs = isset($time_spent[$u->id]) ? $time_spent[$u->id] : 0;
+    if ($secs >= 3600) {
+        $hrs = floor($secs / 3600);
+        $mins = floor(($secs % 3600) / 60);
+        $time_fmt = $hrs . 'h ' . $mins . 'm';
+    } else if ($secs >= 60) {
+        $time_fmt = floor($secs / 60) . 'm';
+    } else {
+        $time_fmt = '0m';
+    }
+
+    // Format last login.
+    if ($u->lastaccess) {
+        $last_login = date('d-m-Y H:i', $u->lastaccess);
+        $last_login_ts = $u->lastaccess;
+    } else {
+        $last_login = 'Never';
+        $last_login_ts = 0;
+    }
+
+    // Course data.
+    $courses = isset($learner_courses[$u->id]) ? $learner_courses[$u->id] : [];
+    $course_name_list = [];
+    foreach ($courses as $c) {
+        $course_name_list[] = $c['name'];
+    }
+
+    // Tutor.
+    $tutor_name = isset($tutor_map[$u->id]) ? $tutor_map[$u->id] : 'Unassigned';
+
+    // URLs.
+    $edit_url = new moodle_url('/local/learner/edit.php', ['id' => $u->id]);
+    $loginas_url = new moodle_url('/course/loginas.php', ['id' => 1, 'user' => $u->id, 'sesskey' => sesskey()]);
+    $sendlogin_url = new moodle_url('/local/learner/email.php', ['id' => $u->id]);
+
+    $learner_rows[] = [
+        'id' => $u->id,
+        'firstname' => $u->firstname,
+        'lastname' => $u->lastname,
+        'email' => $u->email,
+        'tutor_name' => $tutor_name,
+        'course_count' => count($courses),
+        'time_spent' => $time_fmt,
+        'time_spent_seconds' => $secs,
+        'last_login' => $last_login,
+        'last_login_ts' => $last_login_ts,
+        'status' => $status,
+        'is_suspended' => $u->suspended ? true : false,
+        'edit_url' => $edit_url->out(false),
+        'loginas_url' => $loginas_url->out(false),
+        'sendlogin_url' => $sendlogin_url->out(false),
+        'courses_json' => json_encode($courses),
+        'course_names' => implode('||', $course_name_list),
+    ];
+}
+
+// Course list for filter dropdown (sorted).
+$course_list = [];
+ksort($all_course_names);
+foreach ($all_course_names as $cname => $unused) {
+    $course_list[] = ['name' => $cname];
+}
+
+$templatecontext = [
+    'wwwroot' => $CFG->wwwroot,
+    'sesskey' => sesskey(),
+    'total_count' => $total_count,
+    'active_count' => $active_count,
+    'inactive_count' => $inactive_count,
+    'created_count' => $created_count,
+    'suspended_count' => $suspended_count,
+    'learners' => $learner_rows,
+    'course_list' => $course_list,
+    'new_learner_url' => (new moodle_url('/user/editadvanced.php', ['id' => -1]))->out(false),
+    'inactive_url' => (new moodle_url('/local/learner/inactiveview.php'))->out(false),
+];
+
+// ===================================================================
+// Render.
+// ===================================================================
+
 echo $OUTPUT->header();
-/*$sql = 'select * from {user} where id>2';
-$records = $DB->get_records_sql($sql);*/
-$count_recs = ($count_recs_arr)?count($count_recs_arr):0;
-echo '<h4>Learner Management</h4>';
-echo '<ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="https://epearlacademy.com/my/">Home</a></li>
-                <li class="breadcrumb-item active" style="margin-top: 4px;">Manage Learners</li>
-            </ol>';
-echo '<div class="card-header-lms">
-                        <h4 class="m-b-0 text-white headline-lms">
-                            <div class="pull-left m-2" >
-                                <strong style="padding-right:12px"> Total Learners</strong><span class="label label-rounded label-warning m-l-10 label-all">'.$count_recs.'</span>
-                            </div>
-                            <a href="'.$CFG->wwwroot.'/user/editadvanced.php?id=-1" target="_blank"  class="btn btn-success waves-effect waves-light pull-right mr-2">
-                                <span class="btn-label">
-                                                <i class="fa fa-lg fa-plus"></i>
-                                </span>New Learner 
-                            </a>
-                            <a href="'.$CFG->wwwroot.'/local/learner/inactiveview.php" target="_blank" class="btn btn-warning waves-effect waves-light pull-right mr-2">
-                                <span class="btn-label">
-                                    <i class="fa fa-lg fa-plus"></i>
-                                </span>InActive Learners
-                            </a>     
-                                        
-                        </h4>
-        </div>';
-echo '<br>';
-echo '<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.print.min.js"></script>';
-echo '<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
-      <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.6.2/css/buttons.dataTables.min.css">';
-
-
-echo  html_writer::script("$(document).ready(function() {
-                                        var oTable = $('#learners').DataTable({
-                                            dom: 'Blfrtip',
-                                            'lengthMenu': [[15,25, 50, 100, 200, -1], [15,25, 50,100, 200, 'All']],
-                                            buttons: [
-                                            'excel', 'pdf'
-                                            ],
-                                           
-                                        });
-                                        $('.dataTables_filter').css('display','none'); 
-                                        $('.dataTables_info').css('display','block !important');
-                                        $('.dataTables_length').css('float','right !important');
-                                       
-                                        })
-                                        "
-                                    ); 
-echo $mform->display();
-echo $result;
+echo $OUTPUT->render_from_template('local_learner/view', $templatecontext);
 echo $OUTPUT->footer();
-//
-echo html_writer::script('function activate(userid){
-                            Swal.fire({
-                              title: "Are you sure?",
-                              text: "You wont be able to revert this",
-                              icon: "warning",
-                              showCancelButton: true,
-                              confirmButtonColor: "#3085d6",
-                              cancelButtonColor: "#d33",
-                              confirmButtonText: "Activate"
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $.ajax({
-                                        type: "POST",
-                                        data:{userid:userid,action:"active"},
-                                        url: "'.$CFG->wwwroot.'/local/learner/process.php",
-                                        dataType: "json",
-                                        success: function (r) {
-                                            console.log(r);
-                                            var response = ""; 
-                                            location.reload(true);              
-                                            
-                                        }
-                                    });
-                                    
-                                }
-                                location.reload();
-                            });
-                        }
-                ');
-//
-echo html_writer::script('function deactivate(userid){
-                            Swal.fire({
-                              title: "Are you sure?",
-                              text: "You wont be able to revert this",
-                              icon: "warning",
-                              showCancelButton: true,
-                              confirmButtonColor: "#3085d6",
-                              cancelButtonColor: "#d33",
-                              confirmButtonText: "Deactivate"
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    $.ajax({
-                                        type: "POST",
-                                        data:{userid:userid,action:"deactive"},
-                                        url: "'.$CFG->wwwroot.'/local/learner/process.php",
-                                        dataType: "json",
-                                        success: function (r) {
-                                            console.log(r);
-                                            var response = ""; 
-                                                          
-                                            
-                                        }
-                                    });
-                                    
-                                }
-                                location.reload();
-                            });
-                        }
-                ');
-echo html_writer::script('$("#id_course").change(function(){
-             var courseid = $(this).val();
-             if(courseid){
-             $.ajax({
-                type: "POST",
-                data:{courseid:courseid,action:"getuser"},
-                url: "'.$CFG->wwwroot.'/blocks/stats/ajax.php",
-                dataType: "json",
-                success: function (r) {
-                    console.log(r);
-                        var response = "";                    
-                        response += "<option value =null>--Select User--</option>";
-                        $.each(r, function( index, value){
-                          response += "<option value = " + index + " >" +value.firstname+" "+value.lastname + "</option>";
-                        });
-                        $("#id_user").html(response);
-                    
-                }
-            });
-            }else{
-                var response = "";                    
-                response += "<option value =null>--Select User--</option>";
-                $("#id_user").val(response);
-            }
-    });
-$("#id_cancel").val("Reset");
-');
-
-echo '<style>
-      .mform{
-         margin-right:700px;
-      }
-      .wrapper-course {
-            margin-top:-30px;
-            padding: 0px 10px !important;
-        }
-        .fheader{
-            border:none;
-        }
-        #learners_length{
-            float:right;
-        }
-        .form-control{
-            font-size: 12px;
-        }
-        #id_submitbutton{
-            font-size: 12px;
-        }
-        #id_cancel{
-            font-size: 12px;
-        }
-        .dt-button{
-            font-size:11px !important;
-        }
-        .generaltable  thead {
-            background: #0100ff;
-        }
-        th.header{
-            color:#ffff !important;
-        }
-        .card-header-lms{
-            padding: 1.75rem 0.25rem;
-            margin-bottom: 0;
-            background-color: #0100ff;;
-            border-bottom: 1px solid rgba(0, 0, 0, .125);
-        }
-        .headline-lms{
-            margin-top: -20px;
-            margin-bottom: 15px;
-        }
-        .btn-success,.btn-success.disabled {
-            font-size: 12px;
-            background: #cbd446;
-            background-color: #cbd446;
-            border: 1px solid #cbd446;
-        }
-        .btn-warning, .btn-warning.disabled {
-            font-size: 12px;
-            background: #ebb548;
-            background-color: #ebb548;
-            border: 1px solid #ebb548;
-        }
-        .label-warning {
-            background-color: #ebb548;
-        }
-        .label-rounded {
-            border-radius: 60px;
-        }
-        .label {
-            padding: 2px 10px;
-            line-height: 13px;
-            color: #ffffff;
-            font-weight: 400;
-            border-radius: 10px;
-            font-size: 100%;
-        }
-        .label-success {
-            background-color: #cbd446;
-        }
-        .btn-label {
-            /*background: rgba(0, 0, 0, 0.05);*/
-            display: inline-block;
-            margin: -6px 12px -6px -14px;
-            color:#fff;
-            font-size:13px;
-        }
-        table.dataTable thead .sorting {
-            background-image: url(./images/sort_both.png)!important;
-        }
-        .btn-info {
-            padding: 7px 12px !important;
-            font-size: 14px !important;
-            cursor: pointer !important;
-            color: #fff;
-            background-color: #5bc0de;
-            border-color: #5bc0de;
-        }
-        .login_as{
-            padding: 7px 12px !important;
-            font-size: 14px !important;
-            cursor: pointer !important;
-        }
-        .btn-danger:hover, .btn-danger.disabled:hover {
-            background: #e25959;
-            background-color: #e25959;
-            opacity: 0.7;
-            border: 1px solid #e25959;
-            padding: 7px 12px !important;
-            font-size: 14px !important;
-            cursor: pointer !important;
-        }
-        .btn-danger{
-            background: #e25959;
-            background-color: #e25959;
-            opacity: 0.7;
-            border: 1px solid #e25959;
-            padding: 7px 12px !important;
-            font-size: 14px !important;
-            cursor: pointer !important;
-        }
-      </style>';
-
-    
-

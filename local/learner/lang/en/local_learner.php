@@ -53,3 +53,27 @@ $string['tutorperformance'] = 'Tutor Performance';
 $string['courseoverview'] = 'Course Overview';
 $string['alertsoverview'] = 'Alerts & Action Items';
 
+// Learner view (view.php) strings.
+$string['learnermanagement'] = 'Learner Management';
+$string['learnermanagement_subtitle'] = 'Manage all learners &middot; Epearl Academy';
+$string['totallearners_kpi'] = 'Total Learners';
+$string['active_kpi'] = 'Active';
+$string['inactive_kpi'] = 'Inactive (30+ Days)';
+$string['created_kpi'] = 'Created (Never Logged In)';
+$string['suspended_kpi'] = 'Suspended';
+$string['newlearner'] = 'New Learner';
+$string['inactivelearners'] = 'Inactive Learners';
+$string['filteractivity'] = 'Activity Status';
+$string['filtercourse'] = 'Course';
+$string['filterreset'] = 'Reset Filters';
+$string['learnerdetails'] = 'Learner Details';
+$string['learnerdetails_desc'] = 'Click the + icon to expand course details per learner';
+$string['courses'] = 'Courses';
+$string['timespent'] = 'Time Spent';
+$string['lastlogin'] = 'Last Login';
+$string['actions'] = 'Actions';
+$string['tutor'] = 'Tutor';
+$string['unassigned'] = 'Unassigned';
+$string['never'] = 'Never';
+$string['confirm_activate'] = 'Are you sure you want to activate this learner?';
+$string['confirm_deactivate'] = 'Are you sure you want to deactivate this learner?';
