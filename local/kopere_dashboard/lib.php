@@ -147,7 +147,7 @@ function local_kopere_dashboard_extend_navigation_400() {
     global $CFG;
 
     $cache = \cache::make("local_kopere_dashboard", "report_getdata_cache");
-    if (false && $cache->has("local_kopere_dashboard_menu")) {
+    if ($cache->has("local_kopere_dashboard_menu")) {
         $CFG->extramenu = $cache->get("local_kopere_dashboard_menu");
     } else {
 

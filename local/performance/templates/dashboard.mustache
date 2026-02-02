@@ -1,0 +1,87 @@
+{{!
+    Performance Health Dashboard template.
+    @template local_performance/dashboard
+}}
+<div class="perf-shell">
+    <div class="perf-header">
+        <div class="perf-header-left">
+            <h2 class="perf-title">Performance Health Dashboard</h2>
+            <p class="perf-subtitle">Automated bottleneck detection and optimization status</p>
+        </div>
+        <div class="perf-header-right">
+            <a href="{{{ settings_url }}}" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-cog"></i> Settings
+            </a>
+        </div>
+    </div>
+
+    {{! Score card }}
+    <div class="perf-score-section">
+        <div class="perf-score-ring {{ scoreclass }}">
+            <span class="perf-score-value">{{ score }}</span>
+            <span class="perf-score-label">/ 100</span>
+        </div>
+        <div class="perf-score-summary">
+            <div class="perf-stat perf-stat-pass">
+                <span class="perf-stat-num">{{ pass_count }}</span>
+                <span class="perf-stat-text">Passed</span>
+            </div>
+            <div class="perf-stat perf-stat-fail">
+                <span class="perf-stat-num">{{ fail_count }}</span>
+                <span class="perf-stat-text">Failed</span>
+            </div>
+            <div class="perf-stat perf-stat-warn">
+                <span class="perf-stat-num">{{ warn_count }}</span>
+                <span class="perf-stat-text">Warnings</span>
+            </div>
+            <div class="perf-stat perf-stat-info">
+                <span class="perf-stat-num">{{ info_count }}</span>
+                <span class="perf-stat-text">Info</span>
+            </div>
+        </div>
+    </div>
+
+    {{! Toggles summary }}
+    <div class="perf-toggles">
+        <h4>Optimization Toggles</h4>
+        <div class="perf-toggle-row">
+            <span class="perf-toggle-indicator {{# role_cache_enabled }}perf-on{{/ role_cache_enabled }}{{^ role_cache_enabled }}perf-off{{/ role_cache_enabled }}"></span>
+            <span>Role Cache Service</span>
+        </div>
+        <div class="perf-toggle-row">
+            <span class="perf-toggle-indicator {{# nav_shortcircuit_enabled }}perf-on{{/ nav_shortcircuit_enabled }}{{^ nav_shortcircuit_enabled }}perf-off{{/ nav_shortcircuit_enabled }}"></span>
+            <span>Nav Hook Short-circuit (Alpha)</span>
+        </div>
+        <div class="perf-toggle-row">
+            <span class="perf-toggle-indicator {{# logstore_fix_enabled }}perf-on{{/ logstore_fix_enabled }}{{^ logstore_fix_enabled }}perf-off{{/ logstore_fix_enabled }}"></span>
+            <span>Logstore Query Optimization</span>
+        </div>
+    </div>
+
+    {{! Checks table }}
+    <div class="perf-checks">
+        <h4>Health Checks ({{ total_checks }})</h4>
+        <table class="perf-table">
+            <thead>
+                <tr>
+                    <th style="width:50px">#</th>
+                    <th style="width:90px">Status</th>
+                    <th>Check</th>
+                    <th>Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{# checks }}
+                <tr class="perf-row-{{ status }}">
+                    <td class="perf-cell-num">{{@index}}</td>
+                    <td>
+                        <span class="perf-badge perf-badge-{{ status }}">{{ status_label }}</span>
+                    </td>
+                    <td class="perf-cell-title">{{ title }}</td>
+                    <td class="perf-cell-detail">{{ detail }}</td>
+                </tr>
+                {{/ checks }}
+            </tbody>
+        </table>
+    </div>
+</div>

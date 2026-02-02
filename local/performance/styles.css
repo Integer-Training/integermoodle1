@@ -1,0 +1,205 @@
+/* Performance Optimizer Dashboard — perf- namespace */
+
+.perf-shell {
+    max-width: 960px;
+    margin: 0 auto;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.perf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.perf-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a2238;
+    margin: 0 0 4px 0;
+}
+
+.perf-subtitle {
+    color: #64748b;
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+/* Score section */
+.perf-score-section {
+    display: flex;
+    align-items: center;
+    gap: 40px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px 32px;
+    margin-bottom: 24px;
+}
+
+.perf-score-ring {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 6px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.perf-score-ring.perf-score-high { border-color: #22c55e; background: #f0fdf4; }
+.perf-score-ring.perf-score-mid  { border-color: #f59e0b; background: #fffbeb; }
+.perf-score-ring.perf-score-low  { border-color: #ef4444; background: #fef2f2; }
+
+.perf-score-value {
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: #1a2238;
+}
+
+.perf-score-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.perf-score-summary {
+    display: flex;
+    gap: 32px;
+}
+
+.perf-stat {
+    text-align: center;
+}
+
+.perf-stat-num {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.perf-stat-text {
+    font-size: 0.75rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.perf-stat-pass .perf-stat-num { color: #22c55e; }
+.perf-stat-fail .perf-stat-num { color: #ef4444; }
+.perf-stat-warn .perf-stat-num { color: #f59e0b; }
+.perf-stat-info .perf-stat-num { color: #3b82f6; }
+
+/* Toggles */
+.perf-toggles {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.perf-toggles h4 {
+    margin: 0 0 12px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.perf-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+    font-size: 0.875rem;
+    color: #475569;
+}
+
+.perf-toggle-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.perf-toggle-indicator.perf-on  { background: #22c55e; }
+.perf-toggle-indicator.perf-off { background: #cbd5e1; }
+
+/* Checks table */
+.perf-checks {
+    margin-bottom: 24px;
+}
+
+.perf-checks h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+    margin: 0 0 12px 0;
+}
+
+.perf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.perf-table thead th {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.perf-table tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+}
+
+.perf-cell-num {
+    color: #94a3b8;
+    text-align: center;
+}
+
+.perf-cell-title {
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+}
+
+.perf-cell-detail {
+    color: #64748b;
+}
+
+.perf-row-pass  { background: transparent; }
+.perf-row-fail  { background: #fef2f2; }
+.perf-row-warn  { background: #fffbeb; }
+.perf-row-info  { background: #eff6ff; }
+
+/* Status badges */
+.perf-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-align: center;
+    min-width: 50px;
+}
+
+.perf-badge-pass { background: #dcfce7; color: #166534; }
+.perf-badge-fail { background: #fee2e2; color: #991b1b; }
+.perf-badge-warn { background: #fef3c7; color: #92400e; }
+.perf-badge-info { background: #dbeafe; color: #1e40af; }

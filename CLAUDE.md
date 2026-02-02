@@ -1033,6 +1033,80 @@ Added in `theme/alpha/classes/output/core_renderer.php` for student-role users o
 
 ---
 
+### `local/performance` — Performance Optimizer
+
+Eliminates ~15-20 unnecessary DB queries per page load through a cached role service, automated health dashboard, and targeted patches to existing files.
+
+**Version:** 2026020200 (1.0.0) | **Capability:** `local/performance:view` (manager only)
+
+#### File Structure
+
+```
+local/performance/
+├── version.php                    # v1.0.0 (2026020200)
+├── settings.php                   # 3 toggles: role_cache, nav_shortcircuit, logstore_fix
+├── index.php                      # Health dashboard (score + 10 checks)
+├── lib.php                        # Navigation hook (for non-Alpha themes)
+├── styles.css                     # Dashboard CSS (perf- namespace)
+├── classes/
+│   ├── role_cache.php             # Core: 3-tier cached role service (static → MUC session → DB)
+│   └── health_checker.php         # 10 bottleneck checks with health score
+├── db/
+│   ├── access.php                 # local/performance:view (manager)
+│   └── caches.php                 # MUC session cache: user_roles
+├── lang/en/local_performance.php  # Language strings
+└── templates/dashboard.mustache   # Health dashboard template
+```
+
+#### Core Component: `role_cache.php`
+
+Replaces 4-7 scattered role DB queries per page with a single query, cached in 3 tiers:
+
+1. **Static memory** — free, current PHP request
+2. **MUC MODE_SESSION** — persists across page loads, no external deps
+3. **DB query** — `SELECT DISTINCT r.shortname FROM {role_assignments} ra JOIN {role} r ON r.id = ra.roleid WHERE ra.userid = :userid`
+
+**API:** `role_cache::is_admin()`, `::is_teacher()`, `::is_student()`, `::is_editing_teacher()`, `::has_any_role(['teacher', 'editingteacher'])`, `::get_roles()`, `::invalidate($userid)`, `::invalidate_all()`
+
+#### Health Dashboard (`index.php`)
+
+10 automated checks with PASS/FAIL/WARN/INFO status and weighted score (0-100):
+
+| # | Check | Weight | What it detects |
+|---|-------|--------|----------------|
+| 1 | Sidebar role cache | 20 | role_cache usage in core_renderer.php |
+| 2 | Learner Dashboard nav hook | 10 | Alpha theme short-circuit |
+| 3 | Learner Progression nav hook | 10 | Alpha theme short-circuit |
+| 4 | Kopere menu cache | 15 | "false &&" cache bypass |
+| 5 | Kopere wildcard observer | 5 | "*" event observer |
+| 6 | Logstore query | 15 | YEAR(FROM_UNIXTIME()) vs timestamp range |
+| 7 | Admin dashboard N+1 | 5 | Per-tutor query loop |
+| 8 | assignrelative observer | 5 | Global assign table updates |
+| 9 | config.php settings | 10 | Debug mode, JS caching, theme designer |
+| 10 | MUC backend | 5 | APCu/Redis availability |
+
+#### Settings (3 Toggles)
+
+| Setting | Default | Effect |
+|---------|---------|--------|
+| `enable_role_cache` | ON | Use role_cache in sidebar instead of raw DB queries |
+| `enable_nav_shortcircuit` | ON | Skip nav hook DB queries when Alpha theme is active |
+| `enable_logstore_fix` | ON | Use timestamp range instead of YEAR(FROM_UNIXTIME()) |
+
+#### 5 Patches Applied to Existing Files
+
+| File | Change | Savings |
+|------|--------|---------|
+| `theme/alpha/classes/output/core_renderer.php` | Manager/teacher/student checks use `role_cache` with fallback | 4-7 queries/page |
+| `local/learnerdashboard/lib.php` | Early return when Alpha theme detected | 2 queries/page |
+| `local/learnerprogression/lib.php` | Early return when Alpha theme detected | 2 queries/page |
+| `local/kopere_dashboard/lib.php` | Removed `false &&` to enable menu cache | 5-10 queries/page |
+| `local/learnerdashboard/index.php` | Logstore: `timecreated >= :yearstart` instead of `YEAR(FROM_UNIXTIME())` | Full table scan avoided |
+
+All patches include fallback to original code if the performance plugin is disabled or uninstalled.
+
+---
+
 ## Project Documentation Files
 
 The repository contains documentation files that track known issues, planned features, and development context:

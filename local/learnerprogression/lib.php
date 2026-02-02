@@ -30,7 +30,13 @@ defined('MOODLE_INTERNAL') || die();
  * @param global_navigation $nav
  */
 function local_learnerprogression_extend_navigation(global_navigation $nav) {
-    global $USER, $DB;
+    global $USER, $DB, $PAGE;
+
+    // Alpha theme hardcodes sidebar — skip DB queries here (saves 2+ queries/page).
+    if (get_config('local_performance', 'enable_nav_shortcircuit')
+        && isset($PAGE->theme->name) && $PAGE->theme->name === 'alpha') {
+        return;
+    }
 
     $context = context_system::instance();
 

@@ -1505,13 +1505,19 @@ class core_renderer extends \core_renderer {
                     ';
             }
             //
-            $roleid = 9;
-            $role_users = $DB->get_records('role_assignments',['roleid'=>9,'contextid'=>1]);
-            $in_users = array();
-            foreach($role_users as $users){
-                 $in_users[] = $users->userid;
+            if (get_config('local_performance', 'enable_role_cache')
+                && class_exists('\\local_performance\\role_cache')) {
+                $is_manager_user = \local_performance\role_cache::is_admin();
+            } else {
+                $roleid = 9;
+                $role_users = $DB->get_records('role_assignments',['roleid'=>9,'contextid'=>1]);
+                $in_users = array();
+                foreach($role_users as $users){
+                     $in_users[] = $users->userid;
+                }
+                $is_manager_user = in_array($USER->id,$in_users);
             }
-            if(in_array($USER->id,$in_users)){
+            if($is_manager_user){
                 $user_link = new moodle_url('/local/learner/users.php', array('contextid' => 1));
                     $html  .= '<li class="rui-sidebar-nav-item">
                             <a href="'.$user_link.'" id="itemCustomItem5" class="rui-sidebar-nav-item-link">
@@ -1522,11 +1528,17 @@ class core_renderer extends \core_renderer {
             }
             // Learner Progressions for tutors (teacher role) — admins already have it above.
             if (!is_siteadmin($USER)) {
-                $teacher_role_rec = $DB->get_record('role', ['shortname' => 'teacher']);
-                if ($teacher_role_rec && $DB->record_exists('role_assignments', [
-                    'roleid' => $teacher_role_rec->id,
-                    'userid' => $USER->id,
-                ])) {
+                if (get_config('local_performance', 'enable_role_cache')
+                    && class_exists('\\local_performance\\role_cache')) {
+                    $is_teacher_user = \local_performance\role_cache::is_teacher();
+                } else {
+                    $teacher_role_rec = $DB->get_record('role', ['shortname' => 'teacher']);
+                    $is_teacher_user = $teacher_role_rec && $DB->record_exists('role_assignments', [
+                        'roleid' => $teacher_role_rec->id,
+                        'userid' => $USER->id,
+                    ]);
+                }
+                if ($is_teacher_user) {
                     $prog_link = new moodle_url('/local/learnerprogression/index.php');
                     $html .= '<li class="rui-sidebar-nav-item">
                                 <a href="'.$prog_link.'" id="itemProgression" class="rui-sidebar-nav-item-link">
@@ -1539,11 +1551,17 @@ class core_renderer extends \core_renderer {
 
             // Learner Dashboard for students only (not admins or tutors).
             if (!is_siteadmin($USER)) {
-                $student_role_rec = $DB->get_record('role', ['shortname' => 'student']);
-                if ($student_role_rec && $DB->record_exists('role_assignments', [
-                    'roleid' => $student_role_rec->id,
-                    'userid' => $USER->id,
-                ])) {
+                if (get_config('local_performance', 'enable_role_cache')
+                    && class_exists('\\local_performance\\role_cache')) {
+                    $is_student_user = \local_performance\role_cache::is_student();
+                } else {
+                    $student_role_rec = $DB->get_record('role', ['shortname' => 'student']);
+                    $is_student_user = $student_role_rec && $DB->record_exists('role_assignments', [
+                        'roleid' => $student_role_rec->id,
+                        'userid' => $USER->id,
+                    ]);
+                }
+                if ($is_student_user) {
                     $dash_link = new moodle_url('/local/learnerdashboard/index.php');
                     $html .= '<li class="rui-sidebar-nav-item">
                                 <a href="'.$dash_link.'" id="itemLearnerDash" class="rui-sidebar-nav-item-link">

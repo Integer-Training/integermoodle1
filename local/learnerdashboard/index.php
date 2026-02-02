@@ -277,13 +277,31 @@ $hours_chart_data = [];
 // Then calculate time spent in PHP with a 30-minute idle cap (standard time-on-site method).
 $hours_results_raw = [];
 try {
-    $log_sql = "SELECT timecreated
-                FROM {logstore_standard_log}
-                WHERE userid = :userid
-                  AND courseid > 1
-                  AND YEAR(FROM_UNIXTIME(timecreated)) = YEAR(CURDATE())
-                ORDER BY timecreated ASC";
-    $hours_results_raw = $DB->get_records_sql($log_sql, ['userid' => $userid]);
+    // Use timestamp range for index-friendly query (performance optimization).
+    if (get_config('local_performance', 'enable_logstore_fix')) {
+        $yearstart = mktime(0, 0, 0, 1, 1, (int) date('Y'));
+        $yearend = mktime(0, 0, 0, 1, 1, (int) date('Y') + 1);
+        $log_sql = "SELECT timecreated
+                    FROM {logstore_standard_log}
+                    WHERE userid = :userid
+                      AND courseid > 1
+                      AND timecreated >= :yearstart
+                      AND timecreated < :yearend
+                    ORDER BY timecreated ASC";
+        $hours_results_raw = $DB->get_records_sql($log_sql, [
+            'userid' => $userid,
+            'yearstart' => $yearstart,
+            'yearend' => $yearend,
+        ]);
+    } else {
+        $log_sql = "SELECT timecreated
+                    FROM {logstore_standard_log}
+                    WHERE userid = :userid
+                      AND courseid > 1
+                      AND YEAR(FROM_UNIXTIME(timecreated)) = YEAR(CURDATE())
+                    ORDER BY timecreated ASC";
+        $hours_results_raw = $DB->get_records_sql($log_sql, ['userid' => $userid]);
+    }
 } catch (Exception $e) {
     // Silently handle — chart will show zeros.
 }
