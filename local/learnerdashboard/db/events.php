@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * Event observers for local_learnerdashboard.
+ *
  * @package   local_learnerdashboard
  * @copyright 2026 Epearl Academy
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -22,8 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_learnerdashboard';
-$plugin->version   = 2026020201;
-$plugin->requires  = 2024042200;
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0';
+$observers = [
+    [
+        'eventname' => '\core\event\user_loggedin',
+        'callback'  => '\local_learnerdashboard\observer::user_loggedin',
+    ],
+];
