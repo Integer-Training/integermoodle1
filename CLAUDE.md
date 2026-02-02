@@ -221,6 +221,27 @@ Then bump `version.php` and run `php admin/cli/upgrade.php`.
 - `theme/adaptable`, `theme/almondb`, `theme/alpha`, `theme/moove`, `theme/nice`, `theme/stream`
 - All extend the core `boost` theme
 
+#### Alpha Theme — Custom Sidebar Navigation
+
+**CRITICAL:** The `alpha` theme (active on production) does **NOT** use Moodle's standard `flatnavigation` system. Setting `$node->showinflatnavigation = true` in a plugin's `lib.php` has **NO effect** on the Alpha sidebar.
+
+All sidebar links are hardcoded in `theme/alpha/classes/output/core_renderer.php` via the `mainsidebarmenu()` method. To add a new sidebar link:
+
+1. **For admins:** Add HTML inside the `is_siteadmin($USER)` block
+2. **For tutors:** Add a separate role-check block (query `role_assignments` for `teacher` role)
+
+Each sidebar item follows this HTML pattern:
+```html
+<li class="rui-sidebar-nav-item">
+    <a href="{URL}" id="item{Name}" class="rui-sidebar-nav-item-link">
+        <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-{icon}"></i></span>
+        <span class="rui-sidebar-nav-text">{Label}</span>
+    </a>
+</li>
+```
+
+Plugin `lib.php` navigation hooks still exist for compatibility with other themes but are non-functional with Alpha.
+
 ---
 
 ### `local/learner` — Learner & Tutor Management
@@ -752,6 +773,186 @@ Navy-blue palette matching admin dashboard: `#1a2238`, `#3a5ba0`, `#6ea3c1`, `#f
 
 ---
 
+### `local/learnerprogression` — Learner Progression Monitor
+
+Standalone plugin showing each learner's **Current %** (assignments passed / total) with expandable per-course (unit-wise) breakdown. Accessible to managers (all learners) and tutors (their group learners only).
+
+**Version:** 2026020200 (1.0.0) | **Capability:** `local/learnerprogression:view` (manager only; tutors access via `teacher` role check)
+
+#### File Structure
+
+```
+local/learnerprogression/
+├── index.php                        # Main page — queries, aggregation, template render
+├── version.php                      # Plugin metadata (component: local_learnerprogression)
+├── lib.php                          # Navigation hook (non-functional with Alpha theme, see note)
+├── db/access.php                    # Capability: local/learnerprogression:view (manager)
+├── lang/en/local_learnerprogression.php  # Language strings
+├── templates/progressions.mustache  # Template with HTML + CSS + JS (DataTables)
+└── js/
+    ├── jquery.dataTables.min.js     # Bundled DataTables core
+    └── jquery.dataTables.min.css    # Bundled DataTables styles
+```
+
+#### Entry Point
+
+| File | URL | Purpose |
+|------|-----|---------|
+| `index.php` | `/local/learnerprogression/index.php` | Learner progression table with KPI cards, filters, expandable per-course detail |
+
+#### Role Detection & Access
+
+- **Managers:** `has_capability('local/learnerprogression:view', context_system)` → sees ALL active learners (distinct users)
+- **Capability fallback:** `lib.php` also checks `local/learner:view` for production compatibility (new capability may not be auto-assigned)
+- **Tutors:** `role_assignments` where `role.shortname = 'teacher'` → sees only learners in shared groups
+- **Neither:** throws `moodle_exception('nopermission')`
+
+#### Sidebar Navigation
+
+Since Alpha theme ignores `showinflatnavigation`, sidebar links are added directly in `theme/alpha/classes/output/core_renderer.php`:
+- Admins: inside the `is_siteadmin()` block, with `fa-chart-line` icon
+- Tutors: separate role-check block after admin links
+
+#### Data Queries (3 queries total)
+
+**Query 1 — User info:** Start dates, last access, full name from `{user}` table.
+
+**Query 2 — Per-assignment detail per learner per course:**
+```sql
+SELECT CONCAT(u.id, '-', a.id) AS rowkey, u.id AS userid, ...
+       CASE WHEN gg.finalgrade IS NOT NULL AND ... = 'Pass' THEN 'Pass'
+            WHEN gg.finalgrade IS NOT NULL AND gg.finalgrade > 0 THEN 'Refer'
+            WHEN sub.status = 'submitted' THEN 'Pending Grading'
+            WHEN sub.status = 'draft' THEN 'Submitted'
+            ELSE 'Not Submitted' END AS grade_status
+FROM {user} u
+JOIN {user_enrolments} ue ... JOIN {enrol} en ... JOIN {course} c ...
+JOIN {assign} a ... JOIN {course_modules} cm (visible=1)
+LEFT JOIN {assign_submission} sub (latest=1)
+LEFT JOIN {grade_items} gi ... LEFT JOIN {grade_grades} gg ... LEFT JOIN {scale} sc
+WHERE u.id IN (...) AND assignment exclusions (IAG, ID Proof, Case Studies)
+```
+
+**Query 3 — Tutor lookup (manager only):** Maps each learner to their tutor via group membership.
+
+#### PHP Aggregation
+
+Results are aggregated per-learner, per-course in PHP:
+- **Current %** = Passed assignments / Total assignments (per-course and overall)
+- **Activity status:** Active (accessed < 30 days), Inactive (30+ days), Created (never logged in)
+- Per-course assignments are sorted numerically (Unit 2 before Unit 10) using `preg_match` + `strnatcasecmp`
+
+#### Template Context
+
+```php
+$templatecontext = [
+    'is_manager' => bool,        // Controls tutor column/filter visibility
+    'wwwroot' => string,
+    'learners' => [              // Array of learner rows
+        'fullname', 'start_date', 'activity_status',
+        'tutor_name',            // Manager only: assigned tutor or "Unassigned"
+        'overall_current',       // 0-100 percentage
+        'passed_assignments', 'submitted_assignments', 'total_assignments',
+        'detail_json',           // JSON: per-course breakdown for expandable child rows
+    ],
+    'total_learners_count', 'active_count', 'inactive_count',
+    'created_count', 'suspended_count',
+    'tutor_list' => [['name' => 'Tutor Name'], ...],  // Manager only: filter dropdown options
+];
+```
+
+#### KPI Cards
+
+| Card | Description |
+|------|-------------|
+| Total Learners (Excl. Suspended) | Count of active (non-suspended) learners |
+| Active | Accessed within last 30 days |
+| Inactive | Not accessed for 30+ days |
+| Created | Never logged in (no lastlogin or lastaccess) |
+| Suspended | Separately counted suspended learners |
+
+**Note:** KPI counts are distinct users, not per-course. This differs from tutor dashboard which counts per-course enrollments. Example: 93 total + 10 suspended = 103 distinct learners (not 107 per-course).
+
+#### DataTable Features
+
+- **Columns (admin):** Toggle | Learner Name | Tutor | Start Date | Activity Status | Current % (progress bar) | Passed | Submitted | Total
+- **Columns (tutor):** Same minus Tutor column
+- **Filters:** Activity Status dropdown, Tutor dropdown (admin only)
+- **Sort:** Default by Current % descending
+- **Export:** Excel and PDF buttons
+- **Expandable child rows:** Click toggle to reveal per-course breakdown with individual assignment statuses
+
+#### Dynamic Column Indices (JS)
+
+The template JS uses `hasTutorCol` detection to handle different column layouts:
+```javascript
+var hasTutorCol = $('#progTable thead th').length > 7;
+var COL_TUTOR    = hasTutorCol ? 2 : -1;
+var COL_DATE     = hasTutorCol ? 3 : 2;
+var COL_ACTIVITY = hasTutorCol ? 4 : 3;
+var COL_CURRENT  = hasTutorCol ? 5 : 4;
+```
+
+#### CSS Namespace
+
+All CSS classes use `prog-` prefix to avoid conflicts: `prog-shell`, `prog-header`, `prog-cards`, `prog-table`, `prog-bar`, `prog-badge`, `prog-filter`, etc.
+
+#### Grade Status Mapping
+
+| Status | Meaning | Counted as Passed | Counted as Submitted |
+|--------|---------|-------------------|---------------------|
+| Pass | Scale value matches 'Pass' | Yes | Yes |
+| Refer | Grade > 0 but not Pass | No | Yes |
+| Pending Grading | Submitted, awaiting grade | No | Yes |
+| Submitted | Draft status | No | No |
+| Not Submitted | No submission | No | No |
+
+---
+
+## Project Documentation Files
+
+The repository contains documentation files that track known issues, planned features, and development context:
+
+### `issues.md` (root level)
+
+**Path:** `/issues.md`
+**Purpose:** Comprehensive diagnostics document tracking 13 known issues across the platform.
+
+| Issue # | Title | Severity | Status |
+|---------|-------|----------|--------|
+| #0 | PDF Not Generated When Grading | CRITICAL | Partially fixed |
+| #1 | Learners Blocked From Submitting | HIGH | Diagnosed |
+| #2 | assignrelative Global Date Clobbering | CRITICAL | Diagnosed |
+| #3 | 424 Enrollments With timestart=0 | MEDIUM | Diagnosed |
+| #4 | 41 Suspended Users | LOW | Noted |
+| #5 | overrides_cron.php Conflicting Deadlines | HIGH | Diagnosed |
+| #6 | process.php No Authentication | CRITICAL (security) | Diagnosed |
+| #7 | SQL Injection Vulnerabilities | CRITICAL (security) | Diagnosed |
+| #8 | Hardcoded Table Prefixes (mdl_) | MEDIUM | Diagnosed |
+| #9 | usergrade.php No Capability Check | HIGH (security) | Diagnosed |
+| #10 | 365-Day Enrollment Expiration | MEDIUM | Diagnosed |
+| #11 | kopere_dashboard Wildcard Observer | LOW | Noted |
+| #12 | Feedback Session Flag | MEDIUM | Diagnosed |
+| #13 | Production Server Limitations | HIGH | Noted |
+
+Also includes database statistics (assignments, overrides, enrollments, suspended users).
+
+### `local/learner/features.md`
+
+**Path:** `/local/learner/features.md`
+**Purpose:** Planned feature — Tutor-Learner Assignment during registration.
+
+Covers 5 implementation steps:
+1. Add tutor assignment dropdown to learner registration (`users.php`)
+2. Fix hardcoded tutor dropdown in reassign page (`reassign.php`)
+3. Filter main learner list by tutor for tutor role (`view.php`)
+4. Add tutor column to learner list for managers
+5. Grant tutors sidebar navigation access
+
+**Current status:** Partially implemented. Steps 4-5 are done in `local/learnerprogression` (tutor column for admin, sidebar nav). Steps 1-3 remain pending for `local/learner`.
+
+---
+
 ## Critical SQL Patterns for Dashboard Grading Queries
 
 All grading/marking queries across `tutordash.php`, `markallocation.php`, `admindash.php`, and `admindashboard/index.php` **must** follow these rules. Failure to follow any of these causes dashboard count mismatches.
@@ -904,3 +1105,17 @@ When modifying grading/marking queries, these files must all be updated together
 | `~/markallocation.php` | `public_html/local/learner/markallocation.php` |
 | `~/admindash.php` | `public_html/local/learner/admindash.php` |
 | `~/admindashboard_index.php` | `public_html/local/admindashboard/index.php` (rename to `index.php`) |
+
+When modifying sidebar navigation, update:
+
+| File | What to change |
+|------|---------------|
+| `theme/alpha/classes/output/core_renderer.php` | Hardcoded sidebar links in `mainsidebarmenu()` — this is the ONLY file that affects the production sidebar |
+| `local/learnerprogression/lib.php` | Standard Moodle nav hook — only works with non-Alpha themes |
+| `local/learner/lib.php` | Standard Moodle nav hook — only works with non-Alpha themes |
+
+### Git Repository
+
+**Remote:** `https://github.com/Integer-Training/moodlebackup.git` (branch: `main`)
+
+All custom plugin code, themes, and documentation are tracked in this repository. Deploy by uploading changed files to Hostinger File Manager.

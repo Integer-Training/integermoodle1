@@ -1407,6 +1407,13 @@ class core_renderer extends \core_renderer {
                                 <span class="rui-sidebar-nav-text">Admin Dashboard</span>
                             </a>
                         </li>';
+                $prog_link = new moodle_url('/local/learnerprogression/index.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$prog_link.'" id="itemProgression" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+                                <span class="rui-sidebar-nav-text">Learner Progressions</span>
+                            </a>
+                        </li>';
                 $tutor_link = new moodle_url('/local/learner/tutor.php', array('contextid' => 1));
                 $mark_history = new moodle_url('/local/tutors/view.php', array('contextid' => 1));
                 $reassign_link = new moodle_url('/local/tutors/reassign.php', array('contextid' => 1));
@@ -1513,7 +1520,23 @@ class core_renderer extends \core_renderer {
                             </a>
                         </li>';
             }
-            
+            // Learner Progressions for tutors (teacher role) — admins already have it above.
+            if (!is_siteadmin($USER)) {
+                $teacher_role_rec = $DB->get_record('role', ['shortname' => 'teacher']);
+                if ($teacher_role_rec && $DB->record_exists('role_assignments', [
+                    'roleid' => $teacher_role_rec->id,
+                    'userid' => $USER->id,
+                ])) {
+                    $prog_link = new moodle_url('/local/learnerprogression/index.php');
+                    $html .= '<li class="rui-sidebar-nav-item">
+                                <a href="'.$prog_link.'" id="itemProgression" class="rui-sidebar-nav-item-link">
+                                    <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+                                    <span class="rui-sidebar-nav-text">Learner Progressions</span>
+                                </a>
+                            </li>';
+                }
+            }
+
             return $html;
         }
     }

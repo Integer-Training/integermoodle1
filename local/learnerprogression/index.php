@@ -112,6 +112,35 @@ if (!$is_manager && !$is_tutor) {
     throw new moodle_exception('nopermission', 'error', '', null, 'You do not have permission to view this page.');
 }
 
+// ===== TUTOR LOOKUP (manager only) =====
+$learner_tutors = []; // userid => tutor fullname
+$tutor_list = [];     // unique tutor names for filter dropdown
+if ($is_manager && !empty($learner_ids)) {
+    list($lid_sql, $lid_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'lid');
+    $tutor_rows = $DB->get_records_sql(
+        "SELECT DISTINCT gm_s.userid AS learnerid,
+                CONCAT(tu.firstname, ' ', tu.lastname) AS tutorname
+         FROM {groups_members} gm_s
+         JOIN {groups} g ON g.id = gm_s.groupid
+         JOIN {groups_members} gm_t ON gm_t.groupid = g.id AND gm_t.userid <> gm_s.userid
+         JOIN {role_assignments} ra ON ra.userid = gm_t.userid
+         JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50 AND ctx.instanceid = g.courseid
+         JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'teacher'
+         JOIN {user} tu ON tu.id = gm_t.userid AND tu.suspended = 0 AND tu.deleted = 0
+         WHERE gm_s.userid {$lid_sql}",
+        $lid_params
+    );
+    $tutor_names_set = [];
+    foreach ($tutor_rows as $tr) {
+        $learner_tutors[(int) $tr->learnerid] = $tr->tutorname;
+        $tutor_names_set[$tr->tutorname] = true;
+    }
+    ksort($tutor_names_set);
+    foreach ($tutor_names_set as $name => $v) {
+        $tutor_list[] = ['name' => $name];
+    }
+}
+
 // ===== DATA RETRIEVAL =====
 $templatecontext = [
     'is_manager' => $is_manager,
@@ -122,6 +151,7 @@ $templatecontext = [
     'inactive_count' => 0,
     'created_count' => 0,
     'suspended_count' => $suspended_count,
+    'tutor_list' => $tutor_list,
 ];
 
 if (!empty($learner_ids)) {
@@ -304,10 +334,13 @@ if (!empty($learner_ids)) {
             ];
         }
 
+        $tutor_name = isset($learner_tutors[$uid]) ? $learner_tutors[$uid] : 'Unassigned';
+
         $learners[] = [
             'fullname' => $ld['fullname'],
             'start_date' => $start_date,
             'activity_status' => $activity_status,
+            'tutor_name' => $tutor_name,
             'overall_current' => $overall_current,
             'passed_assignments' => $passed,
             'submitted_assignments' => $ld['total_submitted'],

@@ -39,7 +39,7 @@
         <span class="prog-kpi-icon prog-kpi-icon--learners">
           <i class="bi bi-people-fill"></i>
         </span>
-        <span class="prog-kpi-label">Total Learners</span>
+        <span class="prog-kpi-label">Total Learners (Excl. Suspended)</span>
       </div>
       <div class="prog-kpi-value">{{{total_learners_count}}}</div>
     </div>
@@ -116,6 +116,18 @@
             <option value="76-100">76 – 100%</option>
           </select>
         </div>
+        {{#is_manager}}
+        <div class="prog-filter-group">
+          <label class="prog-filter-label" for="progFilterTutor">Tutor</label>
+          <select id="progFilterTutor" class="prog-filter-select">
+            <option value="">All Tutors</option>
+            {{#tutor_list}}
+            <option value="{{name}}">{{name}}</option>
+            {{/tutor_list}}
+            <option value="Unassigned">Unassigned</option>
+          </select>
+        </div>
+        {{/is_manager}}
         <button id="progFilterReset" class="prog-filter-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset Filters</button>
       </div>
 
@@ -124,6 +136,7 @@
           <tr>
             <th style="width:36px"></th>
             <th>Learner Name</th>
+            {{#is_manager}}<th>Tutor</th>{{/is_manager}}
             <th>Start Date</th>
             <th>Activity</th>
             <th>Current %</th>
@@ -136,6 +149,7 @@
           <tr class="prog-learner-row" data-details="{{detail_json}}">
             <td class="prog-toggle-cell"><span class="prog-toggle-btn"><i class="bi bi-plus-circle"></i></span></td>
             <td class="prog-cell-name">{{{fullname}}}</td>
+            {{#is_manager}}<td class="prog-cell-tutor">{{{tutor_name}}}</td>{{/is_manager}}
             <td class="prog-cell-date">{{{start_date}}}</td>
             <td class="prog-cell-activity">{{{activity_status}}}</td>
             <td>
@@ -173,6 +187,14 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
+    // ===== COLUMN INDEX DETECTION =====
+    // Admin view has Tutor column; tutor view does not.
+    var hasTutorCol = $('#progTable thead th').length > 7;
+    var COL_TUTOR    = hasTutorCol ? 2 : -1;
+    var COL_DATE     = hasTutorCol ? 3 : 2;
+    var COL_ACTIVITY = hasTutorCol ? 4 : 3;
+    var COL_CURRENT  = hasTutorCol ? 5 : 4;
+
     // ===== DATATABLES =====
     var progTable = $('#progTable').DataTable({
         dom: 'Blfrtip',
@@ -183,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ],
         language: { emptyTable: 'No learners found' },
         pageLength: 25,
-        order: [[4, 'desc']],
+        order: [[COL_CURRENT, 'desc']],
         columnDefs: [{ orderable: false, targets: 0 }],
         // Render Activity column as badge
         createdRow: function(row, data, dataIndex) {
@@ -201,34 +223,43 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ===== CUSTOM FILTERS =====
 
-    // Activity status filter (column 3).
+    // Activity status filter.
     $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
         if (settings.nTable.id !== 'progTable') return true;
         var filterVal = $('#progFilterActivity').val();
         if (!filterVal) return true;
-        var cellVal = $.trim(data[3]);
-        return cellVal === filterVal;
+        return $.trim(data[COL_ACTIVITY]) === filterVal;
     });
 
-    // Progression range filter (column 4 = Current %).
+    // Progression range filter (Current %).
     $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
         if (settings.nTable.id !== 'progTable') return true;
         var filterVal = $('#progFilterProgress').val();
         if (!filterVal) return true;
-        var pct = parseInt(data[4], 10) || 0;
+        var pct = parseInt(data[COL_CURRENT], 10) || 0;
         var parts = filterVal.split('-');
         var lo = parseInt(parts[0], 10);
         var hi = parseInt(parts[1], 10);
         return pct >= lo && pct <= hi;
     });
 
+    // Tutor filter (admin only).
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (settings.nTable.id !== 'progTable') return true;
+        if (COL_TUTOR < 0) return true; // No tutor column (tutor view).
+        var filterVal = $('#progFilterTutor').val();
+        if (!filterVal) return true;
+        return $.trim(data[COL_TUTOR]) === filterVal;
+    });
+
     // Wire up filter controls.
-    $('#progFilterActivity, #progFilterProgress').on('change', function() {
+    $('#progFilterActivity, #progFilterProgress, #progFilterTutor').on('change', function() {
         progTable.draw();
     });
     $('#progFilterReset').on('click', function() {
         $('#progFilterActivity').val('');
         $('#progFilterProgress').val('');
+        $('#progFilterTutor').val('');
         progTable.draw();
     });
 
@@ -554,6 +585,11 @@ document.addEventListener('DOMContentLoaded', function() {
 .prog-cell-name {
     font-weight: 600;
     color: #1a2238;
+}
+.prog-cell-tutor {
+    font-size: 13px;
+    color: #374151;
+    white-space: nowrap;
 }
 .prog-cell-date {
     font-size: 12px !important;

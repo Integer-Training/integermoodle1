@@ -34,8 +34,9 @@ function local_learnerprogression_extend_navigation(global_navigation $nav) {
 
     $context = context_system::instance();
 
-    // Managers: have the capability.
-    $show = has_capability('local/learnerprogression:view', $context);
+    // Managers: check both plugin capability and existing learner:view.
+    $show = has_capability('local/learnerprogression:view', $context)
+         || has_capability('local/learner:view', $context);
 
     // Tutors: teacher role assignment.
     if (!$show) {
