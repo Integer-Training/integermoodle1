@@ -45,5 +45,17 @@ function xmldb_local_sitebackup_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026020102, 'local', 'sitebackup');
     }
 
+    if ($oldversion < 2026020200) {
+        // Add progress_step column for live progress tracking.
+        $table = new xmldb_table('local_sitebackup_logs');
+        $field = new xmldb_field('progress_step', XMLDB_TYPE_CHAR, '100', null, null, null, null, 'contents');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_plugin_savepoint(true, 2026020200, 'local', 'sitebackup');
+    }
+
     return true;
 }

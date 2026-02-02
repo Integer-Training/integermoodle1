@@ -22,6 +22,9 @@ defined('MOODLE_INTERNAL') || die();
  * Core backup orchestrator.
  * Creates database dumps, zips themes/plugins/config/moodledata, bundles into a master ZIP,
  * uploads to Google Drive, and logs the result.
+ *
+ * Progress is tracked via the progress_step column in local_sitebackup_logs,
+ * polled by progress.php for a live UI.
  */
 class backup_manager {
 
@@ -40,9 +43,10 @@ class backup_manager {
     /**
      * Run a full backup.
      * @param bool $skipdrive If true, skip Google Drive upload (local only)
+     * @param int  $existinglogid If >0, reuse this pre-created log record instead of creating a new one
      * @return bool True on success
      */
-    public function run(bool $skipdrive = false): bool {
+    public function run(bool $skipdrive = false, int $existinglogid = 0): bool {
         global $DB, $CFG;
 
         // Ensure logs table exists (handles edge case where install.xml didn't run).
@@ -57,6 +61,7 @@ class backup_manager {
             $table->add_field('status', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, 'in_progress');
             $table->add_field('error_message', XMLDB_TYPE_TEXT, null, null, null, null, null);
             $table->add_field('contents', XMLDB_TYPE_TEXT, null, null, null, null, null);
+            $table->add_field('progress_step', XMLDB_TYPE_CHAR, '100', null, null, null, null);
             $table->add_field('duration', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
             $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
             $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
@@ -69,14 +74,27 @@ class backup_manager {
         $this->timestamp = date('Y-m-d_H-i-s');
         $filename = 'sitebackup_' . $this->timestamp . '.zip';
 
-        // Create log record.
-        $this->logid = $DB->insert_record('local_sitebackup_logs', (object) [
-            'filename'    => $filename,
-            'filesize'    => 0,
-            'status'      => 'in_progress',
-            'contents'    => '',
-            'timecreated' => $start,
-        ]);
+        // Reuse existing log record (from ad-hoc task queue) or create a new one.
+        if ($existinglogid > 0 && $DB->record_exists('local_sitebackup_logs', ['id' => $existinglogid])) {
+            $this->logid = $existinglogid;
+            $existinglog = $DB->get_record('local_sitebackup_logs', ['id' => $existinglogid]);
+            $filename = $existinglog->filename;
+            $start = (int) $existinglog->timecreated;
+            $DB->update_record('local_sitebackup_logs', (object) [
+                'id'            => $this->logid,
+                'status'        => 'in_progress',
+                'progress_step' => 'Starting backup...',
+            ]);
+        } else {
+            $this->logid = $DB->insert_record('local_sitebackup_logs', (object) [
+                'filename'      => $filename,
+                'filesize'      => 0,
+                'status'        => 'in_progress',
+                'progress_step' => 'Starting backup...',
+                'contents'      => '',
+                'timecreated'   => $start,
+            ]);
+        }
 
         try {
             // Create temp directory.
@@ -88,6 +106,7 @@ class backup_manager {
 
             // Step 1: Database dump.
             if (get_config('local_sitebackup', 'include_database') !== '0') {
+                $this->update_progress('Dumping database...');
                 $this->dump_database();
                 $this->contents[] = 'database';
             }
@@ -95,6 +114,7 @@ class backup_manager {
 
             // Step 2: Themes.
             if (get_config('local_sitebackup', 'include_themes') !== '0') {
+                $this->update_progress('Zipping themes...');
                 $this->zip_themes();
                 $this->contents[] = 'themes';
             }
@@ -102,6 +122,7 @@ class backup_manager {
 
             // Step 3: Local plugins.
             if (get_config('local_sitebackup', 'include_plugins') !== '0') {
+                $this->update_progress('Zipping plugins...');
                 $this->zip_plugins();
                 $this->contents[] = 'plugins';
             }
@@ -109,6 +130,7 @@ class backup_manager {
 
             // Step 4: Config.
             if (get_config('local_sitebackup', 'include_config') !== '0') {
+                $this->update_progress('Copying config...');
                 $this->copy_config();
                 $this->contents[] = 'config';
             }
@@ -116,17 +138,20 @@ class backup_manager {
 
             // Step 5: Moodledata (uploaded files).
             if (get_config('local_sitebackup', 'include_moodledata') === '1') {
+                $this->update_progress('Zipping uploaded files (this may take a while)...');
                 $this->zip_moodledata();
                 $this->contents[] = 'moodledata';
             }
             $this->db_keepalive();
 
             // Step 6: Bundle everything into master ZIP.
+            $this->update_progress('Creating master ZIP...');
             $masterzip = $CFG->dataroot . '/temp/' . $filename;
             $this->create_master_zip($masterzip);
             $this->db_keepalive();
 
             // Step 7: Move master ZIP to permanent local storage.
+            $this->update_progress('Saving backup file...');
             $storagedir = $CFG->dataroot . '/sitebackup';
             if (!is_dir($storagedir)) {
                 mkdir($storagedir, 0777, true);
@@ -139,6 +164,7 @@ class backup_manager {
             $driveid = '';
             $drivelink = '';
             if (!$skipdrive && google_drive::is_connected()) {
+                $this->update_progress('Uploading to Google Drive...');
                 $this->db_keepalive();
                 $result = google_drive::upload_file($localpath, $filename);
                 $driveid = $result['id'];
@@ -157,6 +183,7 @@ class backup_manager {
                 'drive_file_id' => $driveid,
                 'drive_link'    => $drivelink,
                 'status'        => 'success',
+                'progress_step' => 'Backup complete',
                 'contents'      => json_encode($this->contents),
                 'duration'      => $duration,
             ]);
@@ -174,6 +201,7 @@ class backup_manager {
                 $DB->update_record('local_sitebackup_logs', (object) [
                     'id'            => $this->logid,
                     'status'        => 'failed',
+                    'progress_step' => 'Failed: ' . substr($e->getMessage(), 0, 80),
                     'error_message' => $e->getMessage(),
                     'contents'      => json_encode($this->contents),
                     'duration'      => $duration,
@@ -188,6 +216,19 @@ class backup_manager {
 
             // Re-throw so the caller gets the actual error details.
             throw $e;
+        }
+    }
+
+    /**
+     * Update the progress_step in the log record so the UI can poll it.
+     * @param string $step Current step description
+     */
+    private function update_progress(string $step): void {
+        global $DB;
+        try {
+            $DB->set_field('local_sitebackup_logs', 'progress_step', $step, ['id' => $this->logid]);
+        } catch (\Exception $e) {
+            // Non-fatal — progress display is cosmetic.
         }
     }
 
@@ -254,7 +295,8 @@ class backup_manager {
 
     /**
      * PHP-based SQL dump as fallback when mysqldump is not available.
-     * Exports all tables as CREATE TABLE + INSERT statements.
+     * Exports all tables as CREATE TABLE + batch INSERT statements.
+     * Includes DB keepalive every 50 tables to prevent connection timeout.
      * @param string $dumpfile Output file path
      */
     private function php_dump(string $dumpfile): void {
@@ -275,13 +317,23 @@ class backup_manager {
         // Get all tables.
         $tables = $DB->get_records_sql("SHOW TABLES");
         $dbname = $CFG->dbname;
-
-        // SHOW TABLES returns rows with a column named 'Tables_in_{dbname}'.
-        $colname = 'tables_in_' . strtolower($dbname);
+        $tablecount = count($tables);
+        $tableidx = 0;
 
         foreach ($tables as $row) {
             $rowarray = (array) $row;
             $table = reset($rowarray);
+            $tableidx++;
+
+            // Update progress every 20 tables.
+            if ($tableidx % 20 === 0 || $tableidx === 1) {
+                $this->update_progress("Dumping database ({$tableidx}/{$tablecount} tables)...");
+            }
+
+            // Keepalive every 50 tables to prevent MySQL timeout.
+            if ($tableidx % 50 === 0) {
+                $this->db_keepalive();
+            }
 
             // Get CREATE TABLE statement.
             $create = $DB->get_record_sql("SHOW CREATE TABLE `{$table}`");
@@ -291,7 +343,7 @@ class backup_manager {
             fwrite($handle, "DROP TABLE IF EXISTS `{$table}`;\n");
             fwrite($handle, $createstmt . ";\n\n");
 
-            // Export data in batches.
+            // Export data in batches with multi-row INSERTs.
             $offset = 0;
             $batchsize = 1000;
 
@@ -304,6 +356,8 @@ class backup_manager {
                     break;
                 }
 
+                // Build multi-row INSERT (much faster than 1 per row).
+                $valuechunks = [];
                 foreach ($rows as $datarow) {
                     $values = [];
                     foreach ((array) $datarow as $value) {
@@ -313,10 +367,18 @@ class backup_manager {
                             $values[] = "'" . addslashes((string) $value) . "'";
                         }
                     }
-                    fwrite($handle, "INSERT INTO `{$table}` VALUES (" . implode(',', $values) . ");\n");
+                    $valuechunks[] = '(' . implode(',', $values) . ')';
                 }
 
+                // Write one INSERT per batch (up to 1000 rows).
+                fwrite($handle, "INSERT INTO `{$table}` VALUES\n" . implode(",\n", $valuechunks) . ";\n");
+
                 $offset += $batchsize;
+
+                // Keepalive every 5000 rows within large tables.
+                if ($offset % 5000 === 0) {
+                    $this->db_keepalive();
+                }
             }
 
             fwrite($handle, "\n");
@@ -341,8 +403,7 @@ class backup_manager {
                 'Cannot create themes.zip');
         }
 
-        // Zip custom themes (non-core). Core themes that ship with Moodle
-        // don't need backing up. We focus on: alpha, adaptable, moove, almondb, nice, stream.
+        // Zip custom themes (non-core).
         $customthemes = ['alpha', 'adaptable', 'moove', 'almondb', 'nice', 'stream'];
         foreach ($customthemes as $theme) {
             $path = $themedir . '/' . $theme;
@@ -490,7 +551,6 @@ class backup_manager {
     /**
      * Send a lightweight query to keep the MySQL connection alive.
      * Shared hosting often has short wait_timeout (30–60s).
-     * This prevents "MySQL server has gone away" during long file operations.
      */
     private function db_keepalive(): void {
         global $DB;
@@ -498,12 +558,11 @@ class backup_manager {
             $DB->count_records_sql("SELECT 1");
         } catch (\Exception $e) {
             // Connection already lost — nothing to do here.
-            // The keepalive calls between steps prevent this from happening.
         }
     }
 
     /**
-     * Clean up temp directory and optionally the master ZIP.
+     * Clean up temp directory.
      * @param string|null $masterzip Path to master ZIP to remove
      */
     private function cleanup(?string $masterzip = null): void {

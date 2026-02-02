@@ -25,40 +25,40 @@ require_capability('local/sitebackup:manage', $context);
 // Handle actions.
 $action = optional_param('action', '', PARAM_ALPHA);
 
-// Run backup now.
+// Run backup now — queue as ad-hoc task so it runs in the background via cron.
 if ($action === 'backup' && confirm_sesskey()) {
     $skipdrive = optional_param('skipdrive', 0, PARAM_INT);
-    try {
-        $manager = new \local_sitebackup\backup_manager();
-        $success = $manager->run((bool) $skipdrive);
 
-        if ($success) {
-            redirect(
-                new moodle_url('/local/sitebackup/view.php'),
-                get_string('backupcomplete', 'local_sitebackup'),
-                null,
-                \core\output\notification::NOTIFY_SUCCESS
-            );
-        } else {
-            redirect(
-                new moodle_url('/local/sitebackup/view.php'),
-                get_string('backupfailed', 'local_sitebackup'),
-                null,
-                \core\output\notification::NOTIFY_ERROR
-            );
-        }
-    } catch (\Exception $e) {
-        $errmsg = 'Backup error: ' . $e->getMessage();
-        if (!empty($e->debuginfo)) {
-            $errmsg .= ' — Detail: ' . $e->debuginfo;
-        }
-        redirect(
-            new moodle_url('/local/sitebackup/view.php'),
-            $errmsg,
-            null,
-            \core\output\notification::NOTIFY_ERROR
-        );
-    }
+    // Create the log record immediately so we can redirect to progress page.
+    $start = time();
+    $timestamp = date('Y-m-d_H-i-s');
+    $filename = 'sitebackup_' . $timestamp . '.zip';
+    $logid = $DB->insert_record('local_sitebackup_logs', (object) [
+        'filename'      => $filename,
+        'filesize'      => 0,
+        'status'        => 'queued',
+        'progress_step' => 'Queued — waiting for cron to pick up...',
+        'contents'      => '',
+        'timecreated'   => $start,
+    ]);
+
+    // Queue the ad-hoc task.
+    $task = new \local_sitebackup\task\run_backup();
+    $task->set_custom_data((object) [
+        'skipdrive' => (bool) $skipdrive,
+        'logid'     => $logid,
+    ]);
+    \core\task\manager::queue_adhoc_task($task);
+
+    // Trigger cron in the background so the task starts immediately.
+    // This is fire-and-forget — if it fails, cron will pick it up on next scheduled run.
+    $cronurl = $CFG->wwwroot . '/admin/cron.php';
+    @file_get_contents($cronurl, false, stream_context_create([
+        'http' => ['timeout' => 1, 'method' => 'GET'],
+    ]));
+
+    // Redirect to progress page immediately — no waiting.
+    redirect(new moodle_url('/local/sitebackup/progress.php', ['id' => $logid]));
 }
 
 // Disconnect Google Drive.
@@ -138,10 +138,10 @@ if ($node = $PAGE->navigation->find('local_sitebackup', navigation_node::TYPE_CU
 $driveconnected = \local_sitebackup\google_drive::is_connected();
 $driveconfigured = \local_sitebackup\google_drive::is_configured();
 
-// Auto-fail stale backups that have been "in_progress" for over 30 minutes.
-$staletime = time() - 1800;
+// Auto-fail stale backups that have been "in_progress" or "queued" for over 2 hours.
+$staletime = time() - 7200;
 $stalebackups = $DB->get_records_select('local_sitebackup_logs',
-    "status = 'in_progress' AND timecreated < ?", [$staletime]);
+    "(status = 'in_progress' OR status = 'queued') AND timecreated < ?", [$staletime]);
 foreach ($stalebackups as $stale) {
     $DB->update_record('local_sitebackup_logs', (object) [
         'id'            => $stale->id,
@@ -191,6 +191,8 @@ foreach ($logs as $log) {
         $statusclass = 'success';
     } else if ($log->status === 'failed') {
         $statusclass = 'failed';
+    } else if ($log->status === 'queued') {
+        $statusclass = 'progress';
     }
 
     $errorshort = '';

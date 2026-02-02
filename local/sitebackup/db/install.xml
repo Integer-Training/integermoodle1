@@ -13,6 +13,7 @@
         <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="in_progress" SEQUENCE="false"/>
         <FIELD NAME="error_message" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="contents" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="progress_step" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="duration" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
       </FIELDS>

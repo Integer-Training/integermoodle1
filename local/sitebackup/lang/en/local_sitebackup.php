@@ -23,7 +23,7 @@ $string['localbackup'] = 'Local Backup';
 $string['drivebackup'] = 'Backup + Drive';
 $string['confirmbackuplocal'] = 'Run a local backup now? The ZIP will be available for download once complete.';
 $string['confirmbackupdrive'] = 'Run a backup and upload to Google Drive? This may take longer.';
-$string['backuptimedout'] = 'Backup timed out (exceeded 30 minutes). The local ZIP file may still be available for download.';
+$string['backuptimedout'] = 'Backup timed out (exceeded 2 hours). The local ZIP file may still be available for download.';
 $string['backuphistory'] = 'Backup History';
 $string['lastbackup'] = 'Last Backup';
 $string['googledrive'] = 'Google Drive';
@@ -36,6 +36,8 @@ $string['nobackupsyet'] = 'No backups have been created yet.';
 $string['confirmbackup'] = 'Are you sure you want to run a full site backup now? This may take several minutes.';
 $string['confirmdisconnect'] = 'Are you sure you want to disconnect Google Drive? Future backups will not be uploaded.';
 $string['backupstarted'] = 'Backup started successfully.';
+$string['backupqueued'] = 'Backup queued. It will start shortly via cron.';
+$string['backupprogress'] = 'Backup in Progress';
 $string['backupcomplete'] = 'Backup completed successfully.';
 $string['backupfailed'] = 'Backup failed.';
 $string['driveconnected'] = 'Google Drive connected successfully.';
@@ -59,6 +61,7 @@ $string['confirmdelete'] = 'Are you sure you want to delete this backup from Goo
 $string['status_success'] = 'Success';
 $string['status_failed'] = 'Failed';
 $string['status_in_progress'] = 'In Progress';
+$string['status_queued'] = 'Queued';
 
 // Settings.
 $string['settings'] = 'Settings';
