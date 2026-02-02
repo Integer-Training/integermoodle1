@@ -29,9 +29,10 @@
     </div>
   </div>
 
-  <!-- ===== KPI CARDS ===== -->
+  <!-- ===== KPI CARDS (clickable — filter table) ===== -->
   <div class="lv-kpis">
 
+    <a href="#" class="lv-kpi-link" data-filter="">
     <div class="lv-kpi-card">
       <div class="lv-kpi-top">
         <span class="lv-kpi-icon lv-kpi-icon--learners">
@@ -41,7 +42,9 @@
       </div>
       <div class="lv-kpi-value">{{{total_count}}}</div>
     </div>
+    </a>
 
+    <a href="#" class="lv-kpi-link" data-filter="Active">
     <div class="lv-kpi-card lv-kpi-card--green">
       <div class="lv-kpi-top">
         <span class="lv-kpi-icon lv-kpi-icon--active">
@@ -51,7 +54,9 @@
       </div>
       <div class="lv-kpi-value">{{{active_count}}}</div>
     </div>
+    </a>
 
+    <a href="#" class="lv-kpi-link" data-filter="Inactive">
     <div class="lv-kpi-card lv-kpi-card--amber">
       <div class="lv-kpi-top">
         <span class="lv-kpi-icon lv-kpi-icon--inactive">
@@ -61,7 +66,9 @@
       </div>
       <div class="lv-kpi-value">{{{inactive_count}}}</div>
     </div>
+    </a>
 
+    <a href="#" class="lv-kpi-link" data-filter="Created">
     <div class="lv-kpi-card lv-kpi-card--blue">
       <div class="lv-kpi-top">
         <span class="lv-kpi-icon lv-kpi-icon--created">
@@ -71,7 +78,9 @@
       </div>
       <div class="lv-kpi-value">{{{created_count}}}</div>
     </div>
+    </a>
 
+    <a href="#" class="lv-kpi-link" data-filter="Suspended">
     <div class="lv-kpi-card lv-kpi-card--grey">
       <div class="lv-kpi-top">
         <span class="lv-kpi-icon lv-kpi-icon--suspended">
@@ -81,6 +90,7 @@
       </div>
       <div class="lv-kpi-value">{{{suspended_count}}}</div>
     </div>
+    </a>
 
   </div>
 
@@ -244,11 +254,25 @@ document.addEventListener('DOMContentLoaded', function() {
         lvTable.draw();
     });
 
+    // ===== KPI CARD CLICK → FILTER =====
+    $('.lv-kpi-link').on('click', function(e) {
+        e.preventDefault();
+        var filterVal = $(this).data('filter');
+        $('#lvFilterActivity').val(filterVal);
+        $('#lvFilterCourse').val('');
+        lvTable.draw();
+        // Highlight active card.
+        $('.lv-kpi-link').removeClass('lv-kpi-link--active');
+        $(this).addClass('lv-kpi-link--active');
+    });
+
     // ===== URL-BASED FILTER PRESET =====
     var urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('action') === 'inactive') {
         $('#lvFilterActivity').val('Inactive');
         lvTable.draw();
+        // Highlight the inactive card.
+        $('.lv-kpi-link[data-filter="Inactive"]').addClass('lv-kpi-link--active');
     }
 
     // ===== EXPANDABLE CHILD ROWS =====
@@ -450,9 +474,24 @@ document.addEventListener('DOMContentLoaded', function() {
    ========================================================================== */
 .lv-kpis {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(5, 1fr);
     gap: 16px;
     margin-bottom: 24px;
+}
+.lv-kpi-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    transition: transform 0.15s;
+}
+.lv-kpi-link:hover {
+    text-decoration: none;
+    color: inherit;
+    transform: translateY(-3px);
+}
+.lv-kpi-link--active .lv-kpi-card {
+    box-shadow: 0 4px 20px rgba(58,91,160,0.25);
+    border-width: 2px;
 }
 .lv-kpi-card {
     background: #fff;
@@ -461,10 +500,11 @@ document.addEventListener('DOMContentLoaded', function() {
     padding: 20px;
     transition: box-shadow 0.2s, transform 0.15s;
     border-top: 3px solid #3a5ba0;
+    cursor: pointer;
+    height: 100%;
 }
 .lv-kpi-card:hover {
     box-shadow: 0 4px 20px rgba(26,34,56,0.1);
-    transform: translateY(-2px);
 }
 .lv-kpi-card--green { border-top-color: #22c55e; }
 .lv-kpi-card--amber { border-top-color: #f59e0b; }
@@ -553,6 +593,7 @@ document.addEventListener('DOMContentLoaded', function() {
     align-items: flex-end;
     gap: 16px;
     flex-wrap: wrap;
+    flex-direction: row;
     margin-bottom: 20px;
     padding: 16px 20px;
     background: #f8fafc;
@@ -560,9 +601,10 @@ document.addEventListener('DOMContentLoaded', function() {
     border-radius: 8px;
 }
 .lv-filter-group {
-    display: flex;
+    display: inline-flex;
     flex-direction: column;
     gap: 4px;
+    flex: 0 0 auto;
 }
 .lv-filter-label {
     font-size: 11px;
@@ -823,13 +865,26 @@ tr.shown .lv-toggle-btn {
     border-color: #3a5ba0 !important;
 }
 
+/* DataTables search — ensure visible */
+.lv-panel-body .dataTables_filter {
+    display: block !important;
+    float: right;
+    margin-bottom: 12px;
+}
+
 /* ==========================================================================
    RESPONSIVE
    ========================================================================== */
+@media (max-width: 1100px) {
+    .lv-kpis { grid-template-columns: repeat(3, 1fr); }
+}
 @media (max-width: 768px) {
     .lv-header-inner { flex-direction: column; text-align: center; }
-    .lv-kpis { grid-template-columns: 1fr 1fr; }
+    .lv-kpis { grid-template-columns: repeat(2, 1fr); }
     .lv-filter-bar { flex-direction: column; align-items: stretch; }
     .lv-filter-select { min-width: 100%; }
+}
+@media (max-width: 480px) {
+    .lv-kpis { grid-template-columns: 1fr; }
 }
 </style>

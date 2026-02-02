@@ -36,6 +36,8 @@ $PAGE->set_title(get_string('learnermanagement', 'local_learner'));
 $PAGE->requires->jquery();
 $PAGE->requires->js('/local/learner/js/jquery.dataTables.min.js', true);
 $PAGE->requires->css('/local/learner/js/jquery.dataTables.min.css');
+echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">';
+echo '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>';
 
 // ===================================================================
 // QUERY 1: Main learner list — all non-staff users.
