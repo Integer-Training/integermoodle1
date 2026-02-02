@@ -709,14 +709,20 @@ DataTables.js, Vvveb.js (page builder), CodeMirror (code editing), JSZip, Bootst
 
 Full-site backup system with local download and Google Drive upload. Backs up database (all courses, grades, enrollments), themes, local plugins, config.php, and optionally moodledata/filedir.
 
-**Version:** 2026020102 | **Capability:** `local/sitebackup:manage` (manager only, RISK_CONFIG | RISK_DATALOSS)
+**Version:** 2026020201 (2.1.0) | **Capability:** `local/sitebackup:manage` (manager only, RISK_CONFIG | RISK_DATALOSS)
 
-#### Architecture
+#### Architecture (v2.0+)
 
 ```
-User clicks "Local Backup"
-  → view.php creates backup_manager
-  → dump_database() (mysqldump or PHP fallback)
+User clicks "Local Backup" or "Backup + Drive"
+  → view.php creates log record (status=queued)
+  → Queues ad-hoc task (task\run_backup)
+  → Fire-and-forget cron trigger
+  → Redirects to progress.php (live polling UI)
+
+Ad-hoc task (runs via cron, background):
+  → backup_manager->run() with progress tracking
+  → dump_database() (mysqldump or PHP fallback with multi-row INSERTs)
   → zip_themes() (custom themes only)
   → zip_plugins() (all local/ plugins)
   → copy_config() (config.php)
@@ -724,32 +730,51 @@ User clicks "Local Backup"
   → create_master_zip() with manifest.json
   → Move ZIP to $CFG->dataroot/sitebackup/
   → [optional] Upload to Google Drive
-  → Update log record → Redirect with success
+  → Update log record (status=success)
 ```
 
 **Critical: MySQL keepalive** — Hostinger shared hosting has short `wait_timeout`. The `db_keepalive()` method sends `SELECT 1` between every step to prevent "MySQL server has gone away" during long file operations.
+
+**Background execution** — Backups run as ad-hoc tasks via Moodle cron, not in the HTTP request. This prevents browser timeouts and PHP execution limits. Progress is tracked via `progress_step` column polled by `progress.php` every 3 seconds.
 
 #### Database Table
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
-| `local_sitebackup_logs` | Backup run history | `filename`, `filesize`, `drive_file_id`, `drive_link`, `status` (in_progress/success/failed), `error_message`, `contents` (JSON array), `duration`, `timecreated` |
+| `local_sitebackup_logs` | Backup run history | `filename`, `filesize`, `drive_file_id`, `drive_link`, `status` (queued/in_progress/success/failed), `error_message`, `contents` (JSON array), `progress_step`, `duration`, `timecreated` |
 
-#### Entry Points
+#### File Structure
 
-| File | URL | Purpose |
-|------|-----|---------|
-| `view.php` | `/local/sitebackup/view.php` | Dashboard: status cards, backup history, download/delete actions |
-| `authorize.php` | `/local/sitebackup/authorize.php` | Google OAuth callback |
-| `settings.php` | Admin settings | Client ID/secret, folder name, retention, content toggles |
+```
+local/sitebackup/
+├── version.php                        # Plugin metadata (v2.1.0)
+├── view.php                           # Dashboard: queue backup, history, download/delete
+├── progress.php                       # Live progress UI (polls via AJAX) + AJAX endpoint
+├── diagnose.php                       # Google Drive connection diagnostics page
+├── authorize.php                      # Google OAuth 2.0 callback
+├── settings.php                       # Admin settings page
+├── classes/
+│   ├── backup_manager.php             # Core orchestrator with progress tracking
+│   ├── google_drive.php               # Google Drive REST API v3 (Moodle \curl, with fallbacks)
+│   └── task/
+│       ├── run_backup.php             # Ad-hoc task for background backup execution
+│       └── scheduled_backup.php       # Cron task: daily at 2:00 AM
+├── db/
+│   ├── access.php                     # Capability definition
+│   ├── install.xml                    # Table schema (includes progress_step)
+│   └── upgrade.php                    # Migration steps
+├── lang/en/local_sitebackup.php       # Language strings
+└── templates/view.mustache            # Dashboard template
+```
 
 #### Key Classes
 
 | Class | Purpose |
 |-------|---------|
-| `backup_manager` | Core orchestrator: run(), dump_database(), zip_themes/plugins/moodledata(), db_keepalive() |
-| `google_drive` | Google Drive REST API v3: OAuth 2.0, upload, list, delete, retention. Uses `token_request()` with file_get_contents + cURL fallback |
-| `task\scheduled_backup` | Cron task: daily at 2:00 AM |
+| `backup_manager` | Core orchestrator: run(), dump_database() with multi-row INSERTs, zip_themes/plugins/moodledata(), db_keepalive(), update_progress() |
+| `google_drive` | Google Drive REST API v3: OAuth 2.0, upload (multipart + resumable chunked), list, delete, retention. `token_request()` uses Moodle `\curl` class (primary) with raw cURL and file_get_contents fallbacks. Includes `log_debug()` for diagnostic logging. |
+| `task\run_backup` | Ad-hoc task: runs backup_manager in background via cron |
+| `task\scheduled_backup` | Scheduled task: daily at 2:00 AM |
 
 #### Admin Settings
 
@@ -758,14 +783,24 @@ User clicks "Local Backup"
 #### UI Features
 
 - **Two backup buttons**: "Local Backup" (skips Drive, fast) and "Backup + Drive" (only shows when Drive connected)
-- **Stale detection**: Backups stuck "In Progress" > 30 min auto-marked as failed
+- **Live progress page**: Animated spinner, step labels, elapsed timer, progress bar (polls every 3 seconds)
+- **Stale detection**: Backups stuck "In Progress" or "Queued" > 2 hours auto-marked as failed
 - **Local download**: Green download button per log entry when ZIP exists on disk
-- **Auto-create table**: backup_manager checks table exists before first write (handles install edge cases)
+- **Diagnose page**: Tests outbound POST to Google's token endpoint using all 3 HTTP methods (Moodle curl, raw cURL, file_get_contents) to identify WAF/firewall issues
 
-#### Known Issues (see `issues.md`)
+#### Google Drive Integration
 
-1. **Google Drive OAuth**: Token exchange returns "Invalid grant_type:" — likely Hostinger WAF/firewall stripping POST body. Deferred; local download works as workaround.
-2. **Synchronous execution**: Backup runs in the HTTP request, causing browser hangs and MySQL timeouts on large sites. Needs migration to ad-hoc tasks for 2.0.
+**OAuth flow:** `get_auth_url()` → Google consent → callback to `authorize.php` → `exchange_code()` → stores tokens in `config_plugins` table.
+
+**Token management:** `token_request()` sends POST to `https://oauth2.googleapis.com/token` using Moodle's `\curl` class (preferred), with fallbacks to raw cURL and `file_get_contents`. Includes debug logging via `log_debug()` (visible in cron output and Moodle debug log).
+
+**Folder management:** `get_or_create_folder()` auto-creates a Drive folder named from the `drive_folder_name` setting (default: "Moodle-Backups"). Folder ID is cached in `google_drive_folder_id` config. Verified on each use (checks if folder still exists and isn't trashed).
+
+**Upload:** Files < 5MB use multipart upload; larger files use resumable chunked upload (5MB chunks). Resumable upload uses raw cURL for chunk management.
+
+**Retention:** `apply_retention()` deletes oldest files beyond `retention_count` after each upload.
+
+**Known issue:** Hostinger WAF may strip POST bodies to `oauth2.googleapis.com/token`. The fix in v2.1.0 uses Moodle's `\curl` class which may route differently. Use `diagnose.php` to test which methods work on your hosting. If all methods fail, contact hosting provider to whitelist outbound POST to `oauth2.googleapis.com`.
 
 #### Design System
 

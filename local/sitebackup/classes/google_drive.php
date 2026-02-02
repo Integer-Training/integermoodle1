@@ -108,8 +108,12 @@ class google_drive {
         $data = json_decode($response, true);
         if (empty($data['access_token'])) {
             $error = $data['error_description'] ?? $data['error'] ?? 'Unknown error';
-            $raw = substr($response, 0, 200);
-            throw new \Exception($error . ' [Raw: ' . $raw . ']');
+            $raw = substr($response, 0, 500);
+            self::log_debug("exchange_code FAILED: error={$error}, raw={$raw}");
+            throw new \Exception("Google Drive auth failed: {$error}. "
+                . "If error mentions 'Invalid grant_type:', your hosting firewall may be "
+                . "stripping POST request bodies. Contact your hosting provider to whitelist "
+                . "outbound POST requests to oauth2.googleapis.com.");
         }
 
         set_config('google_access_token', $data['access_token'], 'local_sitebackup');
@@ -175,7 +179,9 @@ class google_drive {
         $data = json_decode($response, true);
         if (empty($data['access_token'])) {
             $error = $data['error_description'] ?? $data['error'] ?? 'Token refresh failed';
-            throw new \Exception($error);
+            $raw = substr($response, 0, 500);
+            self::log_debug("refresh_token FAILED: error={$error}, raw={$raw}");
+            throw new \Exception("Token refresh failed: {$error}");
         }
 
         set_config('google_access_token', $data['access_token'], 'local_sitebackup');
@@ -431,20 +437,74 @@ class google_drive {
 
     /**
      * Make a POST request to Google's token endpoint.
-     * Tries multiple methods to handle different server configurations.
+     * Uses Moodle's \curl class which respects proxy settings and may bypass WAF restrictions
+     * that strip POST bodies from raw PHP file_get_contents/curl calls.
+     *
+     * Falls back to raw cURL and file_get_contents if Moodle curl fails.
+     *
      * @param array $params POST parameters
      * @return string Raw response body
      */
     private static function token_request(array $params): string {
-        $body = '';
-        foreach ($params as $key => $value) {
-            if ($body !== '') {
-                $body .= '&';
+        $body = http_build_query($params, '', '&');
+
+        // Method 1: Moodle's \curl class (preferred — respects proxy, may bypass WAF).
+        try {
+            $curl = new \curl();
+            $curl->setHeader([
+                'Content-Type: application/x-www-form-urlencoded',
+                'Content-Length: ' . strlen($body),
+            ]);
+            $options = [
+                'CURLOPT_TIMEOUT' => 30,
+                'CURLOPT_RETURNTRANSFER' => true,
+            ];
+            $response = $curl->post(self::TOKEN_URL, $body, $options);
+            $info = $curl->get_info();
+            $httpcode = $info['http_code'] ?? 0;
+            $curlerror = $curl->error;
+
+            // Log diagnostic info for debugging.
+            self::log_debug("token_request [Moodle curl] HTTP {$httpcode}, "
+                . "response length=" . strlen($response)
+                . ", error=" . ($curlerror ?: 'none'));
+
+            if ($response !== false && !empty($response)) {
+                return $response;
             }
-            $body .= rawurlencode($key) . '=' . rawurlencode($value);
+        } catch (\Exception $e) {
+            self::log_debug("token_request [Moodle curl] exception: " . $e->getMessage());
         }
 
-        // Method 1: PHP stream context (most reliable on shared hosting).
+        // Method 2: Raw cURL with explicit settings (fallback).
+        if (function_exists('curl_init')) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, self::TOKEN_URL);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/x-www-form-urlencoded',
+                'Content-Length: ' . strlen($body),
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            $response = curl_exec($ch);
+            $error = curl_error($ch);
+            $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            self::log_debug("token_request [raw cURL] HTTP {$httpcode}, "
+                . "response length=" . strlen($response ?: '')
+                . ", error=" . ($error ?: 'none'));
+
+            if ($response !== false && !empty($response)) {
+                return $response;
+            }
+            throw new \Exception('cURL error: ' . $error);
+        }
+
+        // Method 3: PHP stream context (last resort).
         if (ini_get('allow_url_fopen')) {
             $context = stream_context_create([
                 'http' => [
@@ -460,35 +520,29 @@ class google_drive {
                 ],
             ]);
             $response = @file_get_contents(self::TOKEN_URL, false, $context);
+
+            self::log_debug("token_request [file_get_contents] "
+                . "response=" . ($response !== false ? 'ok (len=' . strlen($response) . ')' : 'false'));
+
             if ($response !== false) {
                 return $response;
             }
         }
 
-        // Method 2: Raw cURL with explicit settings.
-        if (function_exists('curl_init')) {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, self::TOKEN_URL);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/x-www-form-urlencoded',
-                'Content-Length: ' . strlen($body),
-            ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-            $response = curl_exec($ch);
-            $error = curl_error($ch);
-            curl_close($ch);
+        throw new \Exception('All HTTP methods failed for Google token request. '
+            . 'Check server firewall/WAF settings for outbound POST to ' . self::TOKEN_URL);
+    }
 
-            if ($response !== false) {
-                return $response;
-            }
-            throw new \Exception('cURL error: ' . $error);
+    /**
+     * Log a debug message — visible in cron output (mtrace) and Moodle debug log.
+     * @param string $message
+     */
+    private static function log_debug(string $message): void {
+        $msg = '[local_sitebackup/google_drive] ' . $message;
+        if (defined('CLI_SCRIPT') && CLI_SCRIPT) {
+            mtrace($msg);
         }
-
-        throw new \Exception('No HTTP client available (cURL and file_get_contents both unavailable)');
+        debugging($msg, DEBUG_DEVELOPER);
     }
 
     /**

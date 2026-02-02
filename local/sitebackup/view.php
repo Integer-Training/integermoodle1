@@ -239,6 +239,7 @@ $templatecontext = [
     'logs'               => $logdata,
     'settings_url'       => (new moodle_url('/admin/settings.php',
         ['section' => 'local_sitebackup']))->out(false),
+    'diagnose_url'       => (new moodle_url('/local/sitebackup/diagnose.php'))->out(false),
     'connect_url'        => $driveconfigured ? \local_sitebackup\google_drive::get_auth_url() : '',
     'disconnect_url'     => (new moodle_url('/local/sitebackup/view.php',
         ['action' => 'disconnect', 'sesskey' => sesskey()]))->out(false),
