@@ -15,493 +15,330 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * phpcs:disable moodle.Files.RequireLogin.Missing
+ * Tutor Dashboard — caseload stats, grading pipeline, learner activity.
  *
- * index file
- *
- * introduced 23/05/17 17:59
+ * Shows distinct learner counts (not per-course duplicates), grading
+ * pipeline stats, pass rate, and per-course caseload breakdown.
  *
  * @package   local_learner
- * @copyright 2025
+ * @copyright 2025 Epearl Academy
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require_once('../../config.php');
 require_login();
-$defaultpage = get_default_home_page();
+
 $context = context_system::instance();
-//
+
 $PAGE->set_url(new moodle_url('/local/learner/tutordash.php'));
 $PAGE->set_context($context);
-$PAGE->set_title('Dashboard');
-//
+$PAGE->set_title('Tutor Dashboard');
+
 $PAGE->requires->jquery();
-//
-echo '<!-- Bootstrap 5 -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
+
+echo '<!-- Bootstrap Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">';
 echo '<script src="https://code.highcharts.com/highcharts.js"></script>
-<script src="https://code.highcharts.com/modules/data.js"></script>
-<script src="https://code.highcharts.com/modules/drilldown.js"></script>
 <script src="https://code.highcharts.com/modules/exporting.js"></script>
-<script src="https://code.highcharts.com/modules/export-data.js"></script>
-<script src="https://code.highcharts.com/modules/accessibility.js"></script>
-<script src="https://code.highcharts.com/themes/adaptive.js"></script>';
+<script src="https://code.highcharts.com/modules/accessibility.js"></script>';
+
 echo $OUTPUT->header();
 
-$templatecontext['mycourse_link'] = new moodle_url('/my/courses.php');
-//teachers list
-//get teachers list hers
-$userid = $USER->id; // user ID you want
-$courses = enrol_get_users_courses($userid);
-$templatecontext['enrolled_courses'] = count($courses);
-//their students
-/*$sql = "SELECT s.id AS studentid,
-		    c.id AS courseid,
-		    c.fullname AS coursename,
-		    g.id AS groupid,
-		    g.name AS groupname,
-		    CONCAT(s.firstname, ' ', s.lastname) AS studentname,
-		    s.email
-		FROM mdl_groups_members gm_teacher
-		JOIN mdl_groups g ON g.id = gm_teacher.groupid
-		JOIN mdl_course c ON c.id = g.courseid
-
-		-- teacher
-		JOIN mdl_user t ON t.id = ".$USER->id."
-
-		-- students in SAME group
-		JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
-		JOIN mdl_user s ON s.id = gm_students.userid
-
-		-- student role check
-		JOIN mdl_role_assignments ra ON ra.userid = s.id
-		JOIN mdl_context ctx ON ctx.id = ra.contextid
-		JOIN mdl_role r ON r.id = ra.roleid
-
-		WHERE
-		    gm_teacher.userid = ".$USER->id."
-		    AND ctx.contextlevel = 50
-		    AND ctx.instanceid = c.id
-		    AND r.shortname = 'student'
-
-		ORDER BY c.fullname, g.name, s.firstname";
-$your_learners = $DB->get_records_sql($sql);
-$templatecontext['your_learners'] = count($your_learners);*/
-//start
-$allcourses = array();
-foreach ($courses as $course) {
-  $allcourses[] = $course->id;
-}
 $prefix = $CFG->prefix;
-$assign_ments = $DB->get_records_sql('select * from {assign} where course in('.implode(',',$allcourses).')');
-$all_assigns = array();
-foreach($assign_ments as $assign){
-    $row = array();
-    //$row[] = $assign->id;
-    $all_assigns[] = $assign->id;
-} 
-//
-$templatecontext['total_assignments'] = count($assign_ments);
-//ends
-//
-// Awaiting Marking — same logic as original (grade matched by userid only).
-// Also filters out invisible course modules and suspended/deleted users to match markallocation.php display.
-$mark_sql = "SELECT
-			    COUNT(DISTINCT sub.id) AS total_notgraded
-			FROM {$prefix}groups_members gm_t
-			JOIN {$prefix}groups g
-			    ON g.id = gm_t.groupid
-			JOIN {$prefix}groups_members gm_s
-			    ON gm_s.groupid = g.id
-			    AND gm_s.userid <> gm_t.userid
-			JOIN {$prefix}role_assignments ra
-			    ON ra.userid = gm_s.userid
-			JOIN {$prefix}context ctx
-			    ON ctx.id = ra.contextid
-			    AND ctx.contextlevel = 50
-			    AND ctx.instanceid = g.courseid
-			JOIN {$prefix}role r
-			    ON r.id = ra.roleid
-			    AND r.shortname = 'student'
-			JOIN {$prefix}user u
-			    ON u.id = gm_s.userid
-			    AND u.suspended = 0
-			    AND u.deleted = 0
-			JOIN {$prefix}assign a
-			    ON a.course = g.courseid
-			JOIN {$prefix}modules mod_m
-			    ON mod_m.name = 'assign'
-			JOIN {$prefix}course_modules cm
-			    ON cm.instance = a.id
-			    AND cm.course = a.course
-			    AND cm.module = mod_m.id
-			    AND cm.visible = 1
-			JOIN {$prefix}assign_submission sub
-			    ON sub.assignment = a.id
-			    AND sub.userid = gm_s.userid
-			    AND sub.status = 'submitted'
-			    AND sub.latest = 1
-			    AND sub.attemptnumber = 0
-			LEFT JOIN {$prefix}assign_grades gr
-			    ON gr.assignment = a.id
-			    AND gr.userid = gm_s.userid
-			    AND gr.attemptnumber = sub.attemptnumber
-			WHERE
-			    gm_t.userid = ".(int)$USER->id."
-			    AND a.name NOT LIKE '%IAG%'
-			    AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-			    AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
-//
-$templatecontext['yet_to_grade'] = $DB->count_records_sql($mark_sql);
+$tutorid = (int) $USER->id;
+$now = time();
+$thirty_days_ago = $now - (30 * 24 * 60 * 60);
 
-// Resubmissions Awaiting Review — subset where attemptnumber > 0.
-// Also filters out invisible course modules and suspended/deleted users to match markallocation.php display.
-$resub_sql = "SELECT
-			    COUNT(DISTINCT sub.id) AS total_resubs
-			FROM {$prefix}groups_members gm_t
-			JOIN {$prefix}groups g
-			    ON g.id = gm_t.groupid
-			JOIN {$prefix}groups_members gm_s
-			    ON gm_s.groupid = g.id
-			    AND gm_s.userid <> gm_t.userid
-			JOIN {$prefix}role_assignments ra
-			    ON ra.userid = gm_s.userid
-			JOIN {$prefix}context ctx
-			    ON ctx.id = ra.contextid
-			    AND ctx.contextlevel = 50
-			    AND ctx.instanceid = g.courseid
-			JOIN {$prefix}role r
-			    ON r.id = ra.roleid
-			    AND r.shortname = 'student'
-			JOIN {$prefix}user u
-			    ON u.id = gm_s.userid
-			    AND u.suspended = 0
-			    AND u.deleted = 0
-			JOIN {$prefix}assign a
-			    ON a.course = g.courseid
-			JOIN {$prefix}modules mod_r
-			    ON mod_r.name = 'assign'
-			JOIN {$prefix}course_modules cm_r
-			    ON cm_r.instance = a.id
-			    AND cm_r.course = a.course
-			    AND cm_r.module = mod_r.id
-			    AND cm_r.visible = 1
-			JOIN {$prefix}assign_submission sub
-			    ON sub.assignment = a.id
-			    AND sub.userid = gm_s.userid
-			    AND sub.status = 'submitted'
-			    AND sub.attemptnumber > 0
-			    AND sub.latest = 1
-			LEFT JOIN {$prefix}assign_grades gr
-			    ON gr.assignment = a.id
-			    AND gr.userid = gm_s.userid
-			    AND gr.attemptnumber = sub.attemptnumber
-			WHERE
-			    gm_t.userid = ".(int)$USER->id."
-			    AND a.name NOT LIKE '%IAG%'
-			    AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-			    AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
-//
-$templatecontext['resubmissions'] = $DB->count_records_sql($resub_sql);
+// ============================================================
+// 1. DISTINCT LEARNER IDS (single query, no double-counting)
+// ============================================================
+$learner_sql = "SELECT DISTINCT gm_s.userid
+    FROM {$prefix}groups_members gm_t
+    JOIN {$prefix}groups g ON g.id = gm_t.groupid
+    JOIN {$prefix}groups_members gm_s ON gm_s.groupid = g.id AND gm_s.userid <> gm_t.userid
+    JOIN {$prefix}role_assignments ra ON ra.userid = gm_s.userid
+    JOIN {$prefix}context ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50 AND ctx.instanceid = g.courseid
+    JOIN {$prefix}role r ON r.id = ra.roleid AND r.shortname = 'student'
+    JOIN {$prefix}user u ON u.id = gm_s.userid AND u.suspended = 0 AND u.deleted = 0
+    WHERE gm_t.userid = {$tutorid}";
 
-$templatecontext['yet_to_grade_url'] = new moodle_url('/local/learner/markallocation.php?action=mark');
-$templatecontext['resubmissions_url'] = new moodle_url('/local/learner/markallocation.php?action=resub');
-$templatecontext['overdue_url'] = new moodle_url('/local/learner/markallocation.php?action=overdue');
-$templatecontext['imm_url'] = new moodle_url('/local/learner/markallocation.php?action=imm');
-//
-$courselist = array();
-$inv = array();
-foreach ($courses as $course) {
-   $row['coursename'] = $course->fullname;
-   $sql = "SELECT s.id AS studentid,
-		    c.id AS courseid,
-		    c.fullname AS coursename,
-		    g.id AS groupid,
-		    g.name AS groupname,
-		    CONCAT(s.firstname, ' ', s.lastname) AS studentname,
-		    s.email
-		FROM {$prefix}groups_members gm_teacher
-		JOIN {$prefix}groups g ON g.id = gm_teacher.groupid
-		JOIN {$prefix}course c ON c.id = g.courseid
-		JOIN {$prefix}user t ON t.id = ".(int)$USER->id."
-		JOIN {$prefix}groups_members gm_students ON gm_students.groupid = g.id
-		JOIN {$prefix}user s ON s.id = gm_students.userid
-		JOIN {$prefix}role_assignments ra ON ra.userid = s.id
-		JOIN {$prefix}context ctx ON ctx.id = ra.contextid
-		JOIN {$prefix}role r ON r.id = ra.roleid
-		WHERE
-		    gm_teacher.userid = ".(int)$USER->id."
-		    AND ctx.contextlevel = 50
-		    AND ctx.instanceid = ".(int)$course->id."
-		    AND r.shortname = 'student'
-		ORDER BY c.fullname, g.name, s.firstname";
-	//
-	$caseload = $DB->get_records_sql($sql);
-	$row['caseload'] = count($caseload);
-	$row['users_link'] = new moodle_url('/user/index.php',['id'=>$course->id]);
-    $courselist[] = $row;
+$learner_records = $DB->get_records_sql($learner_sql);
+$learner_ids = array_keys($learner_records);
+$total_learners = count($learner_ids);
+
+// ============================================================
+// 2. LEARNER ACTIVITY BREAKDOWN (active / inactive / created)
+// ============================================================
+$active_count = 0;
+$inactive_count = 0;
+$created_count = 0;
+
+if (!empty($learner_ids)) {
+    list($lid_sql, $lid_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'uid');
+    $user_records = $DB->get_records_sql(
+        "SELECT id, lastaccess, lastlogin FROM {user} WHERE id {$lid_sql}",
+        $lid_params
+    );
+    foreach ($user_records as $u) {
+        if (empty($u->lastlogin) && empty($u->lastaccess)) {
+            $created_count++;
+        } else if ($u->lastaccess < $thirty_days_ago) {
+            $inactive_count++;
+        } else {
+            $active_count++;
+        }
+    }
 }
-$templatecontext['courses'] = $courselist;
-$your_learners = array();
-foreach ($courselist as $arr) {
-	$your_learners[] = $arr['caseload'];
+
+// ============================================================
+// 3. COURSES & PER-COURSE CASELOAD (single query, not N+1)
+// ============================================================
+$caseload_sql = "SELECT g.courseid, c.fullname AS coursename, COUNT(DISTINCT gm_s.userid) AS caseload
+    FROM {$prefix}groups_members gm_t
+    JOIN {$prefix}groups g ON g.id = gm_t.groupid
+    JOIN {$prefix}course c ON c.id = g.courseid AND c.visible = 1
+    JOIN {$prefix}groups_members gm_s ON gm_s.groupid = g.id AND gm_s.userid <> gm_t.userid
+    JOIN {$prefix}role_assignments ra ON ra.userid = gm_s.userid
+    JOIN {$prefix}context ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50 AND ctx.instanceid = g.courseid
+    JOIN {$prefix}role r ON r.id = ra.roleid AND r.shortname = 'student'
+    JOIN {$prefix}user u ON u.id = gm_s.userid AND u.suspended = 0 AND u.deleted = 0
+    WHERE gm_t.userid = {$tutorid}
+    GROUP BY g.courseid, c.fullname
+    ORDER BY c.fullname";
+
+$caseload_rows = $DB->get_records_sql($caseload_sql);
+
+$courselist = [];
+$allcourses = [];
+foreach ($caseload_rows as $row) {
+    $courselist[] = [
+        'coursename' => $row->coursename,
+        'caseload' => (int) $row->caseload,
+        'users_link' => new moodle_url('/user/index.php', ['id' => $row->courseid]),
+    ];
+    $allcourses[] = (int) $row->courseid;
 }
-$templatecontext['your_learners'] = array_sum($your_learners);
-//for charts
-$sql = "select count(id) from {$prefix}assign_grades where grader=".(int)$USER->id;
-$templatecontext['graded'] = $DB->count_records_sql($sql);
-//for overdue
-$o_sql = "SELECT
-			   COUNT(sub.id) AS overdue_count
-			FROM {$prefix}groups_members gm_t
-			JOIN {$prefix}groups g
-			    ON g.id = gm_t.groupid
-			JOIN {$prefix}groups_members gm_s
-			    ON gm_s.groupid = g.id
-			    AND gm_s.userid <> gm_t.userid
-			JOIN {$prefix}user u
-			    ON u.id = gm_s.userid
-			    AND u.suspended = 0
-			    AND u.deleted = 0
-			JOIN {$prefix}role_assignments ra
-			    ON ra.userid = u.id
-			JOIN {$prefix}context ctx
-			    ON ctx.id = ra.contextid
-			    AND ctx.contextlevel = 50
-			    AND ctx.instanceid = g.courseid
-			JOIN {$prefix}role r
-			    ON r.id = ra.roleid
-			    AND r.shortname = 'student'
-			JOIN {$prefix}assign a
-			    ON a.course = g.courseid
-			JOIN {$prefix}modules mod_o
-			    ON mod_o.name = 'assign'
-			JOIN {$prefix}course_modules cm_o
-			    ON cm_o.instance = a.id
-			    AND cm_o.course = a.course
-			    AND cm_o.module = mod_o.id
-			    AND cm_o.visible = 1
-            JOIN {$prefix}assign_submission sub
-			    ON sub.assignment = a.id
-			    AND sub.userid = u.id
-			    AND sub.latest = 1
-			LEFT JOIN {$prefix}assign_grades gr
-			    ON gr.assignment = a.id
-			    AND gr.userid = gm_s.userid
-			    AND gr.attemptnumber = sub.attemptnumber
-			WHERE
-			    gm_t.userid = ".(int)$USER->id."
-			    AND sub.status = 'submitted'
-			    AND a.name NOT LIKE '%IAG%'
-			    AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-			    AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
-			    AND sub.timemodified > 0 AND sub.timemodified IS NOT NULL
-			    AND sub.timemodified <= ".strtotime('now')."";
+
+$enrolled_courses = count($courselist);
+
+// ============================================================
+// 4. TOTAL ELIGIBLE ASSIGNMENTS (with exclusions + visible filter)
+// ============================================================
+$total_assignments = 0;
+if (!empty($allcourses)) {
+    list($crs_sql, $crs_params) = $DB->get_in_or_equal($allcourses, SQL_PARAMS_NAMED, 'crs');
+    $total_assignments = $DB->count_records_sql(
+        "SELECT COUNT(DISTINCT a.id)
+         FROM {assign} a
+         JOIN {modules} mdl_m ON mdl_m.name = 'assign'
+         JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course
+             AND cm.module = mdl_m.id AND cm.visible = 1
+         WHERE a.course {$crs_sql}
+             AND a.name NOT LIKE '%IAG%'
+             AND a.name NOT LIKE '%ID Proof%'
+             AND a.name NOT LIKE '%Case Stud%'",
+        $crs_params
+    );
+}
+
+// ============================================================
+// 5. AWAITING MARKING (first submissions, attemptnumber = 0)
+// ============================================================
+$mark_sql = "SELECT COUNT(DISTINCT sub.id)
+    FROM {$prefix}groups_members gm_t
+    JOIN {$prefix}groups g ON g.id = gm_t.groupid
+    JOIN {$prefix}groups_members gm_s ON gm_s.groupid = g.id AND gm_s.userid <> gm_t.userid
+    JOIN {$prefix}role_assignments ra ON ra.userid = gm_s.userid
+    JOIN {$prefix}context ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50 AND ctx.instanceid = g.courseid
+    JOIN {$prefix}role r ON r.id = ra.roleid AND r.shortname = 'student'
+    JOIN {$prefix}user u ON u.id = gm_s.userid AND u.suspended = 0 AND u.deleted = 0
+    JOIN {$prefix}assign a ON a.course = g.courseid
+    JOIN {$prefix}modules mod_m ON mod_m.name = 'assign'
+    JOIN {$prefix}course_modules cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mod_m.id AND cm.visible = 1
+    JOIN {$prefix}assign_submission sub ON sub.assignment = a.id AND sub.userid = gm_s.userid
+        AND sub.status = 'submitted' AND sub.latest = 1 AND sub.attemptnumber = 0
+    LEFT JOIN {$prefix}assign_grades gr ON gr.assignment = a.id AND gr.userid = gm_s.userid
+        AND gr.attemptnumber = sub.attemptnumber
+    WHERE gm_t.userid = {$tutorid}
+        AND a.name NOT LIKE '%IAG%'
+        AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+        AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
+
+$yet_to_grade = $DB->count_records_sql($mark_sql);
+
+// ============================================================
+// 6. RESUBMISSIONS AWAITING REVIEW (attemptnumber > 0)
+// ============================================================
+$resub_sql = "SELECT COUNT(DISTINCT sub.id)
+    FROM {$prefix}groups_members gm_t
+    JOIN {$prefix}groups g ON g.id = gm_t.groupid
+    JOIN {$prefix}groups_members gm_s ON gm_s.groupid = g.id AND gm_s.userid <> gm_t.userid
+    JOIN {$prefix}role_assignments ra ON ra.userid = gm_s.userid
+    JOIN {$prefix}context ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50 AND ctx.instanceid = g.courseid
+    JOIN {$prefix}role r ON r.id = ra.roleid AND r.shortname = 'student'
+    JOIN {$prefix}user u ON u.id = gm_s.userid AND u.suspended = 0 AND u.deleted = 0
+    JOIN {$prefix}assign a ON a.course = g.courseid
+    JOIN {$prefix}modules mod_r ON mod_r.name = 'assign'
+    JOIN {$prefix}course_modules cm_r ON cm_r.instance = a.id AND cm_r.course = a.course AND cm_r.module = mod_r.id AND cm_r.visible = 1
+    JOIN {$prefix}assign_submission sub ON sub.assignment = a.id AND sub.userid = gm_s.userid
+        AND sub.status = 'submitted' AND sub.attemptnumber > 0 AND sub.latest = 1
+    LEFT JOIN {$prefix}assign_grades gr ON gr.assignment = a.id AND gr.userid = gm_s.userid
+        AND gr.attemptnumber = sub.attemptnumber
+    WHERE gm_t.userid = {$tutorid}
+        AND a.name NOT LIKE '%IAG%'
+        AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+        AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
+
+$resubmissions = $DB->count_records_sql($resub_sql);
+
+// ============================================================
+// 7. OVERDUE — ungraded submissions where assignment due date has passed
+// ============================================================
+$o_sql = "SELECT COUNT(DISTINCT sub.id)
+    FROM {$prefix}groups_members gm_t
+    JOIN {$prefix}groups g ON g.id = gm_t.groupid
+    JOIN {$prefix}groups_members gm_s ON gm_s.groupid = g.id AND gm_s.userid <> gm_t.userid
+    JOIN {$prefix}user u ON u.id = gm_s.userid AND u.suspended = 0 AND u.deleted = 0
+    JOIN {$prefix}role_assignments ra ON ra.userid = u.id
+    JOIN {$prefix}context ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50 AND ctx.instanceid = g.courseid
+    JOIN {$prefix}role r ON r.id = ra.roleid AND r.shortname = 'student'
+    JOIN {$prefix}assign a ON a.course = g.courseid
+    JOIN {$prefix}modules mod_o ON mod_o.name = 'assign'
+    JOIN {$prefix}course_modules cm_o ON cm_o.instance = a.id AND cm_o.course = a.course AND cm_o.module = mod_o.id AND cm_o.visible = 1
+    JOIN {$prefix}assign_submission sub ON sub.assignment = a.id AND sub.userid = u.id
+        AND sub.status = 'submitted' AND sub.latest = 1
+    LEFT JOIN {$prefix}assign_grades gr ON gr.assignment = a.id AND gr.userid = u.id
+        AND gr.attemptnumber = sub.attemptnumber
+    WHERE gm_t.userid = {$tutorid}
+        AND a.name NOT LIKE '%IAG%'
+        AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+        AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
+        AND a.duedate > 0 AND a.duedate < {$now}";
+
 $overdue_assigns = $DB->count_records_sql($o_sql);
-$templatecontext['overdue_assigns'] = $overdue_assigns; 
-//for immentiate
-$m_sql = "SELECT
-                count(concat(a.id,'-',u.id))
-                FROM {$prefix}groups_members gm_t
-                JOIN {$prefix}groups g
-                    ON g.id = gm_t.groupid
-                JOIN {$prefix}groups_members gm_s
-                    ON gm_s.groupid = g.id
-                    AND gm_s.userid <> gm_t.userid
-                JOIN {$prefix}user u
-                    ON u.id = gm_s.userid
-                    AND u.suspended = 0
-                    AND u.deleted = 0
-                JOIN {$prefix}role_assignments ra
-                    ON ra.userid = u.id
-                JOIN {$prefix}context ctx
-                    ON ctx.id = ra.contextid
-                    AND ctx.contextlevel = 50
-                    AND ctx.instanceid = g.courseid
-                JOIN {$prefix}role r
-                    ON r.id = ra.roleid
-                    AND r.shortname = 'student'
-                JOIN {$prefix}assign a
-                 ON a.course = g.courseid
-                JOIN {$prefix}modules mod_i
-                    ON mod_i.name = 'assign'
-                JOIN {$prefix}course_modules cm_i
-                    ON cm_i.instance = a.id
-                    AND cm_i.course = a.course
-                    AND cm_i.module = mod_i.id
-                    AND cm_i.visible = 1
-                WHERE
-                 gm_t.userid = ".(int)$USER->id." AND
-                a.course in (".implode(',',$allcourses).")
-                AND a.duedate > 0 AND a.duedate IS NOT NULL
-                AND a.name NOT LIKE '%IAG%'
-                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-                AND a.duedate <= ".strtotime("+3 days")."
-                AND a.duedate >= ".strtotime('now')."";
+
+// ============================================================
+// 8. IMMINENT — assignments due within 3 days (not yet submitted)
+// ============================================================
+$three_days = strtotime('+3 days');
+$m_sql = "SELECT COUNT(DISTINCT CONCAT(a.id, '-', u.id))
+    FROM {$prefix}groups_members gm_t
+    JOIN {$prefix}groups g ON g.id = gm_t.groupid
+    JOIN {$prefix}groups_members gm_s ON gm_s.groupid = g.id AND gm_s.userid <> gm_t.userid
+    JOIN {$prefix}user u ON u.id = gm_s.userid AND u.suspended = 0 AND u.deleted = 0
+    JOIN {$prefix}role_assignments ra ON ra.userid = u.id
+    JOIN {$prefix}context ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50 AND ctx.instanceid = g.courseid
+    JOIN {$prefix}role r ON r.id = ra.roleid AND r.shortname = 'student'
+    JOIN {$prefix}assign a ON a.course = g.courseid
+    JOIN {$prefix}modules mod_i ON mod_i.name = 'assign'
+    JOIN {$prefix}course_modules cm_i ON cm_i.instance = a.id AND cm_i.course = a.course AND cm_i.module = mod_i.id AND cm_i.visible = 1
+    LEFT JOIN {$prefix}assign_submission sub ON sub.assignment = a.id AND sub.userid = u.id AND sub.latest = 1
+    WHERE gm_t.userid = {$tutorid}
+        AND a.duedate > 0 AND a.duedate >= {$now} AND a.duedate <= {$three_days}
+        AND a.name NOT LIKE '%IAG%'
+        AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+        AND (sub.id IS NULL OR sub.status <> 'submitted')";
 
 $imm_assigns = $DB->count_records_sql($m_sql);
-$templatecontext['imm_assigns'] = $imm_assigns; 
-//ends
-//inactive learner
-$ina_courselist = array();
-foreach ($courses as $course) {
-	$col = array();
-    $in_sql = "SELECT DISTINCT
-			    s.id AS studentid,
-			    c.id AS courseid,
-			    c.fullname AS coursename,
-			    g.id AS groupid,
-			    g.name AS groupname,
-			    CONCAT(s.firstname, ' ', s.lastname) AS studentname,
-			    s.email,
-			    FROM_UNIXTIME(s.lastaccess) AS last_access
-			FROM {$prefix}groups_members gm_teacher
-			JOIN {$prefix}groups g
-			    ON g.id = gm_teacher.groupid
-			JOIN {$prefix}course c
-			    ON c.id = g.courseid
-			JOIN {$prefix}groups_members gm_students
-			    ON gm_students.groupid = g.id
-			JOIN {$prefix}user s
-			    ON s.id = gm_students.userid
-			JOIN {$prefix}role_assignments ra
-			    ON ra.userid = s.id
-			JOIN {$prefix}context ctx
-			    ON ctx.id = ra.contextid
-			JOIN {$prefix}role r
-			    ON r.id = ra.roleid
-		WHERE
-		    gm_teacher.userid = ".(int)$USER->id."
-		    AND ctx.contextlevel = 50
-		    AND ctx.instanceid = ".(int)$course->id."
-		    AND r.shortname = 'student'
-		    AND s.deleted = 0
-		    AND s.suspended = 0
-		    AND (
-                s.lastaccess IS NOT NULL AND s.lastaccess!=0
-                AND s.lastaccess < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 DAY))
-            )
-		ORDER BY c.fullname, g.name, s.firstname";
-	//
-	$caseload_data = $DB->get_records_sql($in_sql);
-	$col['caseload'] = count($caseload_data);
-    $ina_courselist[] = $col;
+
+// ============================================================
+// 9. GRADING STATS — pass rate + graded count (this tutor's grades)
+// ============================================================
+$graded_count = 0;
+$pass_count = 0;
+$refer_count = 0;
+
+if (!empty($learner_ids)) {
+    list($gl_sql, $gl_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'gl');
+    $gl_params['graderid'] = $tutorid;
+
+    $grade_stats = $DB->get_records_sql(
+        "SELECT gg.id, gg.finalgrade, gi.scaleid, sc.scale
+         FROM {grade_grades} gg
+         JOIN {grade_items} gi ON gi.id = gg.itemid AND gi.itemmodule = 'assign'
+         LEFT JOIN {scale} sc ON sc.id = gi.scaleid
+         WHERE gg.usermodified = :graderid
+             AND gg.userid {$gl_sql}
+             AND gg.finalgrade IS NOT NULL AND gg.finalgrade > 0",
+        $gl_params
+    );
+
+    foreach ($grade_stats as $gs) {
+        $graded_count++;
+        if (!empty($gs->scale)) {
+            $scale_items = explode(',', $gs->scale);
+            $idx = (int) $gs->finalgrade - 1;
+            if (isset($scale_items[$idx]) && trim($scale_items[$idx]) === 'Pass') {
+                $pass_count++;
+            } else {
+                $refer_count++;
+            }
+        }
+    }
 }
-//
-$inactive_learners = array();
-foreach ($ina_courselist as $arr) {
-	$inactive_learners[] = $arr['caseload'];
+
+$pass_rate = ($graded_count > 0) ? round(($pass_count / $graded_count) * 100) : 0;
+
+// ============================================================
+// 10. AVERAGE TURNAROUND (days between submission and grading)
+// ============================================================
+$avg_turnaround = 0;
+if (!empty($learner_ids)) {
+    list($at_sql, $at_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'at');
+    $at_params['graderid'] = $tutorid;
+
+    $turnaround_result = $DB->get_record_sql(
+        "SELECT AVG(ag.timemodified - sub.timemodified) AS avg_seconds
+         FROM {assign_grades} ag
+         JOIN {assign_submission} sub ON sub.assignment = ag.assignment
+             AND sub.userid = ag.userid AND sub.latest = 1
+         WHERE ag.grader = :graderid
+             AND ag.userid {$at_sql}
+             AND ag.grade IS NOT NULL AND ag.grade >= 0
+             AND ag.timemodified > sub.timemodified",
+        $at_params
+    );
+    if ($turnaround_result && $turnaround_result->avg_seconds > 0) {
+        $avg_turnaround = round($turnaround_result->avg_seconds / 86400, 1); // Convert to days.
+    }
 }
-$templatecontext['inactive_learners_link'] = new moodle_url('/local/learner/tutorlearners.php',['id'=>$USER->id,'action'=>'inactive']);
-$templatecontext['inactive_learners'] = array_sum($inactive_learners);
-$templatecontext['progressions_url'] = new moodle_url('/local/learnerprogression/index.php');
-//
+
+// ============================================================
+// BUILD TEMPLATE CONTEXT
+// ============================================================
+$templatecontext = [
+    // KPI cards - top row.
+    'your_learners'     => $total_learners,
+    'enrolled_courses'  => $enrolled_courses,
+    'yet_to_grade'      => $yet_to_grade,
+    'resubmissions'     => $resubmissions,
+    'total_assignments' => $total_assignments,
+    'overdue_assigns'   => $overdue_assigns,
+    'imm_assigns'       => $imm_assigns,
+    'graded'            => $graded_count,
+    'pass_rate'         => $pass_rate,
+    'pass_count'        => $pass_count,
+    'refer_count'       => $refer_count,
+    'avg_turnaround'    => $avg_turnaround,
+
+    // Learner activity breakdown.
+    'active_count'   => $active_count,
+    'inactive_count' => $inactive_count,
+    'created_count'  => $created_count,
+
+    // Per-course caseload.
+    'courses' => $courselist,
+
+    // URLs.
+    'yet_to_grade_url'      => new moodle_url('/local/learner/markallocation.php?action=mark'),
+    'resubmissions_url'     => new moodle_url('/local/learner/markallocation.php?action=resub'),
+    'overdue_url'           => new moodle_url('/local/learner/markallocation.php?action=overdue'),
+    'imm_url'               => new moodle_url('/local/learner/markallocation.php?action=imm'),
+    'inactive_learners_link' => new moodle_url('/local/learner/tutorlearners.php', ['id' => $USER->id, 'action' => 'inactive']),
+    'progressions_url'      => new moodle_url('/local/learnerprogression/index.php'),
+    'mycourse_link'         => new moodle_url('/my/courses.php'),
+];
 
 echo $OUTPUT->render_from_template('local_learner/tutordash', $templatecontext);
-//
+
 echo $OUTPUT->footer();
-
-echo '<style>
-        .wrapper-course {
-            margin-top:-30px;
-            padding: 0px 10px !important;
-        }
-        .highcharts-a11y-proxy-element{
-        	display:none !important;
-        }
-        
-        #hourscontainer{
-        	height:250px !important;
-        }
-        .highcharts-credits{
-        	display:none !important;
-        }
-        .card { border-radius:16px; box-shadow:0 8px 24px rgba(0,0,0,.05); }
-	    .stat-icon { width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%; }
-	    .map-dot { width:12px;height:12px;border-radius:50%; position:absolute; }
-	    .bg-success{background-color: rgba(var(--bs-success-rgb), var(--bs-bg-opacity)) !important;}
-	    .bg-info{background-color: rgba(var(--bs-info-rgb), var(--bs-bg-opacity)) !important;}
-	    .card-noborder{
-	    	 border:none !important;
-	     }
-         .highcharts-no-tooltip.highcharts-button.highcharts-contextbutton.highcharts-button-normal {
-		    display: none !important;
-		}
-		.highcharts-button-box{
-        	display:none !important;
-        }
-        .header-right{background:linear-gradient(90deg,#8fb28a,#c7d916);color:#fff;padding:12px 20px;border-radius:4px;font-size:20px;font-weight:500;
-         }
-        .stat-row{display:flex;justify-content:space-between;align-items:center;padding:18px 0;font-size:18px;color:#4a5a6a;
-         }
-        .badge-circle{width:44px;height:44px;background:#e55a5a;color:#fff;border-radius:50%;display:flex;align-items:center;
-        	justify-content:center;font-size:18px;font-weight:500;
-        }
-        .header-left{background:linear-gradient(90deg,#0ea5c6,#8fb28a);color:#fff;padding:12px 20px;border-radius:4px;font-size:20px;font-weight:500;
-        }
-        /* Header Gradient */
-        .header-gradient{
-            background: linear-gradient(90deg, #1aa3d9 0%, #79b07a 100%);
-            color:#fff;
-            padding:20px 30px;
-            border-radius:6px 6px 0 0;
-        }
-
-        .header-gradient h3{
-            margin:0;
-            font-size:22px;
-            font-weight:600;
-        }
-
-        .header-gradient small{
-            font-size:14px;
-            opacity:0.85;
-        }
-
-        /* Content */
-        .content-box{
-            border:1px solid #e6e9ec;
-            border-top:0;
-            border-radius:0 0 6px 6px;
-            padding:30px;
-        }
-
-        .table-header{
-            color:#4a5f7a;
-            font-weight:600;
-            padding-bottom:10px;
-        }
-
-        .programme-row{
-            padding:18px 0;
-            border-bottom:1px solid #e6e9ec;
-            align-items:center;
-        }
-
-        .programme-row:last-child{
-            border-bottom:none;
-        }
-
-        .programme-title{
-            font-size:16px;
-            color:#4a5f7a;
-        }
-
-        /* Caseload Badge */
-        .caseload-badge{
-            width:48px;
-            height:48px;
-            background:#cbd63a;
-            color:#fff;
-            border-radius:50%;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-weight:600;
-            font-size:16px;
-        }
-      </style>';    
-
-    

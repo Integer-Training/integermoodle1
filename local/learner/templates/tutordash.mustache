@@ -15,179 +15,294 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template local_kopere_dashboard/about_dashboard
+    @template local_learner/tutordash
 
-    Example context (json):
-    {
-    }
+    Tutor Dashboard — caseload, grading pipeline, learner activity.
 }}
-<!-- Top Navbar -->
 
-<div class="container-fluid p-4">
+<style>
+/* ===== Tutor Dashboard (td- namespace) ===== */
+.td-shell { max-width:1400px; margin:0 auto; padding:24px 16px; }
+.td-title { font-family:'Libre Baskerville',Georgia,serif; font-size:26px; font-weight:700; color:#1a2238; margin-bottom:4px; }
+.td-subtitle { font-size:14px; color:#6b7b8d; margin-bottom:24px; }
 
-  <!-- Top Stats -->
-  <div class="row g-4 mb-4">
-    <div class="col-md-3">
-      <div class="card p-3 d-flex flex-row align-items-center">
-        <div class="stat-icon bg-primary text-white me-3"><i class="bi bi-journal"></i></div>
-        <div><h5 class="mb-0">{{{enrolled_courses}}}</h5><small>Courses</small></div>
-      </div>
+/* KPI Cards */
+.td-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
+.td-kpi { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.06); border-left:4px solid #e2e8f0; transition:transform .15s,box-shadow .15s; }
+.td-kpi:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.1); }
+.td-kpi--blue    { border-left-color:#3a5ba0; }
+.td-kpi--green   { border-left-color:#16a34a; }
+.td-kpi--teal    { border-left-color:#0ea5c6; }
+.td-kpi--orange  { border-left-color:#e88a2d; }
+.td-kpi--yellow  { border-left-color:#eab308; }
+.td-kpi--red     { border-left-color:#dc2626; }
+.td-kpi--purple  { border-left-color:#7c3aed; }
+.td-kpi-icon { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; margin-bottom:10px; }
+.td-kpi-value { font-size:28px; font-weight:700; color:#1a2238; line-height:1.1; }
+.td-kpi-label { font-size:13px; color:#6b7b8d; margin-top:2px; }
+.td-kpi a { text-decoration:none; color:inherit; display:block; }
+.td-kpi a:hover .td-kpi-value { text-decoration:underline; }
+
+/* Two-column layout */
+.td-row { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:28px; }
+@media (max-width:900px) { .td-row { grid-template-columns:1fr; } }
+
+/* Panel */
+.td-panel { background:#fff; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; }
+.td-panel-header { padding:18px 24px; font-size:17px; font-weight:600; color:#fff; }
+.td-panel-header--blue { background:linear-gradient(135deg,#1a2238,#3a5ba0); }
+.td-panel-header--green { background:linear-gradient(135deg,#16a34a,#86efac); }
+.td-panel-header--teal { background:linear-gradient(135deg,#0ea5c6,#67e8f9); }
+.td-panel-body { padding:20px 24px; }
+
+/* Stat rows inside panels */
+.td-stat-row { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid #f1f5f9; font-size:15px; color:#4a5a6a; }
+.td-stat-row:last-child { border-bottom:none; }
+.td-stat-badge { min-width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; color:#fff; }
+.td-stat-badge--red { background:#dc2626; }
+.td-stat-badge--orange { background:#e88a2d; }
+.td-stat-badge--blue { background:#3a5ba0; }
+.td-stat-badge--green { background:#16a34a; }
+.td-stat-badge--teal { background:#0ea5c6; }
+.td-stat-badge a { color:#fff; text-decoration:none; }
+.td-stat-badge a:hover { text-decoration:underline; }
+
+/* Learner breakdown bar */
+.td-breakdown { display:flex; gap:0; border-radius:8px; overflow:hidden; height:32px; margin-top:12px; margin-bottom:8px; }
+.td-breakdown-seg { display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#fff; min-width:30px; }
+.td-breakdown-seg--active { background:#16a34a; }
+.td-breakdown-seg--inactive { background:#dc2626; }
+.td-breakdown-seg--created { background:#eab308; }
+.td-breakdown-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:4px; }
+.td-breakdown-legend-item { display:flex; align-items:center; gap:6px; font-size:13px; color:#4a5a6a; }
+.td-breakdown-legend-dot { width:10px; height:10px; border-radius:50%; }
+
+/* Programmes table */
+.td-prog-header { display:flex; padding:12px 24px; font-weight:600; color:#4a5f7a; font-size:14px; border-bottom:1px solid #e6e9ec; }
+.td-prog-row { display:flex; align-items:center; padding:16px 24px; border-bottom:1px solid #f1f5f9; }
+.td-prog-row:last-child { border-bottom:none; }
+.td-prog-name { flex:1; font-size:15px; color:#4a5f7a; }
+.td-prog-badge { width:48px; height:48px; background:#3a5ba0; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:16px; }
+.td-prog-badge a { color:#fff; text-decoration:none; }
+
+/* Chart */
+.td-chart-container { min-height:280px; }
+
+/* Progression link card */
+.td-progression-link { display:flex; align-items:center; gap:14px; background:linear-gradient(135deg,#1a2238,#3a5ba0); color:#fff; padding:18px 24px; border-radius:14px; text-decoration:none; transition:transform .15s,box-shadow .15s; }
+.td-progression-link:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(58,91,160,.3); color:#fff; text-decoration:none; }
+.td-progression-link i { font-size:28px; }
+.td-progression-link-text { font-size:16px; font-weight:600; }
+.td-progression-link-sub { font-size:13px; opacity:.8; font-weight:400; }
+</style>
+
+<div class="td-shell">
+
+  <!-- Header -->
+  <div class="td-title">Tutor Dashboard</div>
+  <div class="td-subtitle">Your caseload overview and grading pipeline</div>
+
+  <!-- KPI Cards Row 1 -->
+  <div class="td-kpi-grid">
+    <div class="td-kpi td-kpi--green">
+      <div class="td-kpi-icon" style="background:#16a34a;"><i class="bi bi-people-fill"></i></div>
+      <div class="td-kpi-value">{{{your_learners}}}</div>
+      <div class="td-kpi-label">Your Learners</div>
     </div>
-    <div class="col-md-3">
-      <div class="card p-3 d-flex flex-row align-items-center">
-        <div class="stat-icon bg-success text-white me-3"><i class="bi bi-people"></i></div>
-        <div><h5 class="mb-0">{{{your_learners}}}</h5><small>Learners</small></div>
-        
-      </div>
+
+    <div class="td-kpi td-kpi--blue">
+      <div class="td-kpi-icon" style="background:#3a5ba0;"><i class="bi bi-journal-bookmark-fill"></i></div>
+      <div class="td-kpi-value">{{{enrolled_courses}}}</div>
+      <div class="td-kpi-label">Courses</div>
     </div>
-    <div class="col-md-3" data-url="{{{yet_to_grade_url}}}" id="yet_to_grade">
-      <div class="card p-3 d-flex flex-row align-items-center">
-        <div class="stat-icon bg-info text-white me-3"><i class="bi bi-cloud-check-fill"></i></div>
-        <div><h5 class="mb-0">{{{yet_to_grade}}}</h5><small>Awaiting Marking</small></div>
-      </div>
+
+    <div class="td-kpi td-kpi--yellow">
+      <div class="td-kpi-icon" style="background:#eab308;"><i class="bi bi-list-check"></i></div>
+      <div class="td-kpi-value">{{{total_assignments}}}</div>
+      <div class="td-kpi-label">Assignments</div>
     </div>
-    <div class="col-md-3" data-url="{{{resubmissions_url}}}" id="resubmissions_card">
-      <div class="card p-3 d-flex flex-row align-items-center">
-        <div class="stat-icon text-white me-3" style="background:#e88a2d"><i class="bi bi-arrow-repeat"></i></div>
-        <div><h5 class="mb-0">{{{resubmissions}}}</h5><small>Resubmissions</small></div>
-      </div>
+
+    <div class="td-kpi td-kpi--teal">
+      <a href="{{{yet_to_grade_url}}}">
+        <div class="td-kpi-icon" style="background:#0ea5c6;"><i class="bi bi-hourglass-split"></i></div>
+        <div class="td-kpi-value">{{{yet_to_grade}}}</div>
+        <div class="td-kpi-label">Awaiting Marking</div>
+      </a>
     </div>
-    <div class="col-md-3">
-      <div class="card p-3 d-flex flex-row align-items-center">
-        <div class="stat-icon bg-warning text-white me-3"><i class="bi bi-activity"></i></div>
-        <div><h5 class="mb-0">{{{total_assignments}}}</h5><small>Total Assignments</small></div>
-      </div>
+
+    <div class="td-kpi td-kpi--orange">
+      <a href="{{{resubmissions_url}}}">
+        <div class="td-kpi-icon" style="background:#e88a2d;"><i class="bi bi-arrow-repeat"></i></div>
+        <div class="td-kpi-value">{{{resubmissions}}}</div>
+        <div class="td-kpi-label">Resubmissions</div>
+      </a>
     </div>
-    <div class="col-md-3">
-      <a href="{{{progressions_url}}}" class="card p-3 d-flex flex-row align-items-center text-decoration-none" style="border-left:4px solid #3a5ba0;">
-        <div class="stat-icon text-white me-3" style="background:#3a5ba0"><i class="bi bi-graph-up"></i></div>
-        <div><h5 class="mb-0" style="color:#3a5ba0">View</h5><small>Learner Progressions</small></div>
+
+    <div class="td-kpi td-kpi--red">
+      <a href="{{{overdue_url}}}">
+        <div class="td-kpi-icon" style="background:#dc2626;"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <div class="td-kpi-value">{{{overdue_assigns}}}</div>
+        <div class="td-kpi-label">Overdue Ungraded</div>
+      </a>
+    </div>
+
+    <div class="td-kpi td-kpi--purple">
+      <a href="{{{imm_url}}}">
+        <div class="td-kpi-icon" style="background:#7c3aed;"><i class="bi bi-alarm-fill"></i></div>
+        <div class="td-kpi-value">{{{imm_assigns}}}</div>
+        <div class="td-kpi-label">Due Within 3 Days</div>
       </a>
     </div>
   </div>
 
-  <!-- Charts -->
-  <div class="row g-4 mb-4">
-    <div class="col-md-6">
-      <div class="card-noborder p-3">
-        <div class="header-left">Total Learners</div>
-        <div id="activityChart"></div>
+  <!-- Two-column: Learner Activity + Grading Pipeline -->
+  <div class="td-row">
+    <!-- Left: Learner Activity -->
+    <div class="td-panel">
+      <div class="td-panel-header td-panel-header--blue">Learner Activity</div>
+      <div class="td-panel-body">
+        <div class="td-stat-row">
+          <span>Total Learners</span>
+          <div class="td-stat-badge td-stat-badge--blue">{{{your_learners}}}</div>
+        </div>
+        <div class="td-stat-row">
+          <span>Active (last 30 days)</span>
+          <div class="td-stat-badge td-stat-badge--green">{{{active_count}}}</div>
+        </div>
+        <div class="td-stat-row">
+          <span>Inactive (30+ days)</span>
+          <div class="td-stat-badge td-stat-badge--red">
+            <a href="{{{inactive_learners_link}}}">{{{inactive_count}}}</a>
+          </div>
+        </div>
+        <div class="td-stat-row">
+          <span>Never Logged In</span>
+          <div class="td-stat-badge td-stat-badge--orange">{{{created_count}}}</div>
+        </div>
+
+        <!-- Breakdown bar -->
+        {{#your_learners}}
+        <div class="td-breakdown">
+          {{#active_count}}<div class="td-breakdown-seg td-breakdown-seg--active" style="flex:{{active_count}};">{{active_count}}</div>{{/active_count}}
+          {{#inactive_count}}<div class="td-breakdown-seg td-breakdown-seg--inactive" style="flex:{{inactive_count}};">{{inactive_count}}</div>{{/inactive_count}}
+          {{#created_count}}<div class="td-breakdown-seg td-breakdown-seg--created" style="flex:{{created_count}};">{{created_count}}</div>{{/created_count}}
+        </div>
+        <div class="td-breakdown-legend">
+          <div class="td-breakdown-legend-item"><div class="td-breakdown-legend-dot" style="background:#16a34a;"></div> Active</div>
+          <div class="td-breakdown-legend-item"><div class="td-breakdown-legend-dot" style="background:#dc2626;"></div> Inactive</div>
+          <div class="td-breakdown-legend-item"><div class="td-breakdown-legend-dot" style="background:#eab308;"></div> Never Logged In</div>
+        </div>
+        {{/your_learners}}
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="card-noborder p-3">
-        
-        <div class="header-right">Learners with Overdue Assignments</div>
-        <div class="mt-4 px-3">
-          <div class="stat-row"><span>Overdue Assignments</span><div class="badge-circle"><a href="{{{overdue_url}}}" target="_blank" style="color:#fff">{{{overdue_assigns}}}</a></div></div>
-          <div class="stat-row"><span>Imminent Assignments</span><div class="badge-circle"><a href="{{{imm_url}}}" target="_blank" style="color:#fff">{{{imm_assigns}}}</a></div></div>
-           <div class="stat-row"><span>Awaiting Marking</span><div class="badge-circle"><a href="{{{yet_to_grade_url}}}" target="_blank" style="color:#fff">{{{yet_to_grade}}}</a></div></div>
-           <div class="stat-row"><span>Resubmissions Awaiting Review</span><div class="badge-circle" style="background:#e88a2d"><a href="{{{resubmissions_url}}}" target="_blank" style="color:#fff">{{{resubmissions}}}</a></div></div>
-           <div class="stat-row"><span>InActive Learners</span><div class="badge-circle"><a href="{{{inactive_learners_link}}}" target="_blank" style="color:#fff">{{{inactive_learners}}}</a></div></div>
+
+    <!-- Right: Grading Pipeline -->
+    <div class="td-panel">
+      <div class="td-panel-header td-panel-header--teal">Grading Pipeline</div>
+      <div class="td-panel-body">
+        <div class="td-stat-row">
+          <span>Awaiting Marking</span>
+          <div class="td-stat-badge td-stat-badge--teal">
+            <a href="{{{yet_to_grade_url}}}">{{{yet_to_grade}}}</a>
+          </div>
+        </div>
+        <div class="td-stat-row">
+          <span>Resubmissions Awaiting Review</span>
+          <div class="td-stat-badge td-stat-badge--orange">
+            <a href="{{{resubmissions_url}}}">{{{resubmissions}}}</a>
+          </div>
+        </div>
+        <div class="td-stat-row">
+          <span>Overdue Ungraded</span>
+          <div class="td-stat-badge td-stat-badge--red">
+            <a href="{{{overdue_url}}}">{{{overdue_assigns}}}</a>
+          </div>
+        </div>
+        <div class="td-stat-row">
+          <span>Due Within 3 Days</span>
+          <div class="td-stat-badge td-stat-badge--blue">
+            <a href="{{{imm_url}}}">{{{imm_assigns}}}</a>
+          </div>
+        </div>
+        <div class="td-stat-row">
+          <span>Total Graded</span>
+          <div class="td-stat-badge td-stat-badge--green">{{{graded}}}</div>
+        </div>
+        <div class="td-stat-row">
+          <span>Avg. Turnaround</span>
+          <div class="td-stat-badge td-stat-badge--blue">{{{avg_turnaround}}}d</div>
+        </div>
       </div>
     </div>
   </div>
 
-    <!-- Bottom Section -->
-    <div class="row g-4">
-      <div class="col-12">
-        <div class="header-gradient">
-            <h3>Approved Programmes</h3>
-        </div>
-        <div class="content-box">
-            <div class="row table-header">
-                <div class="col-md-9">Type</div>
-                <div class="col-md-3 text-end">Caseload</div>
-            </div>
-            {{# courses}}
-            <div class="row programme-row">
-                <div class="col-md-9 programme-title">
-                    {{{coursename}}}
-                </div>
-                <div class="col-md-3 text-end">
-                    <div class="caseload-badge ms-auto"><a href="{{{users_link}}}">{{{caseload}}}</a></div>
-                </div>
-            </div>
-            {{/ courses}}
-        </div>
-        
+  <!-- Two-column: Grading Outcomes Chart + Progressions Link -->
+  <div class="td-row">
+    <!-- Left: Chart -->
+    <div class="td-panel">
+      <div class="td-panel-header td-panel-header--green">Grading Outcomes</div>
+      <div class="td-panel-body">
+        <div id="td-outcomes-chart" class="td-chart-container"></div>
+      </div>
+    </div>
 
+    <!-- Right: Programmes + Progression link -->
+    <div>
+      <!-- Progression link -->
+      <a href="{{{progressions_url}}}" class="td-progression-link" style="margin-bottom:24px;">
+        <i class="bi bi-graph-up-arrow"></i>
+        <div>
+          <div class="td-progression-link-text">Learner Progressions</div>
+          <div class="td-progression-link-sub">View detailed progress per learner</div>
+        </div>
+      </a>
+
+      <!-- Programmes -->
+      <div class="td-panel">
+        <div class="td-panel-header td-panel-header--blue">Programmes &amp; Caseload</div>
+        <div class="td-prog-header">
+          <div style="flex:1;">Programme</div>
+          <div style="width:60px;text-align:center;">Learners</div>
+        </div>
+        {{#courses}}
+        <div class="td-prog-row">
+          <div class="td-prog-name">{{{coursename}}}</div>
+          <div class="td-prog-badge"><a href="{{{users_link}}}">{{{caseload}}}</a></div>
+        </div>
+        {{/courses}}
+        {{^courses}}
+        <div style="padding:24px;text-align:center;color:#6b7b8d;">No programmes assigned</div>
+        {{/courses}}
       </div>
     </div>
   </div>
+
 </div>
 
 <script>
-// Working Activity
-// Data retrieved from https://netmarketshare.com/
-// Build the chart
-Highcharts.chart('activityChart', {
-    chart: {
-        plotBackgroundColor: null,
-        plotBorderWidth: null,
-        plotShadow: false,
-        type: 'pie'
-    },
-    title: {
-        text: ''
-    },
-    tooltip: {
-        pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
-    },
-    accessibility: {
-        point: {
-            valueSuffix: '%'
-        }
-    },
+// Grading Outcomes — Donut chart (Pass vs Refer)
+Highcharts.chart('td-outcomes-chart', {
+    chart: { type: 'pie', height: 280, backgroundColor: 'transparent' },
+    title: { text: 'Pass Rate: {{pass_rate}}%', style: { fontSize: '18px', fontWeight: '600', color: '#1a2238' } },
+    tooltip: { pointFormat: '<b>{point.y}</b> ({point.percentage:.1f}%)' },
+    credits: { enabled: false },
+    exporting: { enabled: false },
     plotOptions: {
         pie: {
+            innerSize: '55%',
             allowPointSelect: true,
             cursor: 'pointer',
-            dataLabels: {
-                enabled: false
-            },
+            dataLabels: { enabled: true, format: '{point.name}: {point.y}', style: { fontSize: '13px' } },
             showInLegend: true
         }
     },
     series: [{
-        name: 'Percent',
+        name: 'Count',
         colorByPoint: true,
-        data: [{
-            name: 'Learners ',
-            y: {{your_learners}},
-            sliced: true,
-            selected: true
-        },  {
-            name: 'Courses',
-            y: {{enrolled_courses}}
-        },  {
-            name: 'Graded',
-            y: {{graded}}
-           
-        }, {
-            name: 'Yet to Grade',
-            y: {{yet_to_grade}}
-        }]
+        data: [
+            { name: 'Pass', y: {{pass_count}}, color: '#16a34a' },
+            { name: 'Refer', y: {{refer_count}}, color: '#dc2626' }
+        ]
     }]
 });
-
-</script>
-<script>
-
-//
-
-    // For the anchor tag
-    // For the button (getting the URL from a data attribute)
-    $('#yet_to_grade').on('click', function(event) {
-        event.preventDefault();
-        var url = $(this).data('url');
-        window.open(url, '_blank');
-    });
-    $('#resubmissions_card').on('click', function(event) {
-        event.preventDefault();
-        var url = $(this).data('url');
-        window.open(url, '_blank');
-    });
-
-
 </script>
