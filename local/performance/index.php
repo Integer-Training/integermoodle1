@@ -25,6 +25,7 @@ $PAGE->set_context($context);
 $PAGE->set_title(get_string('dashboard_title', 'local_performance'));
 $PAGE->set_heading(get_string('dashboard_title', 'local_performance'));
 $PAGE->requires->css('/local/performance/styles.css');
+echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">';
 
 // Run all health checks.
 $result = \local_performance\health_checker::run_all();

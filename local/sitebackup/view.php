@@ -128,6 +128,7 @@ $PAGE->set_context($context);
 $PAGE->set_title(get_string('pluginname', 'local_sitebackup'));
 $PAGE->set_heading(get_string('pluginname', 'local_sitebackup'));
 $PAGE->set_pagelayout('standard');
+echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">';
 
 // Highlight sidebar nav.
 if ($node = $PAGE->navigation->find('local_sitebackup', navigation_node::TYPE_CUSTOM)) {

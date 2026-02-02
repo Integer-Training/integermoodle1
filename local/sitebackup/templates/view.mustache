@@ -18,24 +18,24 @@
   <div class="sb-header">
     <div class="sb-header-inner">
       <div>
-        <h1 class="sb-header-title"><i class="fa fa-cloud-upload"></i> {{#str}}pluginname, local_sitebackup{{/str}}</h1>
+        <h1 class="sb-header-title"><i class="bi bi-cloud-arrow-up"></i> {{#str}}pluginname, local_sitebackup{{/str}}</h1>
         <p class="sb-header-sub">Local download &amp; Google Drive backups &middot; Epearl Academy</p>
       </div>
       <div class="sb-header-actions">
         <button type="button" class="sb-hdr-btn sb-hdr-btn--success sb-backup-trigger"
                 data-confirm="{{#str}}confirmbackuplocal, local_sitebackup{{/str}}"
                 data-url="{{{backup_local_url}}}">
-          <i class="fa fa-download"></i> {{#str}}localbackup, local_sitebackup{{/str}}
+          <i class="bi bi-download"></i> {{#str}}localbackup, local_sitebackup{{/str}}
         </button>
         {{#drive_connected}}
         <button type="button" class="sb-hdr-btn sb-hdr-btn--drive sb-backup-trigger"
                 data-confirm="{{#str}}confirmbackupdrive, local_sitebackup{{/str}}"
                 data-url="{{{backup_drive_url}}}">
-          <i class="fa fa-cloud-upload"></i> {{#str}}drivebackup, local_sitebackup{{/str}}
+          <i class="bi bi-cloud-arrow-up"></i> {{#str}}drivebackup, local_sitebackup{{/str}}
         </button>
         {{/drive_connected}}
-        <a href="{{{settings_url}}}" class="sb-hdr-btn"><i class="fa fa-cog"></i> {{#str}}settings, local_sitebackup{{/str}}</a>
-        <a href="{{{diagnose_url}}}" class="sb-hdr-btn"><i class="fa fa-stethoscope"></i> Diagnose</a>
+        <a href="{{{settings_url}}}" class="sb-hdr-btn"><i class="bi bi-gear"></i> {{#str}}settings, local_sitebackup{{/str}}</a>
+        <a href="{{{diagnose_url}}}" class="sb-hdr-btn"><i class="bi bi-heart-pulse"></i> Diagnose</a>
       </div>
     </div>
   </div>
@@ -44,7 +44,7 @@
   <div class="sb-cards">
     <div class="sb-card sb-card--backup">
       <div class="sb-card-top">
-        <span class="sb-card-icon sb-card-icon--backup"><i class="fa fa-clock-o"></i></span>
+        <span class="sb-card-icon sb-card-icon--backup"><i class="bi bi-clock-history"></i></span>
         <span class="sb-card-label">{{#str}}lastbackup, local_sitebackup{{/str}}</span>
       </div>
       <div class="sb-card-value">{{last_backup_time}}</div>
@@ -60,7 +60,7 @@
 
     <div class="sb-card sb-card--drive">
       <div class="sb-card-top">
-        <span class="sb-card-icon sb-card-icon--drive"><i class="fa fa-google"></i></span>
+        <span class="sb-card-icon sb-card-icon--drive"><i class="bi bi-google"></i></span>
         <span class="sb-card-label">{{#str}}googledrive, local_sitebackup{{/str}}</span>
       </div>
       <div class="sb-card-value">
@@ -79,7 +79,7 @@
 
     <div class="sb-card sb-card--schedule">
       <div class="sb-card-top">
-        <span class="sb-card-icon sb-card-icon--schedule"><i class="fa fa-calendar"></i></span>
+        <span class="sb-card-icon sb-card-icon--schedule"><i class="bi bi-calendar3"></i></span>
         <span class="sb-card-label">{{#str}}nextscheduled, local_sitebackup{{/str}}</span>
       </div>
       <div class="sb-card-value">{{next_scheduled}}</div>
@@ -100,7 +100,7 @@
           <span>Google Drive is not connected. Click to authorize.</span>
         {{/drive_configured}}
         {{^drive_configured}}
-          <i class="fa fa-exclamation-triangle" style="color:#92400e;"></i>
+          <i class="bi bi-exclamation-triangle" style="color:#92400e;"></i>
           <span>{{#str}}configuredrive, local_sitebackup{{/str}}</span>
         {{/drive_configured}}
       {{/drive_connected}}
@@ -109,13 +109,13 @@
       {{#drive_connected}}
         <a href="{{{disconnect_url}}}" class="sb-drive-btn sb-drive-btn--disconnect"
            onclick="return confirm('{{#str}}confirmdisconnect, local_sitebackup{{/str}}');">
-          <i class="fa fa-unlink"></i> {{#str}}disconnectdrive, local_sitebackup{{/str}}
+          <i class="bi bi-link-45deg"></i> {{#str}}disconnectdrive, local_sitebackup{{/str}}
         </a>
       {{/drive_connected}}
       {{^drive_connected}}
         {{#drive_configured}}
           <a href="{{{connect_url}}}" class="sb-drive-btn sb-drive-btn--connect">
-            <i class="fa fa-link"></i> {{#str}}connectdrive, local_sitebackup{{/str}}
+            <i class="bi bi-link-45deg"></i> {{#str}}connectdrive, local_sitebackup{{/str}}
           </a>
         {{/drive_configured}}
       {{/drive_connected}}
@@ -125,7 +125,7 @@
   <!-- Backup History Table -->
   <div class="sb-panel">
     <div class="sb-panel-hdr">
-      <h3><i class="fa fa-history"></i> {{#str}}backuphistory, local_sitebackup{{/str}}</h3>
+      <h3><i class="bi bi-clock-history"></i> {{#str}}backuphistory, local_sitebackup{{/str}}</h3>
       <p>All backup runs with timestamps, status, and Google Drive links</p>
     </div>
     <div class="sb-panel-body">
@@ -159,19 +159,19 @@
             <td>
               {{#has_local_file}}
                 <a href="{{{download_url}}}" class="sb-action-btn sb-action-btn--download" title="{{#str}}download, local_sitebackup{{/str}}">
-                  <i class="fa fa-download"></i>
+                  <i class="bi bi-download"></i>
                 </a>
               {{/has_local_file}}
               {{#drive_link}}
                 <a href="{{{drive_link}}}" target="_blank" class="sb-action-btn sb-action-btn--drive" title="{{#str}}openindrive, local_sitebackup{{/str}}">
-                  <i class="fa fa-external-link"></i>
+                  <i class="bi bi-box-arrow-up-right"></i>
                 </a>
               {{/drive_link}}
               {{#can_delete}}
                 <a href="{{{delete_url}}}" class="sb-action-btn sb-action-btn--delete"
                    title="{{#str}}deletebackup, local_sitebackup{{/str}}"
                    onclick="return confirm('{{#str}}confirmdelete, local_sitebackup{{/str}}');">
-                  <i class="fa fa-trash"></i>
+                  <i class="bi bi-trash"></i>
                 </a>
               {{/can_delete}}
             </td>
@@ -182,7 +182,7 @@
       {{/has_logs}}
       {{^has_logs}}
       <div class="sb-empty">
-        <i class="fa fa-cloud-upload"></i>
+        <i class="bi bi-cloud-arrow-up"></i>
         <p>{{#str}}nobackupsyet, local_sitebackup{{/str}}</p>
       </div>
       {{/has_logs}}

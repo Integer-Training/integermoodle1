@@ -74,6 +74,7 @@ echo $OUTPUT->header();
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
 <style>
 .sbp-shell { max-width:700px; margin:40px auto; font-family:system-ui,-apple-system,sans-serif; }
@@ -133,7 +134,7 @@ echo $OUTPUT->header();
 <div class="sbp-shell">
   <div class="sbp-card">
     <div class="sbp-header">
-      <h2><i class="fa fa-cloud-upload"></i> Site Backup</h2>
+      <h2><i class="bi bi-cloud-arrow-up"></i> Site Backup</h2>
       <p><?php echo s($log->filename); ?></p>
     </div>
 
@@ -230,16 +231,16 @@ echo $OUTPUT->header();
 
         if (success) {
             icon.className = 'sbp-result-icon success';
-            icon.innerHTML = '<i class="fa fa-check-circle"></i>';
+            icon.innerHTML = '<i class="bi bi-check-circle"></i>';
             msg.textContent = 'Backup completed successfully!';
             detail.textContent = 'Duration: ' + data.elapsed_fmt + (data.filesize ? ' — Size: ' + data.filesize : '');
-            actions.innerHTML = '<a href="' + dashUrl + '" class="sbp-btn sbp-btn--primary"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>';
+            actions.innerHTML = '<a href="' + dashUrl + '" class="sbp-btn sbp-btn--primary"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>';
         } else {
             icon.className = 'sbp-result-icon failed';
-            icon.innerHTML = '<i class="fa fa-times-circle"></i>';
+            icon.innerHTML = '<i class="bi bi-x-circle"></i>';
             msg.textContent = 'Backup failed';
             detail.textContent = data.error_message || 'An unknown error occurred.';
-            actions.innerHTML = '<a href="' + dashUrl + '" class="sbp-btn sbp-btn--primary"><i class="fa fa-arrow-left"></i> Back to Dashboard</a>';
+            actions.innerHTML = '<a href="' + dashUrl + '" class="sbp-btn sbp-btn--primary"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>';
         }
     }
 
