@@ -18,291 +18,782 @@
     @template local_learner/tutordash
 
     Tutor Dashboard — caseload, grading pipeline, learner activity.
+    Design system matches admindash (Editorial Aesthetic — Libre Baskerville / Deep Blue / Gold / Teal).
 }}
 
-<style>
-/* ===== Tutor Dashboard (td- namespace) ===== */
-.td-shell { max-width:1400px; margin:0 auto; padding:24px 16px; }
-.td-title { font-family:'Libre Baskerville',Georgia,serif; font-size:26px; font-weight:700; color:#1a2238; margin-bottom:4px; }
-.td-subtitle { font-size:14px; color:#6b7b8d; margin-bottom:24px; }
+<div class="td-shell" id="tutor-dashboard">
 
-/* KPI Cards */
-.td-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; margin-bottom:28px; }
-.td-kpi { background:#fff; border-radius:14px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.06); border-left:4px solid #e2e8f0; transition:transform .15s,box-shadow .15s; }
-.td-kpi:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.1); }
-.td-kpi--blue    { border-left-color:#3a5ba0; }
-.td-kpi--green   { border-left-color:#16a34a; }
-.td-kpi--teal    { border-left-color:#0ea5c6; }
-.td-kpi--orange  { border-left-color:#e88a2d; }
-.td-kpi--yellow  { border-left-color:#eab308; }
-.td-kpi--red     { border-left-color:#dc2626; }
-.td-kpi--purple  { border-left-color:#7c3aed; }
-.td-kpi-icon { width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; color:#fff; margin-bottom:10px; }
-.td-kpi-value { font-size:28px; font-weight:700; color:#1a2238; line-height:1.1; }
-.td-kpi-label { font-size:13px; color:#6b7b8d; margin-top:2px; }
-.td-kpi a { text-decoration:none; color:inherit; display:block; }
-.td-kpi a:hover .td-kpi-value { text-decoration:underline; }
+  <!-- ===== HEADER BAR ===== -->
+  <div class="td-header">
+    <div class="td-header-inner">
+      <div>
+        <h1 class="td-title">Tutor Dashboard</h1>
+        <p class="td-subtitle">Your caseload overview &middot; Grading pipeline</p>
+      </div>
+      <div class="td-header-actions">
+        <a href="{{{yet_to_grade_url}}}" class="td-hdr-btn">
+          <i class="bi bi-journal-check"></i> Marking
+        </a>
+        <a href="{{{progressions_url}}}" class="td-hdr-btn">
+          <i class="bi bi-graph-up-arrow"></i> Progressions
+        </a>
+        <a href="{{{mycourse_link}}}" class="td-hdr-btn">
+          <i class="bi bi-journal-bookmark"></i> My Courses
+        </a>
+      </div>
+    </div>
+  </div>
 
-/* Two-column layout */
-.td-row { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:28px; }
-@media (max-width:900px) { .td-row { grid-template-columns:1fr; } }
+  <!-- ===== SECTION 1: KPI CARDS ===== -->
+  <div class="td-kpis">
 
-/* Panel */
-.td-panel { background:#fff; border-radius:14px; box-shadow:0 2px 12px rgba(0,0,0,.06); overflow:hidden; }
-.td-panel-header { padding:18px 24px; font-size:17px; font-weight:600; color:#fff; }
-.td-panel-header--blue { background:linear-gradient(135deg,#1a2238,#3a5ba0); }
-.td-panel-header--green { background:linear-gradient(135deg,#16a34a,#86efac); }
-.td-panel-header--teal { background:linear-gradient(135deg,#0ea5c6,#67e8f9); }
-.td-panel-body { padding:20px 24px; }
-
-/* Stat rows inside panels */
-.td-stat-row { display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px solid #f1f5f9; font-size:15px; color:#4a5a6a; }
-.td-stat-row:last-child { border-bottom:none; }
-.td-stat-badge { min-width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; color:#fff; }
-.td-stat-badge--red { background:#dc2626; }
-.td-stat-badge--orange { background:#e88a2d; }
-.td-stat-badge--blue { background:#3a5ba0; }
-.td-stat-badge--green { background:#16a34a; }
-.td-stat-badge--teal { background:#0ea5c6; }
-.td-stat-badge a { color:#fff; text-decoration:none; }
-.td-stat-badge a:hover { text-decoration:underline; }
-
-/* Learner breakdown bar */
-.td-breakdown { display:flex; gap:0; border-radius:8px; overflow:hidden; height:32px; margin-top:12px; margin-bottom:8px; }
-.td-breakdown-seg { display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; color:#fff; min-width:30px; }
-.td-breakdown-seg--active { background:#16a34a; }
-.td-breakdown-seg--inactive { background:#dc2626; }
-.td-breakdown-seg--created { background:#eab308; }
-.td-breakdown-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:4px; }
-.td-breakdown-legend-item { display:flex; align-items:center; gap:6px; font-size:13px; color:#4a5a6a; }
-.td-breakdown-legend-dot { width:10px; height:10px; border-radius:50%; }
-
-/* Programmes table */
-.td-prog-header { display:flex; padding:12px 24px; font-weight:600; color:#4a5f7a; font-size:14px; border-bottom:1px solid #e6e9ec; }
-.td-prog-row { display:flex; align-items:center; padding:16px 24px; border-bottom:1px solid #f1f5f9; }
-.td-prog-row:last-child { border-bottom:none; }
-.td-prog-name { flex:1; font-size:15px; color:#4a5f7a; }
-.td-prog-badge { width:48px; height:48px; background:#3a5ba0; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:16px; }
-.td-prog-badge a { color:#fff; text-decoration:none; }
-
-/* Chart */
-.td-chart-container { min-height:280px; }
-
-/* Progression link card */
-.td-progression-link { display:flex; align-items:center; gap:14px; background:linear-gradient(135deg,#1a2238,#3a5ba0); color:#fff; padding:18px 24px; border-radius:14px; text-decoration:none; transition:transform .15s,box-shadow .15s; }
-.td-progression-link:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(58,91,160,.3); color:#fff; text-decoration:none; }
-.td-progression-link i { font-size:28px; }
-.td-progression-link-text { font-size:16px; font-weight:600; }
-.td-progression-link-sub { font-size:13px; opacity:.8; font-weight:400; }
-</style>
-
-<div class="td-shell">
-
-  <!-- Header -->
-  <div class="td-title">Tutor Dashboard</div>
-  <div class="td-subtitle">Your caseload overview and grading pipeline</div>
-
-  <!-- KPI Cards Row 1 -->
-  <div class="td-kpi-grid">
-    <div class="td-kpi td-kpi--green">
-      <div class="td-kpi-icon" style="background:#16a34a;"><i class="bi bi-people-fill"></i></div>
+    <a href="{{{progressions_url}}}" class="td-kpi-card td-kpi-card--link">
+      <div class="td-kpi-top">
+        <span class="td-kpi-icon td-kpi-icon--learners">
+          <i class="bi bi-people-fill"></i>
+        </span>
+        <span class="td-kpi-label">Your Learners</span>
+      </div>
       <div class="td-kpi-value">{{{your_learners}}}</div>
-      <div class="td-kpi-label">Your Learners</div>
-    </div>
+      <div class="td-kpi-chips">
+        <span class="td-chip td-chip--green"><i class="bi bi-check-circle-fill"></i> {{{active_count}}} Active</span>
+        <span class="td-chip td-chip--red"><i class="bi bi-x-circle-fill"></i> {{{inactive_count}}} Inactive</span>
+        <span class="td-chip td-chip--amber"><i class="bi bi-clock-history"></i> {{{created_count}}} Never Logged In</span>
+      </div>
+    </a>
 
-    <div class="td-kpi td-kpi--blue">
-      <div class="td-kpi-icon" style="background:#3a5ba0;"><i class="bi bi-journal-bookmark-fill"></i></div>
+    <a href="{{{mycourse_link}}}" class="td-kpi-card td-kpi-card--warm td-kpi-card--link">
+      <div class="td-kpi-top">
+        <span class="td-kpi-icon td-kpi-icon--courses">
+          <i class="bi bi-journal-bookmark-fill"></i>
+        </span>
+        <span class="td-kpi-label">Courses</span>
+      </div>
       <div class="td-kpi-value">{{{enrolled_courses}}}</div>
-      <div class="td-kpi-label">Courses</div>
+      <div class="td-kpi-chips">
+        <span class="td-chip td-chip--slate"><i class="bi bi-list-check"></i> {{{total_assignments}}} Assignments</span>
+      </div>
+    </a>
+
+    <a href="{{{yet_to_grade_url}}}" class="td-kpi-card td-kpi-card--cool td-kpi-card--link">
+      <div class="td-kpi-top">
+        <span class="td-kpi-icon td-kpi-icon--marking">
+          <i class="bi bi-clipboard2-check-fill"></i>
+        </span>
+        <span class="td-kpi-label">Awaiting Marking</span>
+      </div>
+      <div class="td-kpi-value">{{{yet_to_grade}}}</div>
+      <div class="td-kpi-chips">
+        <span class="td-chip td-chip--teal"><i class="bi bi-arrow-repeat"></i> {{{resubmissions}}} Resubmissions</span>
+      </div>
+    </a>
+
+    <div class="td-kpi-card td-kpi-card--deep">
+      <div class="td-kpi-top">
+        <span class="td-kpi-icon td-kpi-icon--grading">
+          <i class="bi bi-patch-check-fill"></i>
+        </span>
+        <span class="td-kpi-label">Grading Stats</span>
+      </div>
+      <div class="td-kpi-value">{{{graded}}}<span class="td-kpi-value-sub">graded</span></div>
+      <div class="td-kpi-chips">
+        <span class="td-chip td-chip--green"><i class="bi bi-trophy-fill"></i> {{{pass_rate}}}% Pass Rate</span>
+        <span class="td-chip td-chip--slate"><i class="bi bi-hourglass-split"></i> {{{avg_turnaround}}}d Avg Turn.</span>
+      </div>
     </div>
 
-    <div class="td-kpi td-kpi--yellow">
-      <div class="td-kpi-icon" style="background:#eab308;"><i class="bi bi-list-check"></i></div>
-      <div class="td-kpi-value">{{{total_assignments}}}</div>
-      <div class="td-kpi-label">Assignments</div>
+  </div>
+
+  <!-- ===== ALERT CARDS (below KPIs) ===== -->
+  <div class="td-alerts">
+
+    <a href="{{{overdue_url}}}" class="td-alert td-alert--danger">
+      <div class="td-alert-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+      <div class="td-alert-content">
+        <span class="td-alert-label">Overdue (>72h Ungraded)</span>
+        <span class="td-alert-value">{{{overdue_assigns}}}</span>
+      </div>
+      <i class="bi bi-arrow-right td-alert-arrow"></i>
+    </a>
+
+    <a href="{{{imm_url}}}" class="td-alert td-alert--warning">
+      <div class="td-alert-icon"><i class="bi bi-alarm"></i></div>
+      <div class="td-alert-content">
+        <span class="td-alert-label">Due Within 3 Days</span>
+        <span class="td-alert-value">{{{imm_assigns}}}</span>
+      </div>
+      <i class="bi bi-arrow-right td-alert-arrow"></i>
+    </a>
+
+    <a href="{{{inactive_learners_link}}}" class="td-alert td-alert--info">
+      <div class="td-alert-icon"><i class="bi bi-person-slash"></i></div>
+      <div class="td-alert-content">
+        <span class="td-alert-label">Inactive Learners (30+ days)</span>
+        <span class="td-alert-value">{{{inactive_count}}}</span>
+      </div>
+      <i class="bi bi-arrow-right td-alert-arrow"></i>
+    </a>
+
+  </div>
+
+  <!-- ===== SECTION 2: CHARTS ===== -->
+  <div class="td-charts">
+
+    <div class="td-chart-card">
+      <div class="td-chart-hdr">
+        <i class="bi bi-pie-chart-fill"></i>
+        <span>Learner Activity Distribution</span>
+      </div>
+      <div id="tdLearnerPieChart" class="td-chart-body"></div>
     </div>
 
-    <div class="td-kpi td-kpi--teal">
-      <a href="{{{yet_to_grade_url}}}">
-        <div class="td-kpi-icon" style="background:#0ea5c6;"><i class="bi bi-hourglass-split"></i></div>
-        <div class="td-kpi-value">{{{yet_to_grade}}}</div>
-        <div class="td-kpi-label">Awaiting Marking</div>
-      </a>
+    <div class="td-chart-card">
+      <div class="td-chart-hdr td-chart-hdr--alt">
+        <i class="bi bi-bar-chart-line-fill"></i>
+        <span>Grading Outcomes &middot; Pass Rate {{{pass_rate}}}%</span>
+      </div>
+      <div id="tdOutcomesChart" class="td-chart-body"></div>
     </div>
 
-    <div class="td-kpi td-kpi--orange">
-      <a href="{{{resubmissions_url}}}">
-        <div class="td-kpi-icon" style="background:#e88a2d;"><i class="bi bi-arrow-repeat"></i></div>
-        <div class="td-kpi-value">{{{resubmissions}}}</div>
-        <div class="td-kpi-label">Resubmissions</div>
-      </a>
-    </div>
+  </div>
 
-    <div class="td-kpi td-kpi--red">
-      <a href="{{{overdue_url}}}">
-        <div class="td-kpi-icon" style="background:#dc2626;"><i class="bi bi-exclamation-triangle-fill"></i></div>
-        <div class="td-kpi-value">{{{overdue_assigns}}}</div>
-        <div class="td-kpi-label">Overdue Ungraded</div>
-      </a>
+  <!-- ===== SECTION 3: GRADING PIPELINE ===== -->
+  <div class="td-panel">
+    <div class="td-panel-hdr">
+      <div>
+        <h3><i class="bi bi-funnel-fill"></i> Grading Pipeline</h3>
+        <p>Submissions awaiting action, overdue, and imminent deadlines</p>
+      </div>
     </div>
-
-    <div class="td-kpi td-kpi--purple">
-      <a href="{{{imm_url}}}">
-        <div class="td-kpi-icon" style="background:#7c3aed;"><i class="bi bi-alarm-fill"></i></div>
-        <div class="td-kpi-value">{{{imm_assigns}}}</div>
-        <div class="td-kpi-label">Due Within 3 Days</div>
-      </a>
+    <div class="td-panel-body">
+      <table class="td-table" style="width:100%">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th>Count</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-cell-name"><i class="bi bi-hourglass-split" style="color:#3a5ba0;"></i> Awaiting Marking (First Submissions)</td>
+            <td class="text-center"><span class="td-pill td-pill--blue">{{{yet_to_grade}}}</span></td>
+            <td class="text-center"><a href="{{{yet_to_grade_url}}}" class="td-action-link">View <i class="bi bi-arrow-right"></i></a></td>
+          </tr>
+          <tr>
+            <td class="td-cell-name"><i class="bi bi-arrow-repeat" style="color:#92400e;"></i> Resubmissions Awaiting Review</td>
+            <td class="text-center"><span class="td-pill td-pill--amber">{{{resubmissions}}}</span></td>
+            <td class="text-center"><a href="{{{resubmissions_url}}}" class="td-action-link">View <i class="bi bi-arrow-right"></i></a></td>
+          </tr>
+          <tr>
+            <td class="td-cell-name"><i class="bi bi-exclamation-triangle-fill" style="color:#dc2626;"></i> Overdue (>72h Ungraded)</td>
+            <td class="text-center"><span class="td-pill td-pill--red">{{{overdue_assigns}}}</span></td>
+            <td class="text-center"><a href="{{{overdue_url}}}" class="td-action-link">View <i class="bi bi-arrow-right"></i></a></td>
+          </tr>
+          <tr>
+            <td class="td-cell-name"><i class="bi bi-alarm-fill" style="color:#6ea3c1;"></i> Due Within 3 Days</td>
+            <td class="text-center"><span class="td-pill td-pill--teal">{{{imm_assigns}}}</span></td>
+            <td class="text-center"><a href="{{{imm_url}}}" class="td-action-link">View <i class="bi bi-arrow-right"></i></a></td>
+          </tr>
+          <tr>
+            <td class="td-cell-name"><i class="bi bi-check2-all" style="color:#166534;"></i> Total Graded (All Time)</td>
+            <td class="text-center"><span class="td-pill td-pill--green">{{{graded}}}</span></td>
+            <td class="text-center"></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Two-column: Learner Activity + Grading Pipeline -->
-  <div class="td-row">
-    <!-- Left: Learner Activity -->
-    <div class="td-panel">
-      <div class="td-panel-header td-panel-header--blue">Learner Activity</div>
-      <div class="td-panel-body">
-        <div class="td-stat-row">
-          <span>Total Learners</span>
-          <div class="td-stat-badge td-stat-badge--blue">{{{your_learners}}}</div>
-        </div>
-        <div class="td-stat-row">
-          <span>Active (last 30 days)</span>
-          <div class="td-stat-badge td-stat-badge--green">{{{active_count}}}</div>
-        </div>
-        <div class="td-stat-row">
-          <span>Inactive (30+ days)</span>
-          <div class="td-stat-badge td-stat-badge--red">
-            <a href="{{{inactive_learners_link}}}">{{{inactive_count}}}</a>
-          </div>
-        </div>
-        <div class="td-stat-row">
-          <span>Never Logged In</span>
-          <div class="td-stat-badge td-stat-badge--orange">{{{created_count}}}</div>
-        </div>
-
-        <!-- Breakdown bar -->
-        {{#your_learners}}
-        <div class="td-breakdown">
-          {{#active_count}}<div class="td-breakdown-seg td-breakdown-seg--active" style="flex:{{active_count}};">{{active_count}}</div>{{/active_count}}
-          {{#inactive_count}}<div class="td-breakdown-seg td-breakdown-seg--inactive" style="flex:{{inactive_count}};">{{inactive_count}}</div>{{/inactive_count}}
-          {{#created_count}}<div class="td-breakdown-seg td-breakdown-seg--created" style="flex:{{created_count}};">{{created_count}}</div>{{/created_count}}
-        </div>
-        <div class="td-breakdown-legend">
-          <div class="td-breakdown-legend-item"><div class="td-breakdown-legend-dot" style="background:#16a34a;"></div> Active</div>
-          <div class="td-breakdown-legend-item"><div class="td-breakdown-legend-dot" style="background:#dc2626;"></div> Inactive</div>
-          <div class="td-breakdown-legend-item"><div class="td-breakdown-legend-dot" style="background:#eab308;"></div> Never Logged In</div>
-        </div>
-        {{/your_learners}}
+  <!-- ===== SECTION 4: PROGRAMMES & CASELOAD ===== -->
+  <div class="td-panel">
+    <div class="td-panel-hdr td-panel-hdr--alt">
+      <div>
+        <h3><i class="bi bi-journal-bookmark-fill"></i> Programmes &amp; Caseload</h3>
+        <p>Your assigned courses and learner distribution</p>
       </div>
     </div>
-
-    <!-- Right: Grading Pipeline -->
-    <div class="td-panel">
-      <div class="td-panel-header td-panel-header--teal">Grading Pipeline</div>
-      <div class="td-panel-body">
-        <div class="td-stat-row">
-          <span>Awaiting Marking</span>
-          <div class="td-stat-badge td-stat-badge--teal">
-            <a href="{{{yet_to_grade_url}}}">{{{yet_to_grade}}}</a>
-          </div>
-        </div>
-        <div class="td-stat-row">
-          <span>Resubmissions Awaiting Review</span>
-          <div class="td-stat-badge td-stat-badge--orange">
-            <a href="{{{resubmissions_url}}}">{{{resubmissions}}}</a>
-          </div>
-        </div>
-        <div class="td-stat-row">
-          <span>Overdue Ungraded</span>
-          <div class="td-stat-badge td-stat-badge--red">
-            <a href="{{{overdue_url}}}">{{{overdue_assigns}}}</a>
-          </div>
-        </div>
-        <div class="td-stat-row">
-          <span>Due Within 3 Days</span>
-          <div class="td-stat-badge td-stat-badge--blue">
-            <a href="{{{imm_url}}}">{{{imm_assigns}}}</a>
-          </div>
-        </div>
-        <div class="td-stat-row">
-          <span>Total Graded</span>
-          <div class="td-stat-badge td-stat-badge--green">{{{graded}}}</div>
-        </div>
-        <div class="td-stat-row">
-          <span>Avg. Turnaround</span>
-          <div class="td-stat-badge td-stat-badge--blue">{{{avg_turnaround}}}d</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Two-column: Grading Outcomes Chart + Progressions Link -->
-  <div class="td-row">
-    <!-- Left: Chart -->
-    <div class="td-panel">
-      <div class="td-panel-header td-panel-header--green">Grading Outcomes</div>
-      <div class="td-panel-body">
-        <div id="td-outcomes-chart" class="td-chart-container"></div>
-      </div>
-    </div>
-
-    <!-- Right: Programmes + Progression link -->
-    <div>
-      <!-- Progression link -->
-      <a href="{{{progressions_url}}}" class="td-progression-link" style="margin-bottom:24px;">
-        <i class="bi bi-graph-up-arrow"></i>
-        <div>
-          <div class="td-progression-link-text">Learner Progressions</div>
-          <div class="td-progression-link-sub">View detailed progress per learner</div>
-        </div>
-      </a>
-
-      <!-- Programmes -->
-      <div class="td-panel">
-        <div class="td-panel-header td-panel-header--blue">Programmes &amp; Caseload</div>
-        <div class="td-prog-header">
-          <div style="flex:1;">Programme</div>
-          <div style="width:60px;text-align:center;">Learners</div>
-        </div>
-        {{#courses}}
-        <div class="td-prog-row">
-          <div class="td-prog-name">{{{coursename}}}</div>
-          <div class="td-prog-badge"><a href="{{{users_link}}}">{{{caseload}}}</a></div>
-        </div>
-        {{/courses}}
-        {{^courses}}
-        <div style="padding:24px;text-align:center;color:#6b7b8d;">No programmes assigned</div>
-        {{/courses}}
-      </div>
+    <div class="td-panel-body">
+      <table class="td-table" style="width:100%">
+        <thead>
+          <tr>
+            <th>Programme</th>
+            <th>Learners</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#courses}}
+          <tr>
+            <td class="td-cell-name">{{{coursename}}}</td>
+            <td class="text-center">
+              <a href="{{{users_link}}}" class="td-pill td-pill--blue" style="text-decoration:none;">{{{caseload}}}</a>
+            </td>
+          </tr>
+          {{/courses}}
+          {{^courses}}
+          <tr>
+            <td colspan="2" style="text-align:center;color:#6b7280;padding:24px;font-style:italic;">No programmes assigned</td>
+          </tr>
+          {{/courses}}
+        </tbody>
+      </table>
     </div>
   </div>
 
 </div>
 
 <script>
-// Grading Outcomes — Donut chart (Pass vs Refer)
-Highcharts.chart('td-outcomes-chart', {
-    chart: { type: 'pie', height: 280, backgroundColor: 'transparent' },
-    title: { text: 'Pass Rate: {{pass_rate}}%', style: { fontSize: '18px', fontWeight: '600', color: '#1a2238' } },
-    tooltip: { pointFormat: '<b>{point.y}</b> ({point.percentage:.1f}%)' },
-    credits: { enabled: false },
-    exporting: { enabled: false },
-    plotOptions: {
-        pie: {
-            innerSize: '55%',
-            allowPointSelect: true,
-            cursor: 'pointer',
-            dataLabels: { enabled: true, format: '{point.name}: {point.y}', style: { fontSize: '13px' } },
-            showInLegend: true
-        }
-    },
-    series: [{
-        name: 'Count',
-        colorByPoint: true,
-        data: [
-            { name: 'Pass', y: {{pass_count}}, color: '#16a34a' },
-            { name: 'Refer', y: {{refer_count}}, color: '#dc2626' }
-        ]
-    }]
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ===== HIGHCHARTS: Learner Activity Pie =====
+    Highcharts.chart('tdLearnerPieChart', {
+        chart: {
+            type: 'pie',
+            backgroundColor: 'transparent',
+            style: { fontFamily: "'Libre Baskerville', Georgia, serif" }
+        },
+        title: { text: '' },
+        tooltip: { pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b> ({point.y})' },
+        accessibility: { point: { valueSuffix: '%' } },
+        plotOptions: {
+            pie: {
+                allowPointSelect: true,
+                cursor: 'pointer',
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.y}',
+                    style: { fontSize: '12px', fontWeight: '400', color: '#3c4257' }
+                },
+                showInLegend: true
+            }
+        },
+        legend: {
+            itemStyle: { fontSize: '12px', fontWeight: '400', color: '#3c4257' }
+        },
+        colors: ['#3a5ba0', '#2d1e2f', '#f7c873', '#b0b8c1'],
+        series: [{
+            name: 'Learners',
+            colorByPoint: true,
+            data: [
+                { name: 'Active', y: {{active_count}}, sliced: true, selected: true },
+                { name: 'Inactive (30+ days)', y: {{inactive_count}} },
+                { name: 'Never Logged In', y: {{created_count}} },
+                { name: 'Suspended', y: {{suspended_count}} }
+            ]
+        }],
+        credits: { enabled: false }
+    });
+
+    // ===== HIGHCHARTS: Grading Outcomes Pie =====
+    Highcharts.chart('tdOutcomesChart', {
+        chart: {
+            type: 'pie',
+            backgroundColor: 'transparent',
+            style: { fontFamily: "'Libre Baskerville', Georgia, serif" }
+        },
+        title: { text: '' },
+        tooltip: { pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b> ({point.y})' },
+        accessibility: { point: { valueSuffix: '%' } },
+        plotOptions: {
+            pie: {
+                innerSize: '55%',
+                allowPointSelect: true,
+                cursor: 'pointer',
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                dataLabels: {
+                    enabled: true,
+                    format: '<b>{point.name}</b>: {point.y}',
+                    style: { fontSize: '12px', fontWeight: '400', color: '#3c4257' }
+                },
+                showInLegend: true
+            }
+        },
+        legend: {
+            itemStyle: { fontSize: '12px', fontWeight: '400', color: '#3c4257' }
+        },
+        colors: ['#3a5ba0', '#f7c873'],
+        series: [{
+            name: 'Grades',
+            colorByPoint: true,
+            data: [
+                { name: 'Pass', y: {{pass_count}}, sliced: true, selected: true },
+                { name: 'Refer', y: {{refer_count}} }
+            ]
+        }],
+        credits: { enabled: false }
+    });
+
 });
 </script>
+
+<style>
+/* ==========================================================================
+   TUTOR DASHBOARD — Editorial Aesthetic (matches Admin Dashboard)
+   Font: Libre Baskerville | Palette: Deep Blue / Gold / Teal
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* --- Reset within dashboard scope --- */
+#tutor-dashboard *,
+#tutor-dashboard *::before,
+#tutor-dashboard *::after {
+    box-sizing: border-box;
+}
+
+.td-shell {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    color: #1a2238;
+    max-width: 100%;
+    padding: 0;
+}
+
+/* ==========================================================================
+   HEADER
+   ========================================================================== */
+.td-header {
+    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 60%, #6ea3c1 100%);
+    border-radius: 10px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+.td-header::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(247,200,115,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.td-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 32px;
+    position: relative;
+    z-index: 1;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+.td-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+.td-subtitle {
+    font-size: 14px;
+    color: rgba(255,255,255,0.65);
+    margin: 4px 0 0;
+    font-style: italic;
+}
+.td-header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.td-hdr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    text-decoration: none;
+    transition: background 0.2s, border-color 0.2s;
+}
+.td-hdr-btn:hover {
+    background: rgba(255,255,255,0.22);
+    border-color: rgba(255,255,255,0.4);
+    color: #fff;
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   KPI CARDS — 4 across using CSS grid
+   ========================================================================== */
+.td-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+@media (max-width: 1100px) {
+    .td-kpis { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .td-kpis { grid-template-columns: 1fr; }
+}
+
+.td-kpi-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    padding: 22px 24px 18px;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+.td-kpi-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #3a5ba0;
+}
+.td-kpi-card--warm::after { background: #f7c873; }
+.td-kpi-card--cool::after { background: #6ea3c1; }
+.td-kpi-card--deep::after { background: linear-gradient(90deg, #3a5ba0, #2d1e2f); }
+
+.td-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(26,34,56,0.10);
+}
+a.td-kpi-card--link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    cursor: pointer;
+}
+a.td-kpi-card--link:hover {
+    text-decoration: none;
+    color: inherit;
+}
+.td-kpi-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.td-kpi-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+.td-kpi-icon--learners { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.td-kpi-icon--courses { background: rgba(247,200,115,0.2); color: #92400e; }
+.td-kpi-icon--marking { background: rgba(110,163,193,0.15); color: #0e7490; }
+.td-kpi-icon--grading { background: rgba(45,30,47,0.08); color: #2d1e2f; }
+
+.td-kpi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #6b7280;
+}
+.td-kpi-value {
+    font-size: 38px;
+    font-weight: 700;
+    color: #1a2238;
+    line-height: 1.1;
+    margin-bottom: 10px;
+}
+.td-kpi-value-sub {
+    font-size: 14px;
+    font-weight: 400;
+    color: #6b7280;
+    margin-left: 6px;
+    letter-spacing: 0;
+}
+.td-kpi-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.td-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+.td-chip--green { background: #dcfce7; color: #166534; }
+.td-chip--slate { background: #f1f5f9; color: #475569; }
+.td-chip--amber { background: #fef3c7; color: #92400e; }
+.td-chip--red { background: #fee2e2; color: #991b1b; }
+.td-chip--teal { background: #ccfbf1; color: #115e59; }
+
+/* ==========================================================================
+   CHARTS — 2-up grid
+   ========================================================================== */
+.td-charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+}
+@media (max-width: 900px) {
+    .td-charts { grid-template-columns: 1fr; }
+}
+
+.td-chart-card {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.td-chart-hdr {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #3a5ba0, #6ea3c1);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+}
+.td-chart-hdr--alt {
+    background: linear-gradient(135deg, #6ea3c1, #f7c873);
+    color: #1a2238;
+}
+.td-chart-body {
+    height: 340px;
+    padding: 12px 16px;
+}
+
+/* ==========================================================================
+   PANELS (Grading Pipeline / Programmes)
+   ========================================================================== */
+.td-panel {
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 28px;
+}
+.td-panel-hdr {
+    padding: 20px 28px;
+    background: linear-gradient(135deg, #3a5ba0 0%, #6ea3c1 100%);
+    color: #fff;
+}
+.td-panel-hdr--alt {
+    background: linear-gradient(135deg, #6ea3c1 0%, #f7c873 100%);
+    color: #1a2238;
+}
+.td-panel-hdr h3 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.td-panel-hdr p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.8;
+    font-style: italic;
+}
+.td-panel-body {
+    padding: 20px 24px;
+}
+
+/* ==========================================================================
+   TABLES
+   ========================================================================== */
+.td-table {
+    width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+.td-table thead th {
+    background: #1a2238 !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 14px !important;
+    border: none !important;
+    white-space: nowrap;
+}
+.td-table thead th:first-child {
+    border-radius: 6px 0 0 0;
+}
+.td-table thead th:last-child {
+    border-radius: 0 6px 0 0;
+}
+.td-table tbody td {
+    font-size: 13px;
+    padding: 10px 14px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    vertical-align: middle;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.td-table tbody tr:hover td {
+    background: #f8fafc !important;
+}
+.td-cell-name {
+    font-weight: 600;
+    color: #1a2238;
+}
+.td-cell-name i {
+    margin-right: 6px;
+}
+
+/* Pills */
+.td-pill {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.td-pill--blue { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.td-pill--red { background: #fee2e2; color: #991b1b; }
+.td-pill--green { background: #dcfce7; color: #166534; }
+.td-pill--amber { background: #fef3c7; color: #92400e; }
+.td-pill--teal { background: #ccfbf1; color: #115e59; }
+
+/* Action links */
+.td-action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #3a5ba0;
+    text-decoration: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: color 0.2s;
+}
+.td-action-link:hover {
+    color: #1a2238;
+    text-decoration: none;
+}
+.td-action-link i {
+    transition: transform 0.2s;
+}
+.td-action-link:hover i {
+    transform: translateX(3px);
+}
+
+/* ==========================================================================
+   ALERT CARDS
+   ========================================================================== */
+.td-alerts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 28px;
+}
+@media (max-width: 900px) {
+    .td-alerts { grid-template-columns: 1fr; }
+}
+
+.td-alert {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 22px;
+    background: #fff;
+    border: 1px solid #e3eaf2;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #1a2238;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+.td-alert::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+.td-alert--danger::before { background: #dc2626; }
+.td-alert--warning::before { background: #f7c873; }
+.td-alert--info::before { background: #3a5ba0; }
+
+.td-alert:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26,34,56,0.08);
+    text-decoration: none;
+    color: #1a2238;
+}
+.td-alert-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.td-alert--danger .td-alert-icon { background: #fee2e2; color: #dc2626; }
+.td-alert--warning .td-alert-icon { background: #fef3c7; color: #92400e; }
+.td-alert--info .td-alert-icon { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+
+.td-alert-content {
+    flex: 1;
+    min-width: 0;
+}
+.td-alert-label {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    margin-bottom: 2px;
+}
+.td-alert-value {
+    display: block;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+.td-alert-arrow {
+    color: #b0b8c1;
+    font-size: 18px;
+    transition: transform 0.2s;
+}
+.td-alert:hover .td-alert-arrow {
+    transform: translateX(4px);
+    color: #3a5ba0;
+}
+
+/* ==========================================================================
+   HIGHCHARTS CLEANUP
+   ========================================================================== */
+.highcharts-a11y-proxy-element { display: none !important; }
+.highcharts-credits { display: none !important; }
+.highcharts-button-box { display: none !important; }
+.highcharts-no-tooltip.highcharts-button.highcharts-contextbutton.highcharts-button-normal { display: none !important; }
+
+/* ==========================================================================
+   PRINT STYLES
+   ========================================================================== */
+@media print {
+    .td-header-actions { display: none; }
+    .td-kpi-card, .td-chart-card, .td-panel, .td-alert {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
+</style>

@@ -48,6 +48,7 @@ $prefix = $CFG->prefix;
 $tutorid = (int) $USER->id;
 $now = time();
 $thirty_days_ago = $now - (30 * 24 * 60 * 60);
+$sla_threshold = $now - (72 * 3600); // 72 hours ago — marking SLA.
 
 // ============================================================
 // 1. DISTINCT LEARNER IDS (single query, no double-counting)
@@ -65,6 +66,20 @@ $learner_sql = "SELECT DISTINCT gm_s.userid
 $learner_records = $DB->get_records_sql($learner_sql);
 $learner_ids = array_keys($learner_records);
 $total_learners = count($learner_ids);
+
+// ============================================================
+// 1b. SUSPENDED LEARNERS (separate count — not in learner_ids)
+// ============================================================
+$suspended_sql = "SELECT COUNT(DISTINCT gm_s.userid)
+    FROM {$prefix}groups_members gm_t
+    JOIN {$prefix}groups g ON g.id = gm_t.groupid
+    JOIN {$prefix}groups_members gm_s ON gm_s.groupid = g.id AND gm_s.userid <> gm_t.userid
+    JOIN {$prefix}role_assignments ra ON ra.userid = gm_s.userid
+    JOIN {$prefix}context ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50 AND ctx.instanceid = g.courseid
+    JOIN {$prefix}role r ON r.id = ra.roleid AND r.shortname = 'student'
+    JOIN {$prefix}user u ON u.id = gm_s.userid AND u.suspended = 1 AND u.deleted = 0
+    WHERE gm_t.userid = {$tutorid}";
+$suspended_count = $DB->count_records_sql($suspended_sql);
 
 // ============================================================
 // 2. LEARNER ACTIVITY BREAKDOWN (active / inactive / created)
@@ -192,7 +207,7 @@ $resub_sql = "SELECT COUNT(DISTINCT sub.id)
 $resubmissions = $DB->count_records_sql($resub_sql);
 
 // ============================================================
-// 7. OVERDUE — ungraded submissions where assignment due date has passed
+// 7. OVERDUE — ungraded submissions submitted > 72 hours ago (SLA breach)
 // ============================================================
 $o_sql = "SELECT COUNT(DISTINCT sub.id)
     FROM {$prefix}groups_members gm_t
@@ -213,7 +228,7 @@ $o_sql = "SELECT COUNT(DISTINCT sub.id)
         AND a.name NOT LIKE '%IAG%'
         AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
         AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
-        AND a.duedate > 0 AND a.duedate < {$now}";
+        AND sub.timemodified <= {$sla_threshold}";
 
 $overdue_assigns = $DB->count_records_sql($o_sql);
 
@@ -322,9 +337,10 @@ $templatecontext = [
     'avg_turnaround'    => $avg_turnaround,
 
     // Learner activity breakdown.
-    'active_count'   => $active_count,
-    'inactive_count' => $inactive_count,
-    'created_count'  => $created_count,
+    'active_count'    => $active_count,
+    'inactive_count'  => $inactive_count,
+    'created_count'   => $created_count,
+    'suspended_count' => $suspended_count,
 
     // Per-course caseload.
     'courses' => $courselist,
