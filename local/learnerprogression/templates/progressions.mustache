@@ -180,6 +180,31 @@
     </div>
   </div>
 
+  <!-- Learning Times Modal -->
+  <div id="progTimesModal" class="prog-modal-overlay" style="display:none">
+    <div class="prog-modal">
+      <div class="prog-modal-header">
+        <h4><i class="bi bi-clock-history"></i> Learning Times</h4>
+      </div>
+      <div class="prog-modal-body">
+        <table class="prog-times-table">
+          <thead>
+            <tr>
+              <th>Date Accessed</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Length of Access</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="prog-modal-footer">
+        <button id="progTimesModalClose" class="prog-modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ===== CDN: DataTables Buttons ===== -->
@@ -306,6 +331,11 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="prog-course-stats">';
             html += '<span class="prog-pill" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff">Submitted: ' + c.submitted + ' / ' + c.total + '</span>';
             html += '<span class="prog-pill" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff">Passed: ' + c.passed + ' / ' + c.total + '</span>';
+            // Learning hours badge.
+            if (!window.__progSessions) window.__progSessions = [];
+            var sessIdx = window.__progSessions.length;
+            window.__progSessions.push(c.sessions || []);
+            html += '<span class="prog-hours-badge" data-sess-idx="' + sessIdx + '" style="margin-left:8px" title="Click to view session log"><i class="bi bi-clock-history"></i> ' + escHtml(c.hours || '0m') + '</span>';
             html += '<div class="prog-bar-wrap" style="width:100px;margin-left:8px"><div class="prog-bar prog-bar--default" style="width:' + cPct + '%"></div></div>';
             html += '<span class="prog-bar-label">' + cPct + '%</span>';
             html += '</div></div>';
@@ -360,6 +390,35 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch(e) {
                 console.error('Failed to parse progression details', e);
             }
+        }
+    });
+
+    // Learning hours modal handlers.
+    $(document).on('click', '.prog-hours-badge', function(e) {
+        e.stopPropagation();
+        var idx = $(this).data('sess-idx');
+        var sessions = (window.__progSessions && window.__progSessions[idx]) ? window.__progSessions[idx] : [];
+        var $modal = $('#progTimesModal');
+        var $tbody = $modal.find('.prog-times-table tbody');
+        $tbody.empty();
+        if (sessions.length === 0) {
+            $tbody.append('<tr><td colspan="4" style="text-align:center;color:#9ca3af;font-style:italic;padding:20px">No session data available</td></tr>');
+        } else {
+            for (var s = 0; s < sessions.length; s++) {
+                var sess = sessions[s];
+                $tbody.append('<tr><td>' + escHtml(sess.date) + '</td><td>' + escHtml(sess.start) + '</td><td>' + escHtml(sess.end) + '</td><td>' + escHtml(sess.length) + '</td></tr>');
+            }
+        }
+        $modal.fadeIn(200);
+    });
+
+    // Close modal.
+    $(document).on('click', '#progTimesModalClose', function() {
+        $('#progTimesModal').fadeOut(200);
+    });
+    $(document).on('click', '.prog-modal-overlay', function(e) {
+        if ($(e.target).hasClass('prog-modal-overlay')) {
+            $('#progTimesModal').fadeOut(200);
         }
     });
 
@@ -995,5 +1054,117 @@ tr.shown .prog-toggle-btn {
         box-shadow: none;
         border: 1px solid #ccc;
     }
+}
+
+/* ==========================================================================
+   LEARNING HOURS BADGE & MODAL
+   ========================================================================== */
+.prog-hours-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: rgba(124, 58, 237, 0.25);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.prog-hours-badge:hover {
+    background: rgba(124, 58, 237, 0.45);
+}
+.prog-modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.prog-modal {
+    background: #fff;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: progModalIn 0.2s ease;
+}
+@keyframes progModalIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.prog-modal-header {
+    padding: 18px 24px;
+    background: linear-gradient(135deg, #3a5ba0, #6ea3c1);
+    color: #fff;
+}
+.prog-modal-header h4 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Libre Baskerville', Georgia, serif;
+}
+.prog-modal-body {
+    padding: 0;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+.prog-times-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.prog-times-table thead th {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #e3eaf2;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    position: sticky;
+    top: 0;
+}
+.prog-times-table tbody td {
+    font-size: 13px;
+    padding: 10px 16px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: center;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #374151;
+}
+.prog-times-table tbody tr:hover td {
+    background: #f8fafc;
+}
+.prog-modal-footer {
+    padding: 14px 24px;
+    text-align: right;
+    border-top: 1px solid #e3eaf2;
+}
+.prog-modal-close-btn {
+    background: #3a5ba0;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 24px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: background 0.2s;
+}
+.prog-modal-close-btn:hover {
+    background: #2d4a8a;
 }
 </style>

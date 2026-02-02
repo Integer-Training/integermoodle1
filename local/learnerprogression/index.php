@@ -290,6 +290,95 @@ if (!empty($learner_ids)) {
         $course_list[] = ['name' => $cname];
     }
 
+    // ===== LOGSTORE: Learning hours per user per course =====
+    $learning_hours = [];
+    $all_courseids = [];
+    foreach ($learner_data as $u_id => $ld_item) {
+        foreach ($ld_item['courses'] as $c_id => $cd_item) {
+            $all_courseids[$c_id] = true;
+        }
+    }
+    $all_courseids = array_keys($all_courseids);
+
+    if (!empty($all_courseids)) {
+        list($cid_sql, $cid_params) = $DB->get_in_or_equal($all_courseids, SQL_PARAMS_NAMED, 'cid');
+        list($uid2_sql, $uid2_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'luid');
+        $yearstart = mktime(0, 0, 0, 1, 1, (int) date('Y'));
+
+        $log_events = $DB->get_recordset_sql(
+            "SELECT userid, courseid, timecreated
+             FROM {logstore_standard_log}
+             WHERE courseid {$cid_sql}
+               AND userid {$uid2_sql}
+               AND timecreated >= :yearstart
+             ORDER BY userid, courseid, timecreated ASC",
+            array_merge($cid_params, $uid2_params, ['yearstart' => $yearstart])
+        );
+
+        $idle_cap = 1800; // 30-minute idle cap.
+        $cur_key = '';
+        $sess_start = 0;
+        $prev_time = 0;
+        $sess_arr = [];
+        $sess_total = 0;
+
+        $save_session_group = function() use (&$cur_key, &$sess_start, &$prev_time,
+                                               &$sess_arr, &$sess_total, &$learning_hours) {
+            if ($cur_key === '' || $sess_start <= 0) {
+                return;
+            }
+            $dur = $prev_time - $sess_start;
+            if ($dur > 0) {
+                $sess_arr[] = [
+                    'date' => date('d.m.Y', $sess_start),
+                    'start' => date('h:i A', $sess_start),
+                    'end' => date('h:i A', $prev_time),
+                    'length' => sprintf('%02d:%02d:%02d',
+                        floor($dur / 3600), floor(($dur % 3600) / 60), $dur % 60),
+                ];
+                $sess_total += $dur;
+            }
+            $hrs = floor($sess_total / 3600);
+            $mins = floor(($sess_total % 3600) / 60);
+            $learning_hours[$cur_key] = [
+                'total_seconds' => $sess_total,
+                'formatted' => ($hrs > 0 ? $hrs . 'h ' : '') . $mins . 'm',
+                'sessions' => $sess_arr,
+            ];
+        };
+
+        foreach ($log_events as $ev) {
+            $key = $ev->userid . '-' . $ev->courseid;
+            if ($key !== $cur_key) {
+                $save_session_group();
+                $cur_key = $key;
+                $sess_start = (int) $ev->timecreated;
+                $prev_time = (int) $ev->timecreated;
+                $sess_arr = [];
+                $sess_total = 0;
+            } else {
+                $gap = (int) $ev->timecreated - $prev_time;
+                if ($gap > $idle_cap) {
+                    $dur = $prev_time - $sess_start;
+                    if ($dur > 0) {
+                        $sess_arr[] = [
+                            'date' => date('d.m.Y', $sess_start),
+                            'start' => date('h:i A', $sess_start),
+                            'end' => date('h:i A', $prev_time),
+                            'length' => sprintf('%02d:%02d:%02d',
+                                floor($dur / 3600), floor(($dur % 3600) / 60), $dur % 60),
+                        ];
+                        $sess_total += $dur;
+                    }
+                    $sess_start = (int) $ev->timecreated;
+                }
+                $prev_time = (int) $ev->timecreated;
+            }
+        }
+        $save_session_group();
+        $log_events->close();
+    }
+
     // Build template array.
     $learners = [];
     $active_count = 0;
@@ -338,6 +427,8 @@ if (!empty($learner_ids)) {
                 }
                 return strnatcasecmp($a['name'], $b['name']);
             });
+            $lh_key = $uid . '-' . $cid;
+            $course_hrs = isset($learning_hours[$lh_key]) ? $learning_hours[$lh_key] : null;
             $course_details[] = [
                 'name' => $cd['name'],
                 'current' => $c_current,
@@ -345,6 +436,9 @@ if (!empty($learner_ids)) {
                 'submitted' => $cd['submitted'],
                 'total' => $cd['total'],
                 'assignments' => $sorted_assignments,
+                'hours' => $course_hrs ? $course_hrs['formatted'] : '0m',
+                'hours_seconds' => $course_hrs ? $course_hrs['total_seconds'] : 0,
+                'sessions' => $course_hrs ? $course_hrs['sessions'] : [],
             ];
         }
 

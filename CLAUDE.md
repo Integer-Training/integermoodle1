@@ -819,7 +819,7 @@ Navy-blue palette matching admin dashboard: `#1a2238`, `#3a5ba0`, `#6ea3c1`, `#f
 
 Standalone plugin showing each learner's **Current %** (assignments passed / total) with expandable per-course (unit-wise) breakdown. Accessible to managers (all learners) and tutors (their group learners only).
 
-**Version:** 2026020200 (1.0.0) | **Capability:** `local/learnerprogression:view` (manager only; tutors access via `teacher` role check)
+**Version:** 2026020201 (1.1.0) | **Capability:** `local/learnerprogression:view` (manager only; tutors access via `teacher` role check)
 
 #### File Structure
 
@@ -855,7 +855,13 @@ Since Alpha theme ignores `showinflatnavigation`, sidebar links are added direct
 - Admins: inside the `is_siteadmin()` block, with `fa-chart-line` icon
 - Tutors: separate role-check block after admin links
 
-#### Data Queries (3 queries total)
+#### Features (v1.1.0)
+
+- **Learning Hours per course:** Queries `{logstore_standard_log}` for each user-course combo (current year, 30-min idle cap), calculates session durations, shows clickable purple badge in expandable course header
+- **Session log modal:** Clicking the hours badge opens a modal showing Date Accessed, Start, End, Length of Access for each session
+- **Session calculation:** Uses streaming `get_recordset_sql` for memory efficiency; groups consecutive logstore events into sessions with 1800-second idle cap
+
+#### Data Queries (4 queries total)
 
 **Query 1 — User info:** Start dates, last access, full name from `{user}` table.
 
@@ -876,6 +882,8 @@ WHERE u.id IN (...) AND assignment exclusions (IAG, ID Proof, Case Studies)
 ```
 
 **Query 3 — Tutor lookup (manager only):** Maps each learner to their tutor via group membership.
+
+**Query 4 — Learning hours (v1.1.0):** Streams `{logstore_standard_log}` for all learner+course combos in current year, ordered by `userid, courseid, timecreated ASC`. Processed in PHP with 30-min idle cap into per-user-per-course session arrays.
 
 #### PHP Aggregation
 
