@@ -273,44 +273,44 @@ $month_names = [
 ];
 $hours_chart_data = [];
 
-$hours_sql = "SELECT
-        DATE_FORMAT(FROM_UNIXTIME(t.timecreated), '%m') AS log_month,
-        SUM(t.diff_seconds) AS total_seconds
-    FROM (
-        SELECT
-            timecreated,
-            IF(
-                @prev_user = userid
-                AND @prev_month = DATE_FORMAT(FROM_UNIXTIME(timecreated), '%m'),
-                timecreated - @prev_time,
-                0
-            ) AS diff_seconds,
-            @prev_user := userid,
-            @prev_month := DATE_FORMAT(FROM_UNIXTIME(timecreated), '%m'),
-            @prev_time := timecreated
-        FROM {logstore_standard_log}
-        CROSS JOIN (SELECT @prev_user := NULL, @prev_month := NULL, @prev_time := NULL) vars
-        WHERE component = 'mod_hvp'
-          AND userid = :userid
-          AND YEAR(FROM_UNIXTIME(timecreated)) = YEAR(CURDATE())
-        ORDER BY userid, timecreated
-    ) AS t
-    GROUP BY log_month
-    ORDER BY log_month";
-
-$hours_results = [];
+// Fetch all course-related log timestamps for the current year, ordered chronologically.
+// Then calculate time spent in PHP with a 30-minute idle cap (standard time-on-site method).
+$hours_results_raw = [];
 try {
-    $hours_results = $DB->get_records_sql($hours_sql, ['userid' => $userid]);
+    $log_sql = "SELECT timecreated
+                FROM {logstore_standard_log}
+                WHERE userid = :userid
+                  AND courseid > 1
+                  AND YEAR(FROM_UNIXTIME(timecreated)) = YEAR(CURDATE())
+                ORDER BY timecreated ASC";
+    $hours_results_raw = $DB->get_records_sql($log_sql, ['userid' => $userid]);
 } catch (Exception $e) {
     // Silently handle — chart will show zeros.
 }
 
-foreach ($month_names as $num => $name) {
-    $key = str_pad($num, 2, '0', STR_PAD_LEFT);
-    $val = 0;
-    if (isset($hours_results[$key]) && $hours_results[$key]->total_seconds > 0) {
-        $val = round($hours_results[$key]->total_seconds / 3600, 1);
+// Aggregate per-month with 30-minute idle cap between consecutive events.
+$month_seconds = array_fill(1, 12, 0);
+$max_gap = 1800; // 30 minutes — gaps larger than this are treated as idle/away.
+$prev_time = null;
+$prev_month = null;
+
+foreach ($hours_results_raw as $row) {
+    $ts = (int) $row->timecreated;
+    $m  = (int) date('n', $ts);
+
+    if ($prev_time !== null && $m === $prev_month) {
+        $gap = $ts - $prev_time;
+        if ($gap > 0 && $gap <= $max_gap) {
+            $month_seconds[$m] += $gap;
+        }
     }
+
+    $prev_time  = $ts;
+    $prev_month = $m;
+}
+
+foreach ($month_names as $num => $name) {
+    $val = ($month_seconds[$num] > 0) ? round($month_seconds[$num] / 3600, 1) : 0;
     $hours_chart_data[] = ['name' => $name, 'y' => $val];
 }
 

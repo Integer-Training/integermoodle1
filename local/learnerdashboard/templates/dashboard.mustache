@@ -11,219 +11,197 @@
 
 <div class="ld-shell" id="learner-dashboard">
 
-  <!-- ===== HEADER BAR ===== -->
+  <!-- ===== HEADER ===== -->
   <div class="ld-header">
-    <div class="ld-header-inner">
+    <div class="ld-header-left">
+      <span class="ld-avatar" data-name="{{{name}}}"></span>
       <div>
-        <h1 class="ld-title">My Dashboard</h1>
-        <p class="ld-subtitle">Welcome back, {{{fullname}}} &middot; Epearl Academy</p>
-      </div>
-      <div class="ld-header-actions">
-        <a href="{{{mycourses_link}}}" class="ld-hdr-btn">
-          <i class="bi bi-journal-bookmark"></i> My Courses
-        </a>
-        <a href="{{{mail_link}}}" class="ld-hdr-btn">
-          <i class="bi bi-envelope"></i> Mail Inbox
-        </a>
-        <a href="{{{contact_link}}}" class="ld-hdr-btn">
-          <i class="bi bi-headset"></i> Contact Support
-        </a>
+        <h1 class="ld-title">Welcome back, {{{name}}}</h1>
+        <p class="ld-subtitle">Here's your learning overview</p>
       </div>
     </div>
+    <div class="ld-header-actions">
+      <a href="{{{mycourses_link}}}" class="ld-btn"><i class="bi bi-journal-bookmark"></i> My Courses</a>
+      <a href="{{{mail_link}}}" class="ld-btn"><i class="bi bi-envelope"></i> Inbox</a>
+      <a href="{{{contact_link}}}" class="ld-btn ld-btn--ghost"><i class="bi bi-headset"></i> Support</a>
+    </div>
   </div>
+
+  <!-- Decorative mesh blobs -->
+  <div class="ld-blob ld-blob--1"></div>
+  <div class="ld-blob ld-blob--2"></div>
 
   <!-- ===== KPI CARDS ===== -->
   <div class="ld-kpis">
-
-    <a href="{{{mycourses_link}}}" class="ld-kpi-card ld-kpi-card--link">
-      <div class="ld-kpi-top">
-        <span class="ld-kpi-icon ld-kpi-icon--courses">
-          <i class="bi bi-journal-bookmark-fill"></i>
-        </span>
+    <a href="{{{mycourses_link}}}" class="ld-kpi ld-kpi--blue">
+      <div class="ld-kpi-icon"><i class="bi bi-book"></i></div>
+      <div class="ld-kpi-body">
+        <span class="ld-kpi-val">{{{enrolled_courses}}}</span>
         <span class="ld-kpi-label">Enrolled Courses</span>
       </div>
-      <div class="ld-kpi-value">{{{enrolled_courses}}}</div>
     </a>
-
-    <div class="ld-kpi-card ld-kpi-card--amber">
-      <div class="ld-kpi-top">
-        <span class="ld-kpi-icon ld-kpi-icon--due">
-          <i class="bi bi-clock-history"></i>
-        </span>
+    <div class="ld-kpi ld-kpi--amber">
+      <div class="ld-kpi-icon"><i class="bi bi-hourglass-split"></i></div>
+      <div class="ld-kpi-body">
+        <span class="ld-kpi-val">{{{due_assignments}}}</span>
         <span class="ld-kpi-label">Due Assignments</span>
       </div>
-      <div class="ld-kpi-value">{{{due_assignments}}}</div>
     </div>
-
-    <div class="ld-kpi-card ld-kpi-card--green">
-      <div class="ld-kpi-top">
-        <span class="ld-kpi-icon ld-kpi-icon--completed">
-          <i class="bi bi-check-circle-fill"></i>
-        </span>
+    <div class="ld-kpi ld-kpi--green">
+      <div class="ld-kpi-icon"><i class="bi bi-check-circle"></i></div>
+      <div class="ld-kpi-body">
+        <span class="ld-kpi-val">{{{completed_assignments}}}</span>
         <span class="ld-kpi-label">Completed</span>
       </div>
-      <div class="ld-kpi-value">{{{completed_assignments}}}</div>
     </div>
-
-    <div class="ld-kpi-card ld-kpi-card--teal">
-      <div class="ld-kpi-top">
-        <span class="ld-kpi-icon ld-kpi-icon--progress">
-          <i class="bi bi-graph-up-arrow"></i>
-        </span>
+    <div class="ld-kpi ld-kpi--cyan">
+      <div class="ld-kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="ld-kpi-body">
+        <span class="ld-kpi-val">{{{overall_progress}}}<small>%</small></span>
         <span class="ld-kpi-label">Overall Progress</span>
       </div>
-      <div class="ld-kpi-value">{{{overall_progress}}}%</div>
     </div>
-
-    <a href="{{{mail_link}}}" class="ld-kpi-card ld-kpi-card--deep ld-kpi-card--link">
-      <div class="ld-kpi-top">
-        <span class="ld-kpi-icon ld-kpi-icon--messages">
-          <i class="bi bi-envelope-fill"></i>
-        </span>
+    <a href="{{{mail_link}}}" class="ld-kpi ld-kpi--purple">
+      <div class="ld-kpi-icon"><i class="bi bi-envelope-open"></i></div>
+      <div class="ld-kpi-body">
+        <span class="ld-kpi-val">{{{unread_messages}}}</span>
         <span class="ld-kpi-label">Unread Messages</span>
       </div>
-      <div class="ld-kpi-value">{{{unread_messages}}}</div>
     </a>
+  </div>
 
+  <!-- ===== PROGRESS RING + QUICK STATS ===== -->
+  <div class="ld-progress-strip">
+    <div class="ld-ring-wrap">
+      <svg class="ld-ring" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="#e5e7eb" stroke-width="10"/>
+        <circle cx="60" cy="60" r="52" fill="none" stroke="url(#ldGrad)" stroke-width="10"
+                stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"
+                class="ld-ring-fill" data-pct="{{{overall_progress}}}"/>
+        <defs><linearGradient id="ldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#06b6d4"/>
+        </linearGradient></defs>
+      </svg>
+      <div class="ld-ring-text">
+        <span class="ld-ring-pct">{{{overall_progress}}}%</span>
+        <span class="ld-ring-lbl">Complete</span>
+      </div>
+    </div>
+    <div class="ld-quick-stats">
+      <div class="ld-qs"><span class="ld-qs-num" style="color:#3b82f6">{{{enrolled_courses}}}</span><span class="ld-qs-lbl">Courses</span></div>
+      <div class="ld-qs-divider"></div>
+      <div class="ld-qs"><span class="ld-qs-num" style="color:#16a34a">{{{completed_assignments}}}</span><span class="ld-qs-lbl">Passed</span></div>
+      <div class="ld-qs-divider"></div>
+      <div class="ld-qs"><span class="ld-qs-num" style="color:#ca8a04">{{{due_assignments}}}</span><span class="ld-qs-lbl">Remaining</span></div>
+    </div>
   </div>
 
   <!-- ===== TWO-COLUMN: DUE DATES + MESSAGES ===== -->
-  <div class="ld-two-col">
+  <div class="ld-grid-2">
 
-    <!-- LEFT: Upcoming Due Dates -->
-    <div class="ld-panel">
-      <div class="ld-panel-hdr">
-        <div>
-          <h3><i class="bi bi-alarm-fill"></i> Upcoming Due Dates</h3>
-          <p>Assignments due within the next 7 days</p>
-        </div>
+    <!-- Due Dates -->
+    <div class="ld-card">
+      <div class="ld-card-hdr">
+        <h3><i class="bi bi-alarm"></i> Upcoming Due Dates</h3>
+        <span class="ld-card-badge">{{{upcoming_count}}} upcoming</span>
       </div>
-      <div class="ld-panel-body">
-        {{#has_upcoming_due}}
-        <div class="ld-due-list">
-          {{#upcoming_due}}
-          <a href="{{{assign_link}}}" class="ld-due-item {{#is_red}}ld-due-item--red{{/is_red}}{{#is_amber}}ld-due-item--amber{{/is_amber}}{{#is_green}}ld-due-item--green{{/is_green}}">
-            <div class="ld-due-icon">
-              <i class="bi bi-file-earmark-text"></i>
-            </div>
-            <div class="ld-due-content">
-              <span class="ld-due-assign">{{{assignname}}}</span>
-              <span class="ld-due-course">{{{coursename}}}</span>
-              <span class="ld-due-date">{{{duedate}}}</span>
-            </div>
-            <div class="ld-due-countdown">
-              <span class="ld-due-days">{{{days_remaining}}}</span>
-              <span class="ld-due-days-label">days</span>
-            </div>
-          </a>
-          {{/upcoming_due}}
-        </div>
-        {{/has_upcoming_due}}
-        {{^has_upcoming_due}}
-        <div class="ld-empty-state">
-          <i class="bi bi-check2-all"></i>
-          <p>No assignments due in the next 7 days</p>
-        </div>
-        {{/has_upcoming_due}}
+      {{#has_upcoming_due}}
+      <div class="ld-card-body ld-card-body--flush">
+        {{#upcoming_due}}
+        <a href="{{{assign_link}}}" class="ld-due {{#is_red}}ld-due--red{{/is_red}}{{#is_amber}}ld-due--amber{{/is_amber}}{{#is_green}}ld-due--green{{/is_green}}">
+          <div class="ld-due-left">
+            <div class="ld-due-name">{{{assignname}}}</div>
+            <div class="ld-due-meta">{{{coursename}}} &middot; {{{duedate}}}</div>
+          </div>
+          <div class="ld-due-right">
+            <span class="ld-due-days">{{{days_remaining}}}</span>
+            <span class="ld-due-unit">days left</span>
+          </div>
+        </a>
+        {{/upcoming_due}}
       </div>
+      {{/has_upcoming_due}}
+      {{^has_upcoming_due}}
+      <div class="ld-card-body">
+        <div class="ld-empty"><i class="bi bi-calendar-check"></i><p>All caught up! No assignments due this week.</p></div>
+      </div>
+      {{/has_upcoming_due}}
     </div>
 
-    <!-- RIGHT: Recent Messages -->
-    <div class="ld-panel">
-      <div class="ld-panel-hdr ld-panel-hdr--alt">
-        <div>
-          <h3><i class="bi bi-chat-left-text-fill"></i> Recent Messages</h3>
-          <p>Latest messages from your tutors</p>
-        </div>
+    <!-- Messages -->
+    <div class="ld-card">
+      <div class="ld-card-hdr">
+        <h3><i class="bi bi-chat-left-text"></i> Recent Messages</h3>
+        {{#has_messages}}<a href="{{{mail_link}}}" class="ld-card-link">View All <i class="bi bi-arrow-right"></i></a>{{/has_messages}}
       </div>
-      <div class="ld-panel-body">
-        {{#has_messages}}
-        <div class="ld-msg-list">
-          {{#recent_messages}}
-          <a href="{{{view_link}}}" class="ld-msg-item{{#is_unread}} ld-msg-item--unread{{/is_unread}}">
-            <div class="ld-msg-sender">
+      {{#has_messages}}
+      <div class="ld-card-body ld-card-body--flush">
+        {{#recent_messages}}
+        <a href="{{{view_link}}}" class="ld-msg{{#is_unread}} ld-msg--unread{{/is_unread}}">
+          <div class="ld-msg-avatar">{{{sender_name}}}</div>
+          <div class="ld-msg-body">
+            <div class="ld-msg-top">
               <span class="ld-msg-name">{{{sender_name}}}</span>
-              {{#is_unread}}<span class="ld-msg-badge">NEW</span>{{/is_unread}}
+              <span class="ld-msg-time">{{{time_ago}}}</span>
             </div>
             <div class="ld-msg-subject">{{{subject}}}</div>
-            <div class="ld-msg-meta">
-              <span class="ld-msg-course"><i class="bi bi-journal-bookmark"></i> {{{coursename}}}</span>
-              <span class="ld-msg-time"><i class="bi bi-clock"></i> {{{time_ago}}}</span>
-            </div>
-          </a>
-          {{/recent_messages}}
-        </div>
-        <div class="ld-msg-footer">
-          <a href="{{{mail_link}}}" class="ld-action-link">View All Messages <i class="bi bi-arrow-right"></i></a>
-        </div>
-        {{/has_messages}}
-        {{^has_messages}}
-        <div class="ld-empty-state">
-          <i class="bi bi-envelope-open"></i>
-          <p>No messages yet</p>
-        </div>
-        {{/has_messages}}
+            <div class="ld-msg-course">{{{coursename}}}</div>
+          </div>
+          {{#is_unread}}<span class="ld-msg-dot"></span>{{/is_unread}}
+        </a>
+        {{/recent_messages}}
       </div>
+      {{/has_messages}}
+      {{^has_messages}}
+      <div class="ld-card-body">
+        <div class="ld-empty"><i class="bi bi-envelope-open"></i><p>No messages yet</p></div>
+      </div>
+      {{/has_messages}}
     </div>
 
   </div>
 
   <!-- ===== MY PROGRESSION ===== -->
-  <div class="ld-panel">
-    <div class="ld-panel-hdr">
-      <div>
-        <h3><i class="bi bi-bar-chart-steps"></i> My Progression</h3>
-        <p>Overall: {{{overall_progress}}}% &middot; Click a course to see assignment details</p>
-      </div>
+  <div class="ld-card">
+    <div class="ld-card-hdr">
+      <h3><i class="bi bi-bar-chart-steps"></i> Course Progression</h3>
+      <a href="{{{progression_link}}}" class="ld-card-link">Full Report <i class="bi bi-arrow-right"></i></a>
     </div>
-    <div class="ld-panel-body">
-      <!-- Overall progress bar -->
-      <div class="ld-overall-progress">
-        <div class="ld-overall-bar-wrap">
-          <div class="ld-overall-bar" style="width:{{{overall_progress}}}%"></div>
-        </div>
-        <span class="ld-overall-label">{{{overall_progress}}}%</span>
-      </div>
-
+    <div class="ld-card-body">
       {{#has_progression}}
-      <div class="ld-prog-courses">
+      <div class="ld-courses">
         {{#progression_courses}}
-        <div class="ld-prog-course" data-assignments='{{assignments_json}}'>
-          <div class="ld-prog-course-header">
-            <span class="ld-prog-toggle"><i class="bi bi-plus-circle"></i></span>
-            <span class="ld-prog-course-name">{{{name}}}</span>
-            <div class="ld-prog-course-stats">
-              <span class="ld-pill">{{{passed}}} / {{{total}}} Passed</span>
-              <div class="ld-prog-bar-wrap">
-                <div class="ld-prog-bar" style="width:{{{current}}}%"></div>
-              </div>
-              <span class="ld-prog-bar-label">{{{current}}}%</span>
+        <div class="ld-course" data-assignments='{{assignments_json}}'>
+          <div class="ld-course-row">
+            <button class="ld-course-toggle" aria-label="Expand"><i class="bi bi-chevron-right"></i></button>
+            <div class="ld-course-info">
+              <div class="ld-course-name">{{{name}}}</div>
+              <div class="ld-course-stat">{{{passed}}} of {{{total}}} passed</div>
             </div>
+            <div class="ld-course-bar-wrap">
+              <div class="ld-course-bar" style="width:{{{current}}}%"></div>
+            </div>
+            <span class="ld-course-pct">{{{current}}}%</span>
           </div>
-          <div class="ld-prog-assignments" style="display:none;"></div>
+          <div class="ld-course-detail"></div>
         </div>
         {{/progression_courses}}
       </div>
       {{/has_progression}}
       {{^has_progression}}
-      <div class="ld-empty-state">
-        <i class="bi bi-mortarboard"></i>
-        <p>No course progression data available</p>
-      </div>
+      <div class="ld-empty"><i class="bi bi-mortarboard"></i><p>No course data available yet</p></div>
       {{/has_progression}}
     </div>
   </div>
 
   <!-- ===== HOURS SPENT ===== -->
-  <div class="ld-panel">
-    <div class="ld-panel-hdr ld-panel-hdr--alt">
-      <div>
-        <h3><i class="bi bi-clock-fill"></i> Hours Spent</h3>
-        <p>Monthly learning activity &middot; Current year</p>
-      </div>
+  <div class="ld-card">
+    <div class="ld-card-hdr">
+      <h3><i class="bi bi-clock-history"></i> Study Hours</h3>
+      <span class="ld-card-badge">Current year</span>
     </div>
-    <div class="ld-panel-body">
-      <div id="ldHoursChart" style="height:300px;"></div>
+    <div class="ld-card-body">
+      <div id="ldHoursChart" style="height:280px;"></div>
     </div>
   </div>
 
@@ -237,96 +215,95 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-    // ===== HIGHCHARTS: Hours Spent =====
-    var hoursData = {{{hours_chart_json}}};
+    /* ===== HEADER AVATAR ===== */
+    var avatarEl = document.querySelector('.ld-avatar');
+    if (avatarEl) {
+        var n = (avatarEl.getAttribute('data-name') || '').trim();
+        avatarEl.textContent = n.charAt(0).toUpperCase();
+    }
 
+    /* ===== PROGRESS RING ANIMATION ===== */
+    document.querySelectorAll('.ld-ring-fill').forEach(function(c) {
+        var pct = parseFloat(c.getAttribute('data-pct')) || 0;
+        var r = 52, circ = 2 * Math.PI * r;
+        c.style.strokeDasharray = circ;
+        c.style.strokeDashoffset = circ;
+        setTimeout(function() {
+            c.style.transition = 'stroke-dashoffset 1.2s ease';
+            c.style.strokeDashoffset = circ - (circ * pct / 100);
+        }, 200);
+    });
+
+    /* ===== HIGHCHARTS ===== */
+    var hoursData = {{{hours_chart_json}}};
     if (typeof Highcharts !== 'undefined') {
         Highcharts.chart('ldHoursChart', {
-            chart: {
-                type: 'column',
-                backgroundColor: 'transparent',
-                style: { fontFamily: "'Libre Baskerville', Georgia, serif" }
-            },
+            chart: { type: 'areaspline', backgroundColor: 'transparent',
+                     style: { fontFamily: "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif" }},
             title: { text: '' },
-            xAxis: { type: 'category' },
-            yAxis: {
-                title: { text: 'Hours' },
-                min: 0
-            },
+            xAxis: { type: 'category', lineColor: '#e5e7eb', tickColor: '#e5e7eb',
+                     labels: { style: { color: '#6b7280', fontSize: '11px' }}},
+            yAxis: { title: { text: 'Hours', style: { color: '#9ca3af', fontSize: '12px' }},
+                     min: 0, gridLineColor: '#f3f4f6',
+                     labels: { style: { color: '#9ca3af', fontSize: '11px' }}},
             legend: { enabled: false },
-            tooltip: {
-                pointFormat: '<b>{point.y:.1f}</b> hours'
-            },
-            plotOptions: {
-                series: {
-                    borderWidth: 0,
-                    borderRadius: 4,
-                    dataLabels: {
-                        enabled: true,
-                        format: '{point.y:.1f}h',
-                        style: { fontSize: '11px', fontWeight: '600' }
-                    }
-                }
-            },
-            colors: ['#3a5ba0'],
-            series: [{
-                name: 'Hours',
-                colorByPoint: false,
-                data: hoursData
-            }],
+            tooltip: { backgroundColor: '#1f2937', borderWidth: 0, borderRadius: 8,
+                       style: { color: '#fff', fontSize: '13px' },
+                       pointFormat: '<b>{point.y:.1f}</b> hours' },
+            plotOptions: { areaspline: { fillOpacity: 0.15, lineWidth: 3, marker: { radius: 5, lineWidth: 2, lineColor: '#fff' },
+                dataLabels: { enabled: true, format: '{point.y:.1f}h',
+                    style: { fontSize: '10px', fontWeight: '600', color: '#6b7280', textOutline: 'none' }}}},
+            colors: ['#3b82f6'],
+            series: [{ name: 'Hours', data: hoursData }],
             credits: { enabled: false },
-            exporting: {
-                buttons: {
-                    contextButton: {
-                        menuItems: ['downloadPNG', 'downloadPDF']
-                    }
-                }
-            }
+            exporting: { buttons: { contextButton: { menuItems: ['downloadPNG','downloadPDF'] }}}
         });
     }
 
-    // ===== EXPANDABLE PROGRESSION =====
-    function escHtml(str) {
-        var d = document.createElement('div');
-        d.appendChild(document.createTextNode(str));
-        return d.innerHTML;
-    }
+    /* ===== EXPANDABLE COURSES ===== */
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
-    document.querySelectorAll('.ld-prog-course-header').forEach(function(header) {
-        header.addEventListener('click', function() {
-            var courseEl = this.closest('.ld-prog-course');
-            var assignDiv = courseEl.querySelector('.ld-prog-assignments');
-            var icon = this.querySelector('.ld-prog-toggle i');
+    document.querySelectorAll('.ld-course-row').forEach(function(row) {
+        row.addEventListener('click', function() {
+            var course = this.closest('.ld-course');
+            var detail = course.querySelector('.ld-course-detail');
+            var icon = this.querySelector('.ld-course-toggle i');
+            var isOpen = course.classList.contains('ld-course--open');
 
-            if (assignDiv.style.display === 'none') {
+            if (!isOpen) {
                 try {
-                    var assignments = JSON.parse(courseEl.getAttribute('data-assignments'));
-                    var html = '<table class="ld-unit-table"><thead><tr><th>Assignment</th><th style="text-align:center">Status</th></tr></thead><tbody>';
-                    for (var i = 0; i < assignments.length; i++) {
-                        var a = assignments[i];
-                        var cls = 'ld-status--notsubmitted';
-                        if (a.status === 'Pass') cls = 'ld-status--pass';
-                        else if (a.status === 'Refer') cls = 'ld-status--refer';
-                        else if (a.status === 'Pending Grading') cls = 'ld-status--pending';
-                        else if (a.status === 'Submitted') cls = 'ld-status--submitted';
-                        html += '<tr><td>' + escHtml(a.name) + '</td>';
-                        html += '<td style="text-align:center"><span class="ld-unit-status ' + cls + '">' + escHtml(a.status) + '</span></td></tr>';
+                    var items = JSON.parse(course.getAttribute('data-assignments'));
+                    var h = '<table class="ld-tbl"><thead><tr><th>Assignment</th><th>Status</th></tr></thead><tbody>';
+                    for (var i = 0; i < items.length; i++) {
+                        var a = items[i], cls = 'ld-st--none';
+                        if (a.status==='Pass') cls='ld-st--pass';
+                        else if (a.status==='Refer') cls='ld-st--refer';
+                        else if (a.status==='Pending Grading') cls='ld-st--pending';
+                        else if (a.status==='Submitted') cls='ld-st--submitted';
+                        h += '<tr><td>'+esc(a.name)+'</td><td><span class="ld-st '+cls+'">'+esc(a.status)+'</span></td></tr>';
                     }
-                    if (assignments.length === 0) {
-                        html += '<tr><td colspan="2" style="text-align:center;color:#9ca3af;font-style:italic;padding:16px;">No assignments</td></tr>';
-                    }
-                    html += '</tbody></table>';
-                    assignDiv.innerHTML = html;
-                } catch (e) {
-                    assignDiv.innerHTML = '<p style="color:#6b7280;text-align:center;padding:12px;">Unable to load assignments</p>';
-                }
-                assignDiv.style.display = 'block';
-                icon.className = 'bi bi-dash-circle';
+                    if (!items.length) h += '<tr><td colspan="2" class="ld-tbl-empty">No assignments</td></tr>';
+                    h += '</tbody></table>';
+                    detail.innerHTML = h;
+                } catch(e) { detail.innerHTML = '<p class="ld-tbl-empty">Unable to load</p>'; }
+                course.classList.add('ld-course--open');
+                icon.className = 'bi bi-chevron-down';
             } else {
-                assignDiv.style.display = 'none';
-                icon.className = 'bi bi-plus-circle';
+                course.classList.remove('ld-course--open');
+                icon.className = 'bi bi-chevron-right';
             }
         });
+    });
+
+    /* ===== MESSAGE AVATARS ===== */
+    document.querySelectorAll('.ld-msg-avatar').forEach(function(el) {
+        var name = el.textContent.trim();
+        var parts = name.split(' ');
+        var initials = (parts[0]||'').charAt(0) + (parts[1]||'').charAt(0);
+        el.textContent = initials.toUpperCase();
+        var colors = ['#3b82f6','#8b5cf6','#06b6d4','#f59e0b','#10b981','#ef4444','#ec4899'];
+        var hash = 0; for(var i=0;i<name.length;i++) hash = name.charCodeAt(i) + ((hash<<5)-hash);
+        el.style.backgroundColor = colors[Math.abs(hash) % colors.length];
     });
 
 });
@@ -334,594 +311,294 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <style>
 /* ==========================================================================
-   LEARNER DASHBOARD — Editorial Aesthetic (ld- namespace)
-   Font: Libre Baskerville | Palette: Deep Blue / Gold / Teal
+   LEARNER DASHBOARD — Modern with Depth (ld- namespace)
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-#learner-dashboard *,
-#learner-dashboard *::before,
-#learner-dashboard *::after {
-    box-sizing: border-box;
-}
+#learner-dashboard *, #learner-dashboard *::before, #learner-dashboard *::after { box-sizing: border-box; }
 
 .ld-shell {
-    font-family: 'Libre Baskerville', Georgia, serif;
-    color: #1a2238;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1e293b;
     max-width: 100%;
     padding: 0;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    overflow: hidden;
 }
 
-/* ==========================================================================
-   HEADER
-   ========================================================================== */
+/* ===== DECORATIVE BACKGROUND BLOBS ===== */
+.ld-blob {
+    position: absolute; border-radius: 50%; pointer-events: none; z-index: 0;
+    filter: blur(80px); opacity: 0.5;
+}
+.ld-blob--1 {
+    width: 500px; height: 500px; top: -120px; right: -100px;
+    background: radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%);
+}
+.ld-blob--2 {
+    width: 400px; height: 400px; top: 400px; left: -150px;
+    background: radial-gradient(circle, rgba(6,182,212,0.15) 0%, transparent 70%);
+}
+
+/* ===== HEADER ===== */
 .ld-header {
-    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 60%, #6ea3c1 100%);
-    border-radius: 10px;
-    margin-bottom: 28px;
-    position: relative;
-    overflow: hidden;
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+    gap: 16px; padding: 32px 36px; margin-bottom: 28px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #164e63 100%);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(15,23,42,0.18);
 }
-.ld-header::before {
-    content: '';
-    position: absolute;
-    top: -40%;
-    right: -10%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(247,200,115,0.15) 0%, transparent 70%);
-    border-radius: 50%;
+.ld-header-left { display: flex; align-items: center; gap: 16px; }
+.ld-avatar {
+    width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800; color: #fff;
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    flex-shrink: 0; box-shadow: 0 4px 14px rgba(59,130,246,0.4);
 }
-.ld-header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 28px 32px;
-    position: relative;
-    z-index: 1;
-    flex-wrap: wrap;
-    gap: 16px;
+.ld-title { font-size: 26px; font-weight: 700; margin: 0; color: #fff; letter-spacing: -0.5px; line-height: 1.2; }
+.ld-subtitle { font-size: 14px; color: rgba(255,255,255,0.55); margin: 4px 0 0; font-weight: 400; }
+.ld-header-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.ld-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px;
+    font-size: 13px; font-weight: 600; text-decoration: none; transition: all .2s;
+    background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.15);
+    font-family: 'Inter', sans-serif; backdrop-filter: blur(8px);
 }
-.ld-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #fff;
-    margin: 0;
-    letter-spacing: -0.5px;
-}
-.ld-subtitle {
-    font-size: 14px;
-    color: rgba(255,255,255,0.65);
-    margin: 4px 0 0;
-    font-style: italic;
-}
-.ld-header-actions {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-.ld-hdr-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.12);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-family: 'Libre Baskerville', Georgia, serif;
-    text-decoration: none;
-    transition: background 0.2s, border-color 0.2s;
-}
-.ld-hdr-btn:hover {
-    background: rgba(255,255,255,0.22);
-    border-color: rgba(255,255,255,0.4);
-    color: #fff;
-    text-decoration: none;
-}
+.ld-btn:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.3); color: #fff; text-decoration: none; }
+.ld-btn--ghost { background: transparent; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.7); }
+.ld-btn--ghost:hover { background: rgba(255,255,255,0.08); color: #fff; }
 
-/* ==========================================================================
-   KPI CARDS
-   ========================================================================== */
+/* ===== KPI CARDS ===== */
 .ld-kpis {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 20px;
-    margin-bottom: 28px;
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px;
 }
-@media (max-width: 1100px) {
-    .ld-kpis { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 600px) {
-    .ld-kpis { grid-template-columns: 1fr; }
-}
+@media (max-width: 1100px) { .ld-kpis { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 600px) { .ld-kpis { grid-template-columns: repeat(2, 1fr); } }
 
-.ld-kpi-card {
-    background: #fff;
-    border: 1px solid #e3eaf2;
-    border-radius: 10px;
-    padding: 22px 24px 18px;
-    position: relative;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    overflow: hidden;
+.ld-kpi {
+    display: flex; align-items: center; gap: 14px; padding: 22px; border-radius: 16px;
+    text-decoration: none; color: inherit;
+    transition: all .25s; box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    border: 1px solid transparent; position: relative; overflow: hidden;
 }
-.ld-kpi-card::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: #3a5ba0;
+.ld-kpi:hover {
+    box-shadow: 0 8px 28px rgba(0,0,0,.12); transform: translateY(-2px);
+    text-decoration: none; color: inherit;
 }
-.ld-kpi-card--amber::after { background: #f7c873; }
-.ld-kpi-card--green::after { background: #166534; }
-.ld-kpi-card--teal::after { background: #6ea3c1; }
-.ld-kpi-card--deep::after { background: linear-gradient(90deg, #3a5ba0, #2d1e2f); }
-.ld-kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(26,34,56,0.10);
-}
+/* Individual KPI color themes */
+.ld-kpi--blue { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #bfdbfe; }
+.ld-kpi--blue .ld-kpi-icon { background: #3b82f6; color: #fff; }
+.ld-kpi--blue .ld-kpi-val { color: #1e3a5f; }
+.ld-kpi--amber { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-color: #fde68a; }
+.ld-kpi--amber .ld-kpi-icon { background: #f59e0b; color: #fff; }
+.ld-kpi--amber .ld-kpi-val { color: #78350f; }
+.ld-kpi--green { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-color: #bbf7d0; }
+.ld-kpi--green .ld-kpi-icon { background: #22c55e; color: #fff; }
+.ld-kpi--green .ld-kpi-val { color: #14532d; }
+.ld-kpi--cyan { background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%); border-color: #a5f3fc; }
+.ld-kpi--cyan .ld-kpi-icon { background: #06b6d4; color: #fff; }
+.ld-kpi--cyan .ld-kpi-val { color: #164e63; }
+.ld-kpi--purple { background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-color: #e9d5ff; }
+.ld-kpi--purple .ld-kpi-icon { background: #8b5cf6; color: #fff; }
+.ld-kpi--purple .ld-kpi-val { color: #3b0764; }
 
-a.ld-kpi-card--link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-    cursor: pointer;
-}
-a.ld-kpi-card--link:hover {
-    text-decoration: none;
-    color: inherit;
-}
-
-.ld-kpi-top {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
-}
 .ld-kpi-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
+    width: 50px; height: 50px; border-radius: 14px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px; flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0,0,0,.15);
 }
-.ld-kpi-icon--courses { background: rgba(58,91,160,0.1); color: #3a5ba0; }
-.ld-kpi-icon--due { background: #fef3c7; color: #d97706; }
-.ld-kpi-icon--completed { background: #dcfce7; color: #166534; }
-.ld-kpi-icon--progress { background: rgba(110,163,193,0.15); color: #0e7490; }
-.ld-kpi-icon--messages { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.ld-kpi-body { display: flex; flex-direction: column; }
+.ld-kpi-val { font-size: 30px; font-weight: 800; line-height: 1.1; }
+.ld-kpi-val small { font-size: 18px; font-weight: 600; }
+.ld-kpi-label { font-size: 12px; font-weight: 600; color: #64748b; margin-top: 3px; letter-spacing: 0.3px; text-transform: uppercase; }
 
-.ld-kpi-label {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #6b7280;
+/* ===== PROGRESS RING STRIP ===== */
+.ld-progress-strip {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; gap: 48px; padding: 32px 40px;
+    background: linear-gradient(135deg, #f0f9ff 0%, #f5f3ff 50%, #fdf4ff 100%);
+    border: 1px solid rgba(59,130,246,0.08);
+    border-radius: 20px; margin-bottom: 28px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.03), inset 0 1px 0 rgba(255,255,255,0.8);
 }
-.ld-kpi-value {
-    font-size: 38px;
-    font-weight: 700;
-    color: #1a2238;
-    line-height: 1.1;
+@media (max-width: 600px) { .ld-progress-strip { flex-direction: column; gap: 24px; text-align: center; padding: 28px 24px; } }
+.ld-ring-wrap { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+.ld-ring { width: 120px; height: 120px; transform: rotate(-90deg); }
+.ld-ring-fill { stroke-dashoffset: 326.73; }
+.ld-ring-text {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center; display: flex; flex-direction: column;
 }
+.ld-ring-pct { font-size: 28px; font-weight: 800; color: #0f172a; line-height: 1; }
+.ld-ring-lbl { font-size: 11px; color: #64748b; font-weight: 500; margin-top: 2px; }
 
-/* ==========================================================================
-   TWO-COLUMN LAYOUT
-   ========================================================================== */
-.ld-two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 28px;
-}
-@media (max-width: 900px) {
-    .ld-two-col { grid-template-columns: 1fr; }
-}
+.ld-quick-stats { display: flex; align-items: center; gap: 36px; }
+.ld-qs { display: flex; flex-direction: column; align-items: center; }
+.ld-qs-num { font-size: 36px; font-weight: 800; line-height: 1; }
+.ld-qs-lbl { font-size: 13px; color: #64748b; font-weight: 500; margin-top: 6px; }
+.ld-qs-divider { width: 1px; height: 48px; background: linear-gradient(to bottom, transparent, #cbd5e1, transparent); }
 
-/* ==========================================================================
-   PANELS
-   ========================================================================== */
-.ld-panel {
-    background: #fff;
-    border: 1px solid #e3eaf2;
-    border-radius: 10px;
+/* ===== CARDS ===== */
+.ld-card {
+    position: relative; z-index: 1;
+    background: rgba(255,255,255,0.8); backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: 20px; margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04), 0 0 0 1px rgba(0,0,0,.02);
     overflow: hidden;
-    margin-bottom: 28px;
 }
-.ld-two-col .ld-panel {
-    margin-bottom: 0;
-}
-.ld-panel-hdr {
-    padding: 20px 28px;
-    background: linear-gradient(135deg, #3a5ba0 0%, #6ea3c1 100%);
+.ld-card-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 28px; border-bottom: none;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
     color: #fff;
 }
-.ld-panel-hdr--alt {
-    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 100%);
+.ld-card-hdr h3 {
+    margin: 0; font-size: 15px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; gap: 10px;
 }
-.ld-panel-hdr h3 {
-    margin: 0;
-    font-size: 19px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.ld-card-hdr h3 i { color: rgba(255,255,255,0.6); font-size: 18px; }
+.ld-card-badge {
+    font-size: 11px; font-weight: 600; padding: 5px 14px; border-radius: 20px;
+    background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.15);
 }
-.ld-panel-hdr p {
-    margin: 4px 0 0;
-    font-size: 13px;
-    opacity: 0.8;
-    font-style: italic;
+.ld-card-link {
+    font-size: 13px; font-weight: 600; color: #93c5fd; text-decoration: none;
+    display: flex; align-items: center; gap: 4px; transition: color .2s;
 }
-.ld-panel-body {
-    padding: 20px 24px;
-}
+.ld-card-link:hover { color: #fff; text-decoration: none; }
+.ld-card-body { padding: 20px 28px; background: linear-gradient(180deg, #f8fafc 0%, #fff 100%); }
+.ld-card-body--flush { padding: 0; background: linear-gradient(180deg, #f8fafc 0%, #fff 100%); }
 
-/* ==========================================================================
-   DUE DATES
-   ========================================================================== */
-.ld-due-list {
-    display: flex;
-    flex-direction: column;
+.ld-grid-2 {
+    position: relative; z-index: 1;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 0;
 }
-.ld-due-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
-    border-bottom: 1px solid #f1f5f9;
-    text-decoration: none;
-    color: #1a2238;
-    transition: background 0.2s;
+.ld-grid-2 .ld-card { margin-bottom: 24px; }
+@media (max-width: 900px) { .ld-grid-2 { grid-template-columns: 1fr; } }
+
+/* ===== DUE DATES ===== */
+.ld-due {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 16px 28px; border-bottom: 1px solid #f1f5f9; text-decoration: none; color: inherit;
+    transition: background .15s; border-left: 4px solid transparent;
+}
+.ld-due:last-child { border-bottom: none; }
+.ld-due:hover { background: rgba(241,245,249,0.5); text-decoration: none; color: inherit; }
+.ld-due--red { border-left-color: #ef4444; background: rgba(254,226,226,0.15); }
+.ld-due--amber { border-left-color: #f59e0b; background: rgba(254,243,199,0.15); }
+.ld-due--green { border-left-color: #22c55e; background: rgba(220,252,231,0.15); }
+.ld-due-left { flex: 1; min-width: 0; }
+.ld-due-name { font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 3px; }
+.ld-due-meta { font-size: 12px; color: #94a3b8; }
+.ld-due-right { text-align: center; flex-shrink: 0; min-width: 60px; }
+.ld-due-days { font-size: 30px; font-weight: 800; line-height: 1; display: block; }
+.ld-due--red .ld-due-days { color: #ef4444; }
+.ld-due--amber .ld-due-days { color: #f59e0b; }
+.ld-due--green .ld-due-days { color: #22c55e; }
+.ld-due-unit { font-size: 10px; color: #94a3b8; text-transform: uppercase; font-weight: 600; letter-spacing: 0.3px; }
+
+/* ===== MESSAGES ===== */
+.ld-msg {
+    display: flex; align-items: flex-start; gap: 12px; padding: 14px 28px;
+    border-bottom: 1px solid #f1f5f9; text-decoration: none; color: inherit; transition: background .15s;
     position: relative;
-    border-left: 4px solid transparent;
 }
-.ld-due-item:last-child { border-bottom: none; }
-.ld-due-item:hover { background: #f8fafc; text-decoration: none; color: #1a2238; }
-.ld-due-item--red { border-left-color: #dc2626; }
-.ld-due-item--amber { border-left-color: #f7c873; }
-.ld-due-item--green { border-left-color: #166534; }
-
-.ld-due-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    flex-shrink: 0;
-    background: rgba(58,91,160,0.08);
-    color: #3a5ba0;
+.ld-msg:last-child { border-bottom: none; }
+.ld-msg:hover { background: rgba(241,245,249,0.5); text-decoration: none; color: inherit; }
+.ld-msg--unread { background: rgba(239,246,255,0.6); }
+.ld-msg-avatar {
+    width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 700; color: #fff;
+    flex-shrink: 0; background: #64748b;
 }
-.ld-due-item--red .ld-due-icon { background: #fee2e2; color: #dc2626; }
-.ld-due-item--amber .ld-due-icon { background: #fef3c7; color: #92400e; }
-
-.ld-due-content {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-.ld-due-assign {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1a2238;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.ld-due-course {
-    font-size: 12px;
-    color: #6b7280;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.ld-due-date {
-    font-size: 11px;
-    color: #9ca3af;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+.ld-msg-body { flex: 1; min-width: 0; }
+.ld-msg-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+.ld-msg-name { font-size: 13px; font-weight: 600; color: #0f172a; }
+.ld-msg-time { font-size: 11px; color: #94a3b8; flex-shrink: 0; }
+.ld-msg-subject { font-size: 13px; color: #475569; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ld-msg-course { font-size: 11px; color: #94a3b8; margin-top: 3px; }
+.ld-msg-dot {
+    width: 9px; height: 9px; border-radius: 50%; background: #3b82f6;
+    flex-shrink: 0; margin-top: 6px; box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
 }
 
-.ld-due-countdown {
-    text-align: center;
-    min-width: 50px;
-    flex-shrink: 0;
+/* ===== PROGRESSION ===== */
+.ld-courses { display: flex; flex-direction: column; }
+.ld-course { border-bottom: 1px solid #f1f5f9; }
+.ld-course:last-child { border-bottom: none; }
+.ld-course-row {
+    display: flex; align-items: center; gap: 12px; padding: 16px 4px;
+    cursor: pointer; transition: background .15s; border-radius: 8px;
 }
-.ld-due-days {
-    display: block;
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1;
+.ld-course-row:hover { background: rgba(241,245,249,0.5); }
+.ld-course-toggle {
+    background: none; border: none; padding: 0; width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 8px; color: #94a3b8; font-size: 14px; cursor: pointer;
+    transition: all .2s; flex-shrink: 0;
 }
-.ld-due-item--red .ld-due-days { color: #dc2626; }
-.ld-due-item--amber .ld-due-days { color: #92400e; }
-.ld-due-item--green .ld-due-days { color: #166534; }
-.ld-due-days-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    color: #6b7280;
-    letter-spacing: 0.5px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+.ld-course-toggle:hover { background: #e2e8f0; color: #334155; }
+.ld-course--open .ld-course-toggle { color: #3b82f6; background: rgba(59,130,246,0.08); }
+.ld-course-info { flex: 1; min-width: 0; }
+.ld-course-name { font-size: 14px; font-weight: 600; color: #0f172a; }
+.ld-course-stat { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.ld-course-bar-wrap {
+    width: 140px; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; flex-shrink: 0;
 }
+.ld-course-bar {
+    height: 100%; background: linear-gradient(90deg, #3b82f6, #06b6d4); border-radius: 4px;
+    transition: width .6s ease; box-shadow: 0 1px 3px rgba(59,130,246,0.3);
+}
+.ld-course-pct { font-size: 14px; font-weight: 700; color: #0f172a; min-width: 44px; text-align: right; }
 
-/* ==========================================================================
-   MESSAGES
-   ========================================================================== */
-.ld-msg-list {
-    display: flex;
-    flex-direction: column;
-}
-.ld-msg-item {
-    display: block;
-    padding: 14px 18px;
-    border-bottom: 1px solid #f1f5f9;
-    text-decoration: none;
-    color: #1a2238;
-    transition: background 0.2s;
-    border-left: 3px solid transparent;
-}
-.ld-msg-item:last-child { border-bottom: none; }
-.ld-msg-item:hover { background: #f8fafc; text-decoration: none; color: #1a2238; }
-.ld-msg-item--unread { border-left-color: #3a5ba0; background: rgba(58,91,160,0.03); }
+/* Course detail (expanded) */
+.ld-course-detail { max-height: 0; overflow: hidden; transition: max-height .35s ease; }
+.ld-course--open .ld-course-detail { max-height: 2000px; }
 
-.ld-msg-sender {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
+.ld-tbl { width: calc(100% - 42px); border-collapse: collapse; margin: 4px 0 12px 42px; }
+.ld-tbl thead th {
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    color: #94a3b8; padding: 10px 16px; border-bottom: 2px solid #f1f5f9; text-align: left;
+    background: none;
 }
-.ld-msg-name {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1a2238;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+.ld-tbl thead th:last-child { text-align: center; }
+.ld-tbl tbody td {
+    font-size: 13px; padding: 10px 16px; border-bottom: 1px solid #f8fafc; color: #334155;
 }
-.ld-msg-badge {
-    display: inline-block;
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: #3a5ba0;
-    color: #fff;
-    letter-spacing: 0.5px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.ld-msg-subject {
-    font-size: 13px;
-    color: #374151;
-    margin-bottom: 6px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.ld-msg-meta {
-    display: flex;
-    gap: 16px;
-    font-size: 11px;
-    color: #9ca3af;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.ld-msg-meta i {
-    margin-right: 3px;
-}
-.ld-msg-footer {
-    padding: 12px 18px;
-    text-align: center;
-    border-top: 1px solid #f1f5f9;
-}
-.ld-action-link {
-    font-size: 13px;
-    font-weight: 600;
-    color: #3a5ba0;
-    text-decoration: none;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    transition: color 0.2s;
-}
-.ld-action-link:hover {
-    color: #1a2238;
-    text-decoration: none;
-}
+.ld-tbl tbody tr:last-child td { border-bottom: none; }
+.ld-tbl tbody tr:hover td { background: rgba(241,245,249,0.5); }
+.ld-tbl-empty { text-align: center; color: #94a3b8; font-style: italic; padding: 20px !important; }
 
-/* ==========================================================================
-   PROGRESSION
-   ========================================================================== */
-.ld-overall-progress {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    margin-bottom: 24px;
-    padding: 16px 20px;
-    background: #f8fafc;
-    border-radius: 8px;
-    border: 1px solid #e3eaf2;
+/* Status badges */
+.ld-st {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 4px 12px;
+    border-radius: 8px; text-align: center;
 }
-.ld-overall-bar-wrap {
-    flex: 1;
-    height: 20px;
-    background: #e3eaf2;
-    border-radius: 10px;
-    overflow: hidden;
-}
-.ld-overall-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #3a5ba0, #6ea3c1);
-    border-radius: 10px;
-    transition: width 0.6s ease;
-    min-width: 0;
-}
-.ld-overall-label {
-    font-size: 22px;
-    font-weight: 700;
-    color: #1a2238;
-    min-width: 60px;
-    text-align: right;
-}
+.ld-st--pass { background: #dcfce7; color: #166534; }
+.ld-st--refer { background: #fef3c7; color: #92400e; }
+.ld-st--pending { background: #dbeafe; color: #1e40af; }
+.ld-st--submitted { background: #e0e7ff; color: #4338ca; }
+.ld-st--none { background: #f1f5f9; color: #94a3b8; }
 
-.ld-prog-courses {
-    display: flex;
-    flex-direction: column;
-}
-.ld-prog-course {
-    border-bottom: 1px solid #f1f5f9;
-}
-.ld-prog-course:last-child { border-bottom: none; }
-.ld-prog-course-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 4px;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.ld-prog-course-header:hover { background: #f8fafc; }
-.ld-prog-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: rgba(58,91,160,0.08);
-    color: #3a5ba0;
-    font-size: 16px;
-    flex-shrink: 0;
-    transition: background 0.2s;
-}
-.ld-prog-toggle:hover { background: rgba(58,91,160,0.18); }
-.ld-prog-course-name {
-    flex: 1;
-    font-size: 14px;
-    font-weight: 600;
-    color: #1a2238;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    min-width: 0;
-}
-.ld-prog-course-stats {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-shrink: 0;
-}
-.ld-pill {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 20px;
-    background: rgba(58,91,160,0.1);
-    color: #3a5ba0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    white-space: nowrap;
-}
-.ld-prog-bar-wrap {
-    width: 80px;
-    height: 8px;
-    background: #e3eaf2;
-    border-radius: 4px;
-    overflow: hidden;
-}
-.ld-prog-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #3a5ba0, #6ea3c1);
-    border-radius: 4px;
-    transition: width 0.4s ease;
-    min-width: 0;
-}
-.ld-prog-bar-label {
-    font-size: 12px;
-    font-weight: 700;
-    color: #3a5ba0;
-    min-width: 35px;
-    text-align: right;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
+/* ===== EMPTY STATES ===== */
+.ld-empty { text-align: center; padding: 40px 16px; }
+.ld-empty i { font-size: 36px; color: #cbd5e1; display: block; margin-bottom: 10px; }
+.ld-empty p { font-size: 14px; color: #94a3b8; margin: 0; }
 
-/* Assignment expansion table */
-.ld-prog-assignments {
-    padding: 0 4px 12px 44px;
-}
-.ld-unit-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-.ld-unit-table thead th {
-    background: #f1f5f9 !important;
-    color: #475569 !important;
-    font-size: 11px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    padding: 8px 16px !important;
-    border: none !important;
-    border-bottom: 1px solid #e3eaf2 !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.ld-unit-table tbody td {
-    font-size: 13px;
-    padding: 8px 16px;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: middle;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    color: #374151;
-}
-.ld-unit-table tbody tr:last-child td { border-bottom: none; }
-.ld-unit-table tbody tr:hover td { background: #fafafa; }
-
-.ld-unit-status {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-}
-.ld-status--pass { background: #dcfce7; color: #166534; }
-.ld-status--refer { background: #fef3c7; color: #92400e; }
-.ld-status--pending { background: #dbeafe; color: #1e40af; }
-.ld-status--submitted { background: #e0e7ff; color: #4338ca; }
-.ld-status--notsubmitted { background: #f3f4f6; color: #6b7280; }
-
-/* ==========================================================================
-   EMPTY STATES
-   ========================================================================== */
-.ld-empty-state {
-    text-align: center;
-    padding: 32px;
-    color: #9ca3af;
-}
-.ld-empty-state i {
-    font-size: 36px;
-    margin-bottom: 8px;
-    display: block;
-    opacity: 0.4;
-}
-.ld-empty-state p {
-    font-style: italic;
-    margin: 0;
-    font-size: 14px;
-}
-
-/* ==========================================================================
-   HIGHCHARTS OVERRIDES
-   ========================================================================== */
+/* ===== HIGHCHARTS ===== */
 .highcharts-a11y-proxy-element { display: none !important; }
 .highcharts-credits { display: none !important; }
 
-/* ==========================================================================
-   PRINT
-   ========================================================================== */
+/* ===== PRINT ===== */
 @media print {
-    .ld-header-actions { display: none; }
-    .ld-kpi-card, .ld-panel {
-        break-inside: avoid;
-        box-shadow: none;
-        border: 1px solid #ccc;
-    }
+    .ld-header-actions, .ld-blob { display: none; }
+    .ld-kpi, .ld-card, .ld-progress-strip { break-inside: avoid; box-shadow: none; border: 1px solid #e2e8f0; backdrop-filter: none; background: #fff; }
+    .ld-header { background: #0f172a !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
 </style>

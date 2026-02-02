@@ -28,7 +28,9 @@
 
 require_once('../../config.php');
 require_login();
-$defaultpage = get_default_home_page();
+
+// Redirect to the new standalone learner dashboard plugin.
+redirect(new moodle_url('/local/learnerdashboard/index.php'));
 $context = context_system::instance();
 //
 $PAGE->set_url(new moodle_url('/local/learner/mydash.php'));
