@@ -116,6 +116,15 @@
             <option value="76-100">76 – 100%</option>
           </select>
         </div>
+        <div class="prog-filter-group">
+          <label class="prog-filter-label" for="progFilterCourse">Course</label>
+          <select id="progFilterCourse" class="prog-filter-select">
+            <option value="">All Courses</option>
+            {{#course_list}}
+            <option value="{{name}}">{{name}}</option>
+            {{/course_list}}
+          </select>
+        </div>
         {{#is_manager}}
         <div class="prog-filter-group">
           <label class="prog-filter-label" for="progFilterTutor">Tutor</label>
@@ -146,7 +155,7 @@
         </thead>
         <tbody>
           {{#learners}}
-          <tr class="prog-learner-row" data-details="{{detail_json}}">
+          <tr class="prog-learner-row" data-details="{{detail_json}}" data-courses="{{course_names}}">
             <td class="prog-toggle-cell"><span class="prog-toggle-btn"><i class="bi bi-plus-circle"></i></span></td>
             <td class="prog-cell-name">{{{fullname}}}</td>
             {{#is_manager}}<td class="prog-cell-tutor">{{{tutor_name}}}</td>{{/is_manager}}
@@ -252,14 +261,26 @@ document.addEventListener('DOMContentLoaded', function() {
         return $.trim(data[COL_TUTOR]) === filterVal;
     });
 
+    // Course filter (checks data-courses attribute on each row).
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (settings.nTable.id !== 'progTable') return true;
+        var filterVal = $('#progFilterCourse').val();
+        if (!filterVal) return true;
+        var row = progTable.row(dataIndex).node();
+        var courses = $(row).attr('data-courses') || '';
+        var courseArr = courses.split('||');
+        return courseArr.indexOf(filterVal) !== -1;
+    });
+
     // Wire up filter controls.
-    $('#progFilterActivity, #progFilterProgress, #progFilterTutor').on('change', function() {
+    $('#progFilterActivity, #progFilterProgress, #progFilterTutor, #progFilterCourse').on('change', function() {
         progTable.draw();
     });
     $('#progFilterReset').on('click', function() {
         $('#progFilterActivity').val('');
         $('#progFilterProgress').val('');
         $('#progFilterTutor').val('');
+        $('#progFilterCourse').val('');
         progTable.draw();
     });
 

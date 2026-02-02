@@ -854,10 +854,12 @@ $templatecontext = [
         'overall_current',       // 0-100 percentage
         'passed_assignments', 'submitted_assignments', 'total_assignments',
         'detail_json',           // JSON: per-course breakdown for expandable child rows
+        'course_names',          // Pipe-delimited (||) course names for JS course filter
     ],
     'total_learners_count', 'active_count', 'inactive_count',
     'created_count', 'suspended_count',
     'tutor_list' => [['name' => 'Tutor Name'], ...],  // Manager only: filter dropdown options
+    'course_list' => [['name' => 'Course Name'], ...], // All unique courses for filter dropdown
 ];
 ```
 
@@ -877,7 +879,7 @@ $templatecontext = [
 
 - **Columns (admin):** Toggle | Learner Name | Tutor | Start Date | Activity Status | Current % (progress bar) | Passed | Submitted | Total
 - **Columns (tutor):** Same minus Tutor column
-- **Filters:** Activity Status dropdown, Tutor dropdown (admin only)
+- **Filters:** Activity Status dropdown, Progression % range dropdown, Course dropdown, Tutor dropdown (admin only)
 - **Sort:** Default by Current % descending
 - **Export:** Excel and PDF buttons
 - **Expandable child rows:** Click toggle to reveal per-course breakdown with individual assignment statuses

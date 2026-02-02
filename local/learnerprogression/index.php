@@ -152,6 +152,7 @@ $templatecontext = [
     'created_count' => 0,
     'suspended_count' => $suspended_count,
     'tutor_list' => $tutor_list,
+    'course_list' => [],
 ];
 
 if (!empty($learner_ids)) {
@@ -276,6 +277,19 @@ if (!empty($learner_ids)) {
         }
     }
 
+    // Build unique course list for filter dropdown.
+    $course_names_set = [];
+    foreach ($learner_data as $ld) {
+        foreach ($ld['courses'] as $cd) {
+            $course_names_set[$cd['name']] = true;
+        }
+    }
+    ksort($course_names_set);
+    $course_list = [];
+    foreach ($course_names_set as $cname => $v) {
+        $course_list[] = ['name' => $cname];
+    }
+
     // Build template array.
     $learners = [];
     $active_count = 0;
@@ -336,6 +350,12 @@ if (!empty($learner_ids)) {
 
         $tutor_name = isset($learner_tutors[$uid]) ? $learner_tutors[$uid] : 'Unassigned';
 
+        // Comma-separated course names for JS filtering.
+        $learner_course_names = [];
+        foreach ($ld['courses'] as $cd) {
+            $learner_course_names[] = $cd['name'];
+        }
+
         $learners[] = [
             'fullname' => $ld['fullname'],
             'start_date' => $start_date,
@@ -346,6 +366,7 @@ if (!empty($learner_ids)) {
             'submitted_assignments' => $ld['total_submitted'],
             'total_assignments' => $total,
             'detail_json' => json_encode($course_details),
+            'course_names' => implode('||', $learner_course_names),
         ];
     }
 
@@ -356,6 +377,7 @@ if (!empty($learner_ids)) {
     $templatecontext['active_count'] = $active_count;
     $templatecontext['inactive_count'] = $inactive_count;
     $templatecontext['created_count'] = $created_count;
+    $templatecontext['course_list'] = $course_list;
 }
 
 echo $OUTPUT->render_from_template('local_learnerprogression/progressions', $templatecontext);
