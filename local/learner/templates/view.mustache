@@ -15,7 +15,7 @@
   <div class="lv-header">
     <div class="lv-header-inner">
       <div>
-        <h1 class="lv-title">Learner Management</h1>
+        <h1 class="lv-title"><i class="bi bi-mortarboard-fill"></i> Learner Management</h1>
         <p class="lv-subtitle">Manage all learners &middot; Epearl Academy</p>
       </div>
       <div class="lv-header-actions">
@@ -124,49 +124,51 @@
             {{/course_list}}
           </select>
         </div>
-        <button id="lvFilterReset" class="lv-filter-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset Filters</button>
+        <button id="lvFilterReset" class="lv-filter-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
       </div>
 
-      <table id="learnerTable" class="lv-table display" style="width:100%">
-        <thead>
-          <tr>
-            <th style="width:36px"></th>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Tutor</th>
-            <th>Courses</th>
-            <th>Time Spent</th>
-            <th>Last Login</th>
-            <th>Status</th>
-            <th style="width:180px">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {{#learners}}
-          <tr class="lv-learner-row" data-courses='{{{courses_json}}}' data-course-names="{{course_names}}">
-            <td class="lv-toggle-cell"><span class="lv-toggle-btn"><i class="bi bi-plus-circle"></i></span></td>
-            <td class="lv-cell-name">{{{firstname}}} {{{lastname}}}</td>
-            <td class="lv-cell-email">{{{email}}}</td>
-            <td class="lv-cell-tutor">{{{tutor_name}}}</td>
-            <td class="lv-cell-courses text-center">{{{course_count}}}</td>
-            <td class="lv-cell-time" data-order="{{{time_spent_seconds}}}">{{{time_spent}}}</td>
-            <td class="lv-cell-login" data-order="{{{last_login_ts}}}">{{{last_login}}}</td>
-            <td class="lv-cell-status">{{{status}}}</td>
-            <td class="lv-cell-actions">
-              <a href="{{{edit_url}}}" class="lv-action-btn lv-action-btn--edit" title="Edit"><i class="bi bi-pencil-square"></i></a>
-              <a href="{{{loginas_url}}}" target="_blank" class="lv-action-btn lv-action-btn--login" title="Login As"><i class="bi bi-box-arrow-in-right"></i></a>
-              <a href="{{{sendlogin_url}}}" class="lv-action-btn lv-action-btn--email" title="Send Login"><i class="bi bi-envelope-fill"></i></a>
-              {{#is_suspended}}
-              <a href="#" class="lv-action-btn lv-action-btn--activate" data-userid="{{id}}" title="Activate"><i class="bi bi-toggle-off"></i></a>
-              {{/is_suspended}}
-              {{^is_suspended}}
-              <a href="#" class="lv-action-btn lv-action-btn--deactivate" data-userid="{{id}}" title="Deactivate"><i class="bi bi-toggle-on"></i></a>
-              {{/is_suspended}}
-            </td>
-          </tr>
-          {{/learners}}
-        </tbody>
-      </table>
+      <div class="lv-table-wrap">
+        <table id="learnerTable" class="lv-table display" style="width:100%">
+          <thead>
+            <tr>
+              <th style="width:36px"></th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Tutor</th>
+              <th>Courses</th>
+              <th>Time Spent</th>
+              <th>Last Login</th>
+              <th>Status</th>
+              <th style="width:180px">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#learners}}
+            <tr class="lv-learner-row" data-courses='{{{courses_json}}}' data-course-names="{{course_names}}">
+              <td class="lv-toggle-cell"><span class="lv-toggle-btn"><i class="bi bi-plus-circle"></i></span></td>
+              <td class="lv-cell-name">{{{firstname}}} {{{lastname}}}</td>
+              <td class="lv-cell-email">{{{email}}}</td>
+              <td class="lv-cell-tutor">{{{tutor_name}}}</td>
+              <td class="lv-cell-courses text-center">{{{course_count}}}</td>
+              <td class="lv-cell-time" data-order="{{{time_spent_seconds}}}">{{{time_spent}}}</td>
+              <td class="lv-cell-login" data-order="{{{last_login_ts}}}">{{{last_login}}}</td>
+              <td class="lv-cell-status">{{{status}}}</td>
+              <td class="lv-cell-actions">
+                <a href="{{{edit_url}}}" class="lv-action-btn lv-action-btn--edit" title="Edit"><i class="bi bi-pencil-square"></i></a>
+                <a href="{{{loginas_url}}}" target="_blank" class="lv-action-btn lv-action-btn--login" title="Login As"><i class="bi bi-box-arrow-in-right"></i></a>
+                <a href="{{{sendlogin_url}}}" class="lv-action-btn lv-action-btn--email" title="Send Login"><i class="bi bi-envelope-fill"></i></a>
+                {{#is_suspended}}
+                <a href="#" class="lv-action-btn lv-action-btn--activate" data-userid="{{id}}" title="Activate"><i class="bi bi-toggle-off"></i></a>
+                {{/is_suspended}}
+                {{^is_suspended}}
+                <a href="#" class="lv-action-btn lv-action-btn--deactivate" data-userid="{{id}}" title="Deactivate"><i class="bi bi-toggle-on"></i></a>
+                {{/is_suspended}}
+              </td>
+            </tr>
+            {{/learners}}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -392,14 +394,22 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
 /* ==========================================================================
    LEARNER VIEW — lv- namespace
-   Matches editorial design system: Libre Baskerville + navy/blue/teal/gold
+   Editorial design: Libre Baskerville + navy/blue/teal palette
    ========================================================================== */
 
-/* Shell */
+/* Box-sizing reset — matches admindashboard */
+#learner-view *,
+#learner-view *::before,
+#learner-view *::after {
+    box-sizing: border-box;
+}
+
+/* Shell — full width within Moodle content area (no fixed max-width) */
 .lv-shell {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 16px 40px;
+    max-width: 100%;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1a2238;
 }
 
 /* ==========================================================================
@@ -407,31 +417,49 @@ document.addEventListener('DOMContentLoaded', function() {
    ========================================================================== */
 .lv-header {
     background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 60%, #6ea3c1 100%);
-    border-radius: 12px;
-    padding: 2px;
+    border-radius: 10px;
     margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.lv-header::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(247,200,115,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
 }
 .lv-header-inner {
-    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 60%, #6ea3c1 100%);
-    border-radius: 10px;
-    padding: 28px 32px;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding: 28px 32px;
+    position: relative;
+    z-index: 1;
     flex-wrap: wrap;
     gap: 16px;
 }
 .lv-title {
     font-family: 'Libre Baskerville', Georgia, serif;
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 700;
     color: #fff;
     margin: 0 0 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.lv-title i {
+    font-size: 22px;
+    opacity: 0.85;
 }
 .lv-subtitle {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 14px;
-    color: rgba(255,255,255,0.65);
+    color: rgba(255,255,255,0.6);
     margin: 0;
 }
 .lv-header-actions {
@@ -443,30 +471,38 @@ document.addEventListener('DOMContentLoaded', function() {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
+    padding: 8px 18px;
     border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
-    transition: opacity 0.2s, transform 0.2s;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: rgba(255,255,255,0.12);
+    transition: all 0.2s ease;
+    background: rgba(255,255,255,0.1);
     color: #fff;
     border: 1px solid rgba(255,255,255,0.2);
+    backdrop-filter: blur(4px);
 }
 .lv-hdr-btn:hover {
-    opacity: 0.85;
+    background: rgba(255,255,255,0.2);
     transform: translateY(-1px);
     text-decoration: none;
     color: #fff;
 }
 .lv-hdr-btn--success {
-    background: rgba(34,197,94,0.25);
-    border-color: rgba(34,197,94,0.5);
+    background: rgba(34,197,94,0.2);
+    border-color: rgba(34,197,94,0.4);
+}
+.lv-hdr-btn--success:hover {
+    background: rgba(34,197,94,0.35);
+    color: #fff;
 }
 .lv-hdr-btn--warning {
-    background: rgba(245,158,11,0.25);
-    border-color: rgba(245,158,11,0.5);
+    background: rgba(245,158,11,0.2);
+    border-color: rgba(245,158,11,0.4);
+}
+.lv-hdr-btn--warning:hover {
+    background: rgba(245,158,11,0.35);
+    color: #fff;
 }
 
 /* ==========================================================================
@@ -482,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function() {
     text-decoration: none;
     color: inherit;
     display: block;
-    transition: transform 0.15s;
+    transition: transform 0.2s ease;
 }
 .lv-kpi-link:hover {
     text-decoration: none;
@@ -491,31 +527,31 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 .lv-kpi-link--active .lv-kpi-card {
     box-shadow: 0 4px 20px rgba(58,91,160,0.25);
-    border-width: 2px;
+    border-color: #3a5ba0;
 }
 .lv-kpi-card {
     background: #fff;
-    border: 1px solid #e3eaf2;
+    border: 1px solid #e2e8f0;
     border-radius: 10px;
     padding: 20px;
-    transition: box-shadow 0.2s, transform 0.15s;
-    border-top: 3px solid #3a5ba0;
+    transition: all 0.2s ease;
+    border-left: 4px solid #3a5ba0;
     cursor: pointer;
     height: 100%;
 }
 .lv-kpi-card:hover {
-    box-shadow: 0 4px 20px rgba(26,34,56,0.1);
+    box-shadow: 0 4px 16px rgba(26,34,56,0.08);
 }
-.lv-kpi-card--green { border-top-color: #22c55e; }
-.lv-kpi-card--amber { border-top-color: #f59e0b; }
-.lv-kpi-card--blue  { border-top-color: #3b82f6; }
-.lv-kpi-card--grey  { border-top-color: #9ca3af; }
+.lv-kpi-card--green  { border-left-color: #22c55e; }
+.lv-kpi-card--amber  { border-left-color: #f59e0b; }
+.lv-kpi-card--blue   { border-left-color: #3b82f6; }
+.lv-kpi-card--grey   { border-left-color: #9ca3af; }
 
 .lv-kpi-top {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 .lv-kpi-icon {
     display: inline-flex;
@@ -533,16 +569,15 @@ document.addEventListener('DOMContentLoaded', function() {
 .lv-kpi-icon--suspended { background: rgba(156,163,175,0.1);color: #9ca3af; }
 
 .lv-kpi-label {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #6b7280;
+    color: #64748b;
 }
 .lv-kpi-value {
     font-family: 'Libre Baskerville', Georgia, serif;
-    font-size: 32px;
+    font-size: 30px;
     font-weight: 700;
     color: #1a2238;
     line-height: 1;
@@ -553,7 +588,7 @@ document.addEventListener('DOMContentLoaded', function() {
    ========================================================================== */
 .lv-panel {
     background: #fff;
-    border: 1px solid #e3eaf2;
+    border: 1px solid #e2e8f0;
     border-radius: 10px;
     overflow: hidden;
 }
@@ -562,13 +597,13 @@ document.addEventListener('DOMContentLoaded', function() {
     align-items: center;
     justify-content: space-between;
     padding: 20px 24px;
-    border-bottom: 1px solid #e3eaf2;
-    background: linear-gradient(90deg, #1a2238, #3a5ba0);
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 100%);
     color: #fff;
 }
 .lv-panel-hdr h3 {
     font-family: 'Libre Baskerville', Georgia, serif;
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 700;
     margin: 0 0 2px;
     display: flex;
@@ -579,11 +614,9 @@ document.addEventListener('DOMContentLoaded', function() {
     font-size: 13px;
     color: rgba(255,255,255,0.6);
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 .lv-panel-body {
     padding: 20px 24px;
-    overflow-x: auto;
 }
 
 /* ==========================================================================
@@ -596,9 +629,9 @@ document.addEventListener('DOMContentLoaded', function() {
     flex-wrap: wrap;
     flex-direction: row !important;
     margin-bottom: 20px;
-    padding: 16px 20px;
+    padding: 14px 20px;
     background: #f8fafc;
-    border: 1px solid #e3eaf2;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
 }
 .lv-filter-group {
@@ -614,15 +647,13 @@ document.addEventListener('DOMContentLoaded', function() {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #6b7280;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #64748b;
 }
 .lv-filter-select {
     border: 1px solid #d1d5db !important;
     border-radius: 6px !important;
     padding: 6px 12px !important;
     font-size: 13px !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     color: #1a2238 !important;
     background: #fff !important;
     width: auto !important;
@@ -633,9 +664,10 @@ document.addEventListener('DOMContentLoaded', function() {
     cursor: pointer;
     -webkit-appearance: menulist !important;
     appearance: menulist !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
 }
 .lv-filter-select:focus {
-    border-color: #3a5ba0;
+    border-color: #3a5ba0 !important;
     box-shadow: 0 0 0 3px rgba(58,91,160,0.1);
 }
 .lv-filter-reset {
@@ -646,12 +678,11 @@ document.addEventListener('DOMContentLoaded', function() {
     border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
-    color: #6b7280;
+    color: #64748b;
     background: #fff;
     border: 1px solid #d1d5db;
     cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: all 0.2s ease;
 }
 .lv-filter-reset:hover {
     background: #f1f5f9;
@@ -659,10 +690,15 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 /* ==========================================================================
-   TABLE
+   TABLE — scrollable wrapper
    ========================================================================== */
+.lv-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 .lv-table {
-    min-width: 1000px;
+    width: 100% !important;
+    min-width: 960px;
 }
 .lv-table thead th {
     background: #f1f5f9 !important;
@@ -671,24 +707,25 @@ document.addEventListener('DOMContentLoaded', function() {
     font-weight: 700 !important;
     text-transform: uppercase !important;
     letter-spacing: 0.5px !important;
-    padding: 10px 14px !important;
+    padding: 10px 12px !important;
     border: none !important;
-    border-bottom: 2px solid #e3eaf2 !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    white-space: nowrap;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 .lv-table tbody td {
     font-size: 13px;
-    padding: 10px 14px;
+    padding: 10px 12px;
     border-bottom: 1px solid #f1f5f9;
     vertical-align: middle;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 .lv-table tbody tr:hover td {
-    background: #fafafa;
+    background: #fafbfc;
 }
 .lv-cell-name {
     font-weight: 600;
     color: #1a2238;
+    white-space: nowrap;
 }
 .lv-cell-email {
     color: #64748b;
@@ -697,6 +734,7 @@ document.addEventListener('DOMContentLoaded', function() {
 .lv-cell-tutor {
     color: #475569;
     font-size: 12px;
+    white-space: nowrap;
 }
 
 /* Status badges */
@@ -706,7 +744,6 @@ document.addEventListener('DOMContentLoaded', function() {
     font-weight: 700;
     padding: 3px 12px;
     border-radius: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     white-space: nowrap;
 }
 .lv-status--active    { background: #dcfce7; color: #166534; }
@@ -730,7 +767,7 @@ document.addEventListener('DOMContentLoaded', function() {
     background: rgba(58,91,160,0.08);
     color: #3a5ba0;
     cursor: pointer;
-    transition: background 0.2s, transform 0.2s;
+    transition: all 0.2s ease;
     font-size: 16px;
 }
 .lv-toggle-btn:hover {
@@ -750,13 +787,13 @@ tr.shown .lv-toggle-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
     border-radius: 6px;
     font-size: 14px;
     text-decoration: none;
-    transition: opacity 0.2s, transform 0.15s;
-    margin-right: 4px;
+    transition: all 0.15s ease;
+    margin-right: 3px;
 }
 .lv-action-btn:hover {
     opacity: 0.8;
@@ -765,7 +802,8 @@ tr.shown .lv-toggle-btn {
 }
 .lv-action-btn--edit       { background: rgba(59,130,246,0.12); color: #3b82f6; }
 .lv-action-btn--login      { background: rgba(58,91,160,0.12);  color: #3a5ba0; }
-.lv-action-btn--email      { background: rgba(34,197,94,0.12);  color: #22c55e; }
+.lv-action-btn--email      { background: rgba(110,163,193,0.15); color: #3a8ab0; }
+/* Toggle state colors: GREEN = active user (toggle-on), RED = suspended user (toggle-off) */
 .lv-action-btn--activate   { background: rgba(239,68,68,0.12);  color: #ef4444; }
 .lv-action-btn--deactivate { background: rgba(34,197,94,0.12);  color: #22c55e; }
 
@@ -777,7 +815,7 @@ tr.shown .lv-toggle-btn {
     background: #f8fafc;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 .lv-detail-empty {
     text-align: center;
@@ -788,7 +826,7 @@ tr.shown .lv-toggle-btn {
 }
 .lv-course-block {
     background: #fff;
-    border: 1px solid #e3eaf2;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     overflow: hidden;
 }
@@ -798,8 +836,8 @@ tr.shown .lv-toggle-btn {
     justify-content: space-between;
     flex-wrap: wrap;
     gap: 12px;
-    padding: 12px 20px;
-    background: linear-gradient(90deg, #3a5ba0, #6ea3c1);
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #3a5ba0 0%, #6ea3c1 100%);
     color: #fff;
 }
 .lv-course-name {
@@ -826,9 +864,8 @@ tr.shown .lv-toggle-btn {
 .lv-panel-body .dataTables_wrapper .dataTables_filter,
 .lv-panel-body .dataTables_wrapper .dataTables_info,
 .lv-panel-body .dataTables_wrapper .dataTables_paginate {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 13px;
-    color: #6b7280;
+    color: #64748b;
 }
 .lv-panel-body .dataTables_filter input {
     border: 1px solid #d1d5db;
@@ -856,9 +893,8 @@ tr.shown .lv-toggle-btn {
     border-radius: 6px !important;
     font-size: 12px !important;
     padding: 6px 14px !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
     font-weight: 600 !important;
-    transition: background 0.2s !important;
+    transition: all 0.2s ease !important;
 }
 .lv-panel-body .dt-button:hover {
     background: #3a5ba0 !important;
@@ -890,11 +926,15 @@ tr.shown .lv-toggle-btn {
 }
 @media (max-width: 768px) {
     .lv-header-inner { flex-direction: column; text-align: center; }
+    .lv-header-actions { justify-content: center; }
     .lv-kpis { grid-template-columns: repeat(2, 1fr); }
-    .lv-filter-bar { flex-direction: column; align-items: stretch; }
-    .lv-filter-select { min-width: 100%; }
+    .lv-filter-bar { flex-direction: column !important; align-items: stretch !important; }
+    .lv-filter-group { max-width: none; }
+    .lv-filter-select { min-width: 100% !important; max-width: 100% !important; }
+    .lv-panel-body { padding: 16px; }
 }
 @media (max-width: 480px) {
     .lv-kpis { grid-template-columns: 1fr; }
+    .lv-panel-hdr { padding: 16px; }
 }
 </style>
