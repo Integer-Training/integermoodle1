@@ -913,9 +913,9 @@ All CSS classes use `prog-` prefix to avoid conflicts: `prog-shell`, `prog-heade
 
 ### `local/learnerdashboard` — Learner Dashboard (Standalone Plugin)
 
-Personalised dashboard for learners showing progression, upcoming due dates, recent messages, KPI cards, and monthly hours chart. Replaces the old `local/learner/mydash.php` with a standalone installable plugin matching the editorial design system.
+Personalised dashboard for learners showing progression, upcoming due dates, recent messages, KPI cards, and monthly hours chart. Replaces the old `local/learner/mydash.php` with a standalone installable plugin. **Default landing page for students after login.**
 
-**Version:** 2026020200 (1.0.0) | **Capability:** `local/learnerdashboard:view` (student, teacher, editingteacher, manager)
+**Version:** 2026020201 (1.1.0) | **Capability:** `local/learnerdashboard:view` (student, teacher, editingteacher, manager)
 
 #### File Structure
 
@@ -924,7 +924,9 @@ local/learnerdashboard/
 ├── version.php                            # Plugin metadata
 ├── index.php                              # Main page — 5 queries + template render
 ├── lib.php                                # Navigation hook (non-functional with Alpha theme)
+├── classes/observer.php                   # Login redirect — sends students here after login
 ├── db/access.php                          # Capability: local/learnerdashboard:view
+├── db/events.php                          # Registers user_loggedin event observer
 ├── lang/en/local_learnerdashboard.php     # Language strings (pluginname, mydashboard)
 └── templates/dashboard.mustache           # Full template (HTML + CSS + JS)
 ```
@@ -935,6 +937,14 @@ local/learnerdashboard/
 |------|-----|---------|
 | `index.php` | `/local/learnerdashboard/index.php` | Learner dashboard with KPIs, due dates, messages, progression, hours chart |
 
+#### Login Redirect (Default Landing Page)
+
+The plugin registers a `\core\event\user_loggedin` observer (`classes/observer.php`) that automatically redirects students to this dashboard after login. Logic:
+- **Students:** Redirected to `/local/learnerdashboard/index.php`
+- **Admins/Teachers:** No redirect (normal Moodle home)
+- **Deep links respected:** If a student clicks a direct link to an assignment/course, they land there instead
+- **Old URL backward-compatible:** `local/learner/mydash.php` now contains a `redirect()` to the new dashboard
+
 #### Data Queries (5 queries)
 
 | Query | Source | Purpose |
@@ -943,9 +953,13 @@ local/learnerdashboard/
 | 2 | `{assign}` + grades/scales | Assignment stats + per-course progression (Pass/Refer/Pending/Submitted/Not Submitted) |
 | 3 | `{assign}` + submissions | Upcoming due dates (7 days, not yet submitted, urgency colors) |
 | 4 | `{local_mail_messages}` + `{local_mail_message_users}` | Recent 5 messages + unread count (guarded with `table_exists`) |
-| 5 | `{logstore_standard_log}` | Monthly hours spent (H5P activity, wrapped in try/catch) |
+| 5 | `{logstore_standard_log}` | Monthly hours spent — all course activity with 30-min idle cap (standard time-on-site method) |
 
 All queries use `{table}` Moodle syntax, parameterized params, exclude IAG/ID Proof/Case Studies.
+
+#### Hours Spent Calculation (Query 5)
+
+Fetches all `logstore_standard_log` timestamps for `courseid > 1` in the current year, ordered chronologically. Calculates time spent in PHP with a 30-minute idle cap: gaps between consecutive log events > 1800 seconds are treated as idle/away. Aggregated per-month and converted to hours for the Highcharts chart.
 
 #### Template Context
 
@@ -966,15 +980,17 @@ $templatecontext = [
 ];
 ```
 
-#### Template Features
+#### Template Features (Modern Glassmorphism Design)
 
-- **Gradient header** with quick action buttons (My Courses, Mail Inbox, Contact Support)
-- **5 KPI cards:** Enrolled Courses, Due Assignments, Completed, Overall Progress %, Unread Messages
-- **Two-column layout:** Upcoming Due Dates (left, color-coded urgency) + Recent Messages (right, unread badges)
-- **My Progression panel:** Overall progress bar + expandable per-course rows with assignment status tables
-- **Hours Spent chart:** Highcharts column chart from logstore data
+- **Dark gradient header** (navy-to-teal) with quick action buttons (My Courses, Mail Inbox, Contact Support)
+- **5 color-themed KPI cards:** Blue (Enrolled), Amber (Due), Green (Completed), Cyan (Progress with SVG ring), Purple (Messages)
+- **Glassmorphism cards** with backdrop-filter blur, dark slate gradient headers
+- **Two-column layout:** Upcoming Due Dates (left, color-coded urgency) + Recent Messages (right, unread badges with color-coded avatars)
+- **My Progression panel:** SVG progress ring + expandable per-course rows with assignment status tables
+- **Hours Spent chart:** Highcharts areaspline chart from logstore data
+- **Decorative background blobs** with CSS blur for visual depth
 - **Empty states** for all sections
-- **CSS namespace:** `ld-` prefix, Libre Baskerville headings, Deep Blue/Gold/Teal palette
+- **CSS namespace:** `ld-` prefix, Inter font family
 
 #### Sidebar Navigation
 
