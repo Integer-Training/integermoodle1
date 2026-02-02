@@ -1537,6 +1537,23 @@ class core_renderer extends \core_renderer {
                 }
             }
 
+            // Learner Dashboard for students only (not admins or tutors).
+            if (!is_siteadmin($USER)) {
+                $student_role_rec = $DB->get_record('role', ['shortname' => 'student']);
+                if ($student_role_rec && $DB->record_exists('role_assignments', [
+                    'roleid' => $student_role_rec->id,
+                    'userid' => $USER->id,
+                ])) {
+                    $dash_link = new moodle_url('/local/learnerdashboard/index.php');
+                    $html .= '<li class="rui-sidebar-nav-item">
+                                <a href="'.$dash_link.'" id="itemLearnerDash" class="rui-sidebar-nav-item-link">
+                                    <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-gauge"></i></span>
+                                    <span class="rui-sidebar-nav-text">My Dashboard</span>
+                                </a>
+                            </li>';
+                }
+            }
+
             return $html;
         }
     }

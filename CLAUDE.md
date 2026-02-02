@@ -911,6 +911,77 @@ All CSS classes use `prog-` prefix to avoid conflicts: `prog-shell`, `prog-heade
 
 ---
 
+### `local/learnerdashboard` — Learner Dashboard (Standalone Plugin)
+
+Personalised dashboard for learners showing progression, upcoming due dates, recent messages, KPI cards, and monthly hours chart. Replaces the old `local/learner/mydash.php` with a standalone installable plugin matching the editorial design system.
+
+**Version:** 2026020200 (1.0.0) | **Capability:** `local/learnerdashboard:view` (student, teacher, editingteacher, manager)
+
+#### File Structure
+
+```
+local/learnerdashboard/
+├── version.php                            # Plugin metadata
+├── index.php                              # Main page — 5 queries + template render
+├── lib.php                                # Navigation hook (non-functional with Alpha theme)
+├── db/access.php                          # Capability: local/learnerdashboard:view
+├── lang/en/local_learnerdashboard.php     # Language strings (pluginname, mydashboard)
+└── templates/dashboard.mustache           # Full template (HTML + CSS + JS)
+```
+
+#### Entry Point
+
+| File | URL | Purpose |
+|------|-----|---------|
+| `index.php` | `/local/learnerdashboard/index.php` | Learner dashboard with KPIs, due dates, messages, progression, hours chart |
+
+#### Data Queries (5 queries)
+
+| Query | Source | Purpose |
+|-------|--------|---------|
+| 1 | `enrol_get_users_courses()` | Enrolled courses count |
+| 2 | `{assign}` + grades/scales | Assignment stats + per-course progression (Pass/Refer/Pending/Submitted/Not Submitted) |
+| 3 | `{assign}` + submissions | Upcoming due dates (7 days, not yet submitted, urgency colors) |
+| 4 | `{local_mail_messages}` + `{local_mail_message_users}` | Recent 5 messages + unread count (guarded with `table_exists`) |
+| 5 | `{logstore_standard_log}` | Monthly hours spent (H5P activity, wrapped in try/catch) |
+
+All queries use `{table}` Moodle syntax, parameterized params, exclude IAG/ID Proof/Case Studies.
+
+#### Template Context
+
+```php
+$templatecontext = [
+    'name', 'fullname',
+    'enrolled_courses', 'due_assignments', 'completed_assignments',
+    'overall_progress',          // 0-100 percentage
+    'unread_messages',           // From local_mail if available
+    'upcoming_due' => [],        // assignname, coursename, duedate, days_remaining, is_red/amber/green, assign_link
+    'has_upcoming_due',
+    'recent_messages' => [],     // id, subject, sender_name, coursename, time_ago, is_unread, view_link
+    'has_messages',
+    'progression_courses' => [], // name, current, passed, submitted, total, assignments_json
+    'has_progression',
+    'hours_chart_json',          // JSON array for Highcharts [{name: 'January', y: 2.5}, ...]
+    'mycourses_link', 'mail_link', 'contact_link', 'progression_link', 'wwwroot',
+];
+```
+
+#### Template Features
+
+- **Gradient header** with quick action buttons (My Courses, Mail Inbox, Contact Support)
+- **5 KPI cards:** Enrolled Courses, Due Assignments, Completed, Overall Progress %, Unread Messages
+- **Two-column layout:** Upcoming Due Dates (left, color-coded urgency) + Recent Messages (right, unread badges)
+- **My Progression panel:** Overall progress bar + expandable per-course rows with assignment status tables
+- **Hours Spent chart:** Highcharts column chart from logstore data
+- **Empty states** for all sections
+- **CSS namespace:** `ld-` prefix, Libre Baskerville headings, Deep Blue/Gold/Teal palette
+
+#### Sidebar Navigation
+
+Added in `theme/alpha/classes/output/core_renderer.php` for student-role users only (not admins or tutors). Uses `fa-solid fa-gauge` icon.
+
+---
+
 ## Project Documentation Files
 
 The repository contains documentation files that track known issues, planned features, and development context:
@@ -1114,6 +1185,7 @@ When modifying sidebar navigation, update:
 |------|---------------|
 | `theme/alpha/classes/output/core_renderer.php` | Hardcoded sidebar links in `mainsidebarmenu()` — this is the ONLY file that affects the production sidebar |
 | `local/learnerprogression/lib.php` | Standard Moodle nav hook — only works with non-Alpha themes |
+| `local/learnerdashboard/lib.php` | Standard Moodle nav hook — only works with non-Alpha themes |
 | `local/learner/lib.php` | Standard Moodle nav hook — only works with non-Alpha themes |
 
 ### Git Repository
