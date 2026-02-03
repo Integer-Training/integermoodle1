@@ -37,85 +37,18 @@ header('Content-Type: application/json');
 /**
  * Filter out assignment questions from submission text to save API quota.
  *
- * Removes lines that appear to be questions or task prompts rather than
- * student-written answers. This helps conserve GPTZero word quota.
+ * NOTE: This function is currently DISABLED. The whole document is scanned
+ * without filtering. A future enhancement will implement workbook-aware
+ * filtering by matching against actual course content.
  *
  * @param string $text The full submission text
- * @return string Filtered text with questions removed
+ * @return string The original text unchanged (filtering disabled)
  */
 function filter_questions_from_text($text) {
-    if (empty($text)) {
-        return $text;
-    }
-
-    // Split into lines for processing.
-    $lines = preg_split('/\r\n|\r|\n/', $text);
-    $filtered = [];
-
-    foreach ($lines as $i => $line) {
-        $trimmed = trim($line);
-
-        // Skip empty lines but keep them for structure.
-        if (empty($trimmed)) {
-            $filtered[] = '';
-            continue;
-        }
-
-        // Pattern 1: Lines with AC reference codes - these are assignment questions
-        // e.g., "(AC 1.1)", "(AC 2.2, 4.2)", "AC 3.3"
-        if (preg_match('/\(?\s*AC\s*\d+\.\d+/i', $trimmed)) {
-            continue; // Skip - this is an assessment criteria question.
-        }
-
-        // Pattern 2: Discussion Questions / Reflective Prompt / Task headers
-        if (preg_match('/^(?:Discussion\s+Questions?|Reflective\s+Prompt|Short\s+Answer\s+Questions?|Case\s+Study\s+\d+|Task\s*\d*|Question\s*\d+|Activity\s*\d*)\s*[\:\-]?/i', $trimmed)) {
-            continue; // Skip section headers.
-        }
-
-        // Pattern 3: Lines that are clearly questions (end with ? and are short)
-        if (preg_match('/\?\s*$/', $trimmed) && strlen($trimmed) < 300) {
-            // Check if it starts with question indicators
-            if (preg_match('/^(?:[\d\.\)\-\•\*]+\s*)?(?:What|Which|How|Why|When|Where|Who|Can|Could|Would|Should|Is|Are|Do|Does|Describe|Explain|Discuss|Identify|List|Outline|Compare|Analyse|Analyze|Evaluate)\s/i', $trimmed)) {
-                continue; // Skip - this is a question.
-            }
-        }
-
-        // Pattern 4: Numbered questions without ? - "1. Describe the...", "Q2. Explain..."
-        if (preg_match('/^(?:Q(?:uestion)?\s*)?[\d]+[\.\)\:]\s*(?:Describe|Explain|Discuss|Identify|List|Outline|Compare|Analyse|Analyze|Evaluate|State|Define|What|Which|How|Why)\s/i', $trimmed) && strlen($trimmed) < 300) {
-            continue; // Skip numbered questions/tasks.
-        }
-
-        // Pattern 5: Unit/Module title headers
-        if (preg_match('/^(?:Unit\s*(?:Title)?|Module|AC\s*M\d+|Case\s+Study|Learning\s+Outcome|Assessment\s+Criteria)\s*[\:\-]/i', $trimmed)) {
-            continue; // Skip unit headers.
-        }
-
-        // Pattern 6: Mark allocation lines - "(10 marks)", "[5 points]", "Worth 20%"
-        if (preg_match('/(?:\(|\[)?\s*\d+\s*(?:marks?|points?|%)\s*(?:\)|\])?/i', $trimmed) && strlen($trimmed) < 50) {
-            continue; // Skip mark allocation lines.
-        }
-
-        // Pattern 7: Very short lines that are just headers (under 50 chars, mostly uppercase)
-        $lower = preg_replace('/[^a-z]/', '', $trimmed);
-        if (strlen($trimmed) < 50 && strlen($lower) < 5) {
-            continue; // Skip short all-caps headers.
-        }
-
-        // Pattern 8: Instruction lines - "Read the following...", "Answer all questions"
-        if (preg_match('/^(?:Read\s+the|Answer\s+(?:all|the|each)|Complete\s+the|Use\s+the\s+(?:space|box)|Write\s+your\s+answer|Refer\s+to|Based\s+on\s+the|Consider\s+the)/i', $trimmed) && strlen($trimmed) < 200) {
-            continue; // Skip instruction lines.
-        }
-
-        // Keep this line - it's likely student content.
-        $filtered[] = $line;
-    }
-
-    // Rejoin and clean up excessive blank lines.
-    $result = implode("\n", $filtered);
-    $result = preg_replace('/\n{4,}/', "\n\n\n", $result); // Max 3 newlines.
-    $result = trim($result);
-
-    return $result;
+    // DISABLED: Return full document without filtering.
+    // Future: Implement workbook-aware filtering by fetching course content
+    // and removing known question text from submissions before scanning.
+    return $text;
 }
 
 /**

@@ -465,6 +465,13 @@ All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading 
   - Extracts from GPTZero's `class_probabilities` object when available
   - Fallback calculation from single `class_probability` for cached results
 
+#### Question Filtering Disabled (v1.2.9 - February 2026)
+
+- **Filtering disabled:** The question filtering feature introduced in v1.2.4 has been disabled. The `filter_questions_from_text()` function now returns the original text unchanged, so the entire document is scanned by GPTZero.
+- **Reason:** The regex-based filtering approach proved unreliable — it either filtered too aggressively (removing student answers) or too loosely (including questions). Pattern-matching cannot reliably distinguish questions from answers.
+- **Future enhancement:** A workbook-aware system is planned that will fetch actual course/assignment content and use that to identify and remove known question text from submissions before scanning. This requires building a mapping of course → workbook content.
+- **DOCX text extraction retained:** The `extract_text_from_docx()` function is still used for Word documents — text is extracted from the DOCX XML for scanning.
+
 #### Data Queries (v1.1.0 — 4 queries total)
 
 | Query | Source | Purpose |
