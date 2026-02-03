@@ -341,23 +341,39 @@ if($results){
            if ($existing_scan && !empty($existing_scan->predicted_class)) {
                // Show existing result with View Report button and all 3 pills.
                $cls = strtolower($existing_scan->predicted_class);
-               $prob = round($existing_scan->class_probability * 100);
                $report_url = new moodle_url('/local/learner/aireport.php', ['id' => $record->submision_id]);
 
-               // Calculate all 3 percentages.
+               // Try to get actual class_probabilities from stored JSON scan data.
                $aiPct = 0;
                $mixedPct = 0;
                $humanPct = 0;
-               if ($cls === 'ai') {
-                   $aiPct = $prob;
-                   $humanPct = 100 - $prob;
-               } else if ($cls === 'human') {
-                   $humanPct = $prob;
-                   $aiPct = 100 - $prob;
-               } else {
-                   $mixedPct = $prob;
-                   $aiPct = round((100 - $prob) / 2);
-                   $humanPct = 100 - $prob - $aiPct;
+               $gotActualProbs = false;
+
+               if (!empty($existing_scan->scanurl) && strpos($existing_scan->scanurl, '{') === 0) {
+                   $scandata = json_decode($existing_scan->scanurl, true);
+                   if (isset($scandata['documents'][0]['class_probabilities'])) {
+                       $classProbs = $scandata['documents'][0]['class_probabilities'];
+                       $aiPct = round(($classProbs['ai'] ?? 0) * 100);
+                       $mixedPct = round(($classProbs['mixed'] ?? 0) * 100);
+                       $humanPct = round(($classProbs['human'] ?? 0) * 100);
+                       $gotActualProbs = true;
+                   }
+               }
+
+               // Fallback to estimation if no actual data stored.
+               if (!$gotActualProbs) {
+                   $prob = round($existing_scan->class_probability * 100);
+                   if ($cls === 'ai') {
+                       $aiPct = $prob;
+                       $humanPct = 100 - $prob;
+                   } else if ($cls === 'human') {
+                       $humanPct = $prob;
+                       $aiPct = 100 - $prob;
+                   } else {
+                       $mixedPct = $prob;
+                       $aiPct = round((100 - $prob) / 2);
+                       $humanPct = 100 - $prob - $aiPct;
+                   }
                }
 
                $humanHighlight = ($cls === 'human') ? ' highlighted' : '';

@@ -191,23 +191,38 @@ try {
         // Return existing results with link to detailed report.
         $reporturl = new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]);
 
-        // Estimate all 3 percentages from cached data.
+        // Try to get actual class_probabilities from stored JSON scan data.
         $cls = strtolower($existingscan->predicted_class);
         $prob = round($existingscan->class_probability * 100);
         $aiPct = 0;
         $mixedPct = 0;
         $humanPct = 0;
+        $gotActualProbs = false;
 
-        if ($cls === 'ai') {
-            $aiPct = $prob;
-            $humanPct = 100 - $prob;
-        } else if ($cls === 'human') {
-            $humanPct = $prob;
-            $aiPct = 100 - $prob;
-        } else {
-            $mixedPct = $prob;
-            $aiPct = round((100 - $prob) / 2);
-            $humanPct = 100 - $prob - $aiPct;
+        if (!empty($existingscan->scanurl) && strpos($existingscan->scanurl, '{') === 0) {
+            $scandata = json_decode($existingscan->scanurl, true);
+            if (isset($scandata['documents'][0]['class_probabilities'])) {
+                $classProbs = $scandata['documents'][0]['class_probabilities'];
+                $aiPct = round(($classProbs['ai'] ?? 0) * 100);
+                $mixedPct = round(($classProbs['mixed'] ?? 0) * 100);
+                $humanPct = round(($classProbs['human'] ?? 0) * 100);
+                $gotActualProbs = true;
+            }
+        }
+
+        // Fallback to estimation if no actual data stored.
+        if (!$gotActualProbs) {
+            if ($cls === 'ai') {
+                $aiPct = $prob;
+                $humanPct = 100 - $prob;
+            } else if ($cls === 'human') {
+                $humanPct = $prob;
+                $aiPct = 100 - $prob;
+            } else {
+                $mixedPct = $prob;
+                $aiPct = round((100 - $prob) / 2);
+                $humanPct = 100 - $prob - $aiPct;
+            }
         }
 
         echo json_encode([
@@ -349,7 +364,20 @@ try {
     $plagiarismfile->class_probability = $response['results']['class_probability'];
     $plagiarismfile->confidence_category = $response['results']['confidence_category'] ?? '';
     $plagiarismfile->scanid = $response['results']['scanId'] ?? '';
-    $plagiarismfile->scanurl = $response['results']['scanUrl'] ?? '';
+
+    // Store class_probabilities as JSON in scanurl if available (for accurate display in table).
+    if (isset($response['results']['class_probabilities'])) {
+        // Store in a format compatible with aireport.php's expected structure.
+        $plagiarismfile->scanurl = json_encode([
+            'documents' => [[
+                'predicted_class' => $response['results']['predicted_class'],
+                'class_probabilities' => $response['results']['class_probabilities'],
+                'result_message' => $response['results']['result_message'] ?? ''
+            ]]
+        ]);
+    } else {
+        $plagiarismfile->scanurl = $response['results']['scanUrl'] ?? '';
+    }
 
     // Insert or update the record.
     if ($existingscan) {
