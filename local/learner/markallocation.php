@@ -61,6 +61,7 @@ if($action == 'mark'){
         'Assignment Name',
         'Submission Date',
         'Grade',
+        'AI Check',
         'Tutor',
     );
     $mark_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id
@@ -118,6 +119,7 @@ if($action == 'mark'){
         'Assignment Name',
         'Submission Date',
         'Grade',
+        'AI Check',
         'Tutor',
     );
     $resub_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id
@@ -309,6 +311,16 @@ if($results){
             $url = new moodle_url('/mod/assign/view.php',['action'=>'grader','userid'=>$record->userid,'id'=>$cm->id]);
 
            $row['grade'] = '<a href="'.$url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
+
+           // AI Check button - manual GPTZero scan.
+           $row['aicheck'] = '<button type="button" class="btn btn-ai-check"
+               data-submissionid="'.$record->submision_id.'"
+               data-learnername="'.s(fullname($user_object)).'"
+               data-assignname="'.s($assign_obj->name).'"
+               onclick="runAICheck(this)">
+               <i class="fa fa-search"></i> AI Check
+           </button>
+           <span class="ai-result" id="ai-result-'.$record->submision_id.'"></span>';
         }else if($action == 'overdue'){
             $row['submission_date'] = date('d-m-Y',$DB->get_field('assign_submission','timemodified',['id'=>$record->submision_id]));
             $today    = new DateTime("today");
@@ -497,7 +509,149 @@ echo '<style>
         th.header{
             width: 300px !important;
         }
+        /* AI Check Button Styles */
+        .btn-ai-check {
+            padding: 5px 10px !important;
+            font-size: 12px !important;
+            cursor: pointer !important;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-ai-check:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-ai-check:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-ai-check.loading {
+            pointer-events: none;
+        }
+        .btn-ai-check.loading i {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .ai-result {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .ai-result.ai-human {
+            background: #8AD4BA;
+            color: #1a5c3f;
+        }
+        .ai-result.ai-ai {
+            background: #FEBD69;
+            color: #8b4513;
+        }
+        .ai-result.ai-mixed {
+            background: #E9D2FF;
+            color: #5a3d7a;
+        }
+        .ai-result.ai-error {
+            background: #ffcccc;
+            color: #990000;
+        }
+        .ai-result a {
+            color: inherit;
+            text-decoration: none;
+        }
+        .ai-result a:hover {
+            text-decoration: underline;
+        }
       </style>';
 
-    
+// AI Check JavaScript - must be after jQuery is loaded
+echo '<script>
+var sesskey = "'.sesskey().'";
+var wwwroot = "'.$CFG->wwwroot.'";
+
+function runAICheck(btn) {
+    var submissionId = btn.getAttribute("data-submissionid");
+    var learnerName = btn.getAttribute("data-learnername");
+    var assignName = btn.getAttribute("data-assignname");
+    var resultSpan = document.getElementById("ai-result-" + submissionId);
+
+    // Confirm before running (to save word quota)
+    if (!confirm("Run AI detection scan for:\\n\\nLearner: " + learnerName + "\\nAssignment: " + assignName + "\\n\\nThis will use words from your GPTZero quota. Continue?")) {
+        return;
+    }
+
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.classList.add("loading");
+    btn.innerHTML = \'<i class="fa fa-spinner fa-spin"></i> Scanning...\';
+    resultSpan.innerHTML = "";
+
+    // Make AJAX call
+    $.ajax({
+        url: wwwroot + "/local/learner/aicheck.php",
+        method: "POST",
+        data: {
+            submissionid: submissionId,
+            sesskey: sesskey,
+            action: "scan"
+        },
+        dataType: "json",
+        success: function(response) {
+            btn.disabled = false;
+            btn.classList.remove("loading");
+
+            if (response.success) {
+                // Show result
+                var cls = response.predicted_class;
+                var pct = response.class_probability;
+                var label = cls.charAt(0).toUpperCase() + cls.slice(1) + " - " + pct + "%";
+
+                if (response.scan_url) {
+                    resultSpan.innerHTML = \'<a href="\' + response.scan_url + \'" target="_blank">\' + label + \'</a>\';
+                } else {
+                    resultSpan.textContent = label;
+                }
+                resultSpan.className = "ai-result ai-" + cls;
+
+                // Update button to show its been scanned
+                if (response.cached) {
+                    btn.innerHTML = \'<i class="fa fa-check"></i> Cached\';
+                } else {
+                    btn.innerHTML = \'<i class="fa fa-check"></i> Done\';
+                }
+                btn.style.background = "#28a745";
+            } else {
+                resultSpan.textContent = "Error";
+                resultSpan.className = "ai-result ai-error";
+                resultSpan.title = response.error || "Unknown error";
+                btn.innerHTML = \'<i class="fa fa-exclamation-triangle"></i> Retry\';
+            }
+        },
+        error: function(xhr, status, error) {
+            btn.disabled = false;
+            btn.classList.remove("loading");
+            btn.innerHTML = \'<i class="fa fa-exclamation-triangle"></i> Retry\';
+            resultSpan.textContent = "Error";
+            resultSpan.className = "ai-result ai-error";
+            resultSpan.title = "Request failed: " + error;
+            console.error("AI Check error:", error);
+        }
+    });
+}
+</script>';
+
+
 

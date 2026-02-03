@@ -281,6 +281,7 @@ The primary custom plugin. Manages learner accounts, tutor caseloads, user regis
 | `admindash.php` | `/local/learner/admindash.php` | Admin dashboard (global + per-tutor stats, charts) |
 | `contact.php` | `/local/learner/contact.php` | Contact form (sends to student.support@integertraining.com) |
 | `process.php` | `/local/learner/process.php` | AJAX: activate/deactivate user, get group members |
+| `aicheck.php` | `/local/learner/aicheck.php` | AJAX: manual GPTZero AI detection scan for submissions |
 | `sessions.php` | `/local/learner/sessions.php` | Session/batch tracking with Total Learning Time column |
 | `duedates.php` | `/local/learner/duedates.php` | Assignment due dates view |
 
@@ -303,6 +304,7 @@ The primary custom plugin. Manages learner accounts, tutor caseloads, user regis
 
 | Template | Context Variables |
 |----------|-------------------|
+| `view.mustache` | `wwwroot`, `sesskey`, `total_count`, `active_count`, `inactive_count`, `created_count`, `suspended_count`, `course_list[]`, `learners[]` (id, firstname, lastname, email, tutor_name, course_count, time_spent, last_login, status, is_suspended, edit_url, loginas_url, sendlogin_url, courses_json), `new_learner_url`, `inactive_url` |
 | `edit.mustache` | `fullname`, `userid`, `username`, `created`, `last_login`, `firstname`, `lastname`, `phone`, `email`, `back_url`, `login_as`, `action_url` + all extended profile fields |
 | `mydash.mustache` | `name`, `enrolled_courses`, `all_dueassignments`, `all_compassignments`, `all_assignments`, `mycourse_link`, `courses[]`, `January`–`December` (hours) |
 | `tutordash.mustache` | `enrolled_courses`, `your_learners`, `yet_to_grade`, `resubmissions`, `resubmissions_url`, `total_assignments`, `graded`, `overdue_assigns`, `imm_assigns`, `courses[]` with `caseload` |
@@ -342,7 +344,15 @@ List page that shows actual entries when clicking dashboard counts. Uses `$CFG->
 | `overdue` | Overdue Submissions | Ungraded submissions past due date |
 | `imm` | Imminent Due Dates | Assignments due within 3 days |
 
-Each row shows: Learner Name, Course Title, Assignment Name, Submission Date, Grade, Tutor. The `mark` and `resub` actions include a "Grade" button linking to the Moodle grading page.
+Each row shows: Learner Name, Course Title, Assignment Name, Submission Date, Grade, AI Check, Tutor. The `mark` and `resub` actions include a "Grade" button linking to the Moodle grading page.
+
+**AI Check Feature (v1.2.0):** The `mark` and `resub` actions include an "AI Check" button that allows tutors to manually trigger GPTZero AI detection scanning. This on-demand approach conserves the API word quota by only scanning when the tutor chooses to. Features:
+- Confirmation dialog before scanning to prevent accidental quota usage
+- Loading spinner during API call
+- Color-coded results: Human (green), AI (orange), Mixed (purple)
+- Clickable results link to GPTZero scan URL for detailed report
+- Results are cached — subsequent clicks show cached result without re-scanning
+- AJAX endpoint at `aicheck.php` with full security (require_login, require_sesskey, require_capability)
 
 #### Admin Dashboard (`admindash.php`)
 
@@ -367,12 +377,34 @@ All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading 
 - **Complete view.php rewrite:** Replaced 814-line inline HTML/CSS/JS with ~278 lines PHP + Mustache template (`templates/view.mustache`)
 - **Security fixes:** `process.php` now requires `require_login()`, `require_sesskey()`, `require_capability()`, uses `required_param()`/`optional_param()` instead of `$_REQUEST`
 - **SQL injection eliminated:** All 3 duplicate code paths consolidated into single parameterized query path using `{table}` syntax and `$DB->get_in_or_equal()`
-- **5 KPI cards:** Total Learners, Active, Inactive (30+ days), Created (never logged in), Suspended
+- **5 KPI cards:** Total Learners, Active, Inactive (30+ days), Created (never logged in), Suspended — all clickable to filter table
 - **Client-side filters:** Activity Status dropdown, Course dropdown, Reset button (via `$.fn.dataTable.ext.search`)
 - **Expandable child rows:** Click toggle to see per-course list with links
 - **Batch queries:** Per-learner courses (Query 2), time spent via streaming logstore (Query 3), tutor lookup via group membership (Query 4) — eliminates N+1 pattern
 - **Editorial design system:** `lv-` CSS namespace, Libre Baskerville headings, navy/blue/teal palette, matches admindashboard and learnerprogression
 - **Backward compatibility:** `?action=inactive` URL auto-selects Inactive filter; `filter_form.php` kept but unused
+
+#### UI Updates (v1.1.1 - February 2026)
+
+- **Fixed layout centering:** Changed from `max-width: 1400px` to `max-width: 100%` to properly fill Moodle's Alpha theme content area without right-shift
+- **Box-sizing reset:** Added scoped `box-sizing: border-box` to prevent layout issues
+- **Decorative header:** Added radial gradient gold accent and backdrop-filter blur on buttons (matches admindashboard)
+- **KPI card styling:** Switched from `border-top` to `border-left` accent for cleaner look
+- **Scrollable table:** Wrapped table in `.lv-table-wrap` with `overflow-x: auto` for horizontal scroll on narrow screens
+- **Styled tooltips:** CSS tooltips on all action icons using `data-tooltip` attribute (Edit, Login As, Send Login, Activate/Deactivate, Expand)
+- **Toggle icon colors:** GREEN (`bi-toggle-on`) = active user, RED (`bi-toggle-off`) = suspended user — reflects user state, not action
+- **Bootstrap Icons only:** Standardized on Bootstrap Icons CDN, removed Font Awesome/Ionic dependencies
+
+#### Manual AI Check (v1.2.0 - February 2026)
+
+- **New `aicheck.php` AJAX endpoint:** Secure endpoint for manual GPTZero AI detection scanning
+- **AI Check column in markallocation.php:** Added to `mark` and `resub` views for tutors
+- **On-demand scanning:** Conserves GPTZero API word quota by only scanning when tutor clicks the button
+- **Confirmation dialog:** Prevents accidental quota usage with learner/assignment details shown
+- **Color-coded results:** Human (green #8AD4BA), AI (orange #FEBD69), Mixed (purple #E9D2FF)
+- **Scan URL linking:** Results are clickable links to the full GPTZero report
+- **Result caching:** Uses existing `plagiarism_gptzero_files` table — subsequent clicks return cached result
+- **Security:** `aicheck.php` requires `require_login()`, `require_sesskey()`, `require_capability('mod/assign:grade')`
 
 #### Data Queries (v1.1.0 — 4 queries total)
 
@@ -385,7 +417,7 @@ All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading 
 
 #### External Libraries (CDN-loaded)
 
-- jQuery 3.7.1, DataTables with Excel/PDF export, Select2 4.1.0, Highcharts, Chart.js, SweetAlert2, Font Awesome, Ionic Icons, Bootstrap Icons (via Alpha theme)
+- jQuery 3.7.1, DataTables with Excel/PDF export, Select2 4.1.0, Highcharts, Chart.js, SweetAlert2, Bootstrap Icons (standardized across all custom plugins)
 
 ---
 
