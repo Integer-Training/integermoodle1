@@ -1,6 +1,6 @@
 # Epearlmoodle — Known Issues & Diagnostics
 
-Last updated: 2026-02-01
+Last updated: 2026-02-03
 
 ---
 
@@ -84,7 +84,7 @@ Set up the built-in Google Drive converter which sends DOCX files to Google Driv
 
 ## ISSUE #1: Learners Blocked From Submitting Assignments
 
-**Status:** Diagnosed
+**Status:** ✅ FIXED (2026-02-03)
 **Severity:** HIGH
 **Affected users:** 1,626 per-user overrides with past cutoff dates (out of 8,996 total)
 
@@ -92,16 +92,13 @@ Set up the built-in Google Drive converter which sends DOCX files to Google Driv
 
 **Created by:** `local/learner/overrides_cron.php` and `local/learner/duedates.php`
 
-**Pattern:**
-- Unit 1: due 15 days after enrollment, cutoff 16 days
-- Unit 2: due 30 days after enrollment, cutoff 31 days
-- Unit 3: due 45 days after enrollment, cutoff 46 days
-- etc.
+**Fix applied:**
+1. Ran SQL to remove all cutoff dates: `UPDATE r6ua_assign_overrides SET cutoffdate = 0 WHERE cutoffdate > 0;` (affected 9,066 records)
+2. Modified `local/learner/overrides_cron.php` to set `cutoffdate = 0` for new overrides (lines 78, 101)
+3. Modified `local/learner/duedates.php` to set `cutoffdate = 0` for manual date assignments (line 85)
+4. Added "Late" status indicator to `markallocation.php` — tutors now see orange "LATE (X days)" badge or green "On Time" badge
 
-**Decision needed:** Should learners be allowed to submit after the cutoff? Options:
-1. Remove all cutoff dates from overrides (allow late submissions)
-2. Extend cutoff dates
-3. Remove the override system entirely (manual deadlines only)
+**Result:** Learners can now submit after the due date — submissions are marked as "Late" but not blocked. Tutors see late status in Awaiting Marking and Resubmissions pages.
 
 ---
 
@@ -146,11 +143,11 @@ Suspended users cannot log in. Their enrollments are NOT removed — they remain
 
 ## ISSUE #5: `local/learner/overrides_cron.php` — Conflicting Deadline System
 
-**Status:** Diagnosed
-**Severity:** HIGH
+**Status:** ✅ PARTIALLY FIXED (2026-02-03) — cutoff dates now set to 0
+**Severity:** HIGH (reduced to MEDIUM)
 **File:** `local/learner/overrides_cron.php` (lines 34-119)
 
-**Problems:**
+**Problems (remaining):**
 - Uses `user.firstaccess` (first login) instead of `user_enrolments.timestart` (enrollment date)
 - Hardcoded `mdl_` table prefix instead of `{table}` Moodle syntax
 - SQL injection vulnerabilities (direct concatenation)
@@ -158,20 +155,30 @@ Suspended users cannot log in. Their enrollments are NOT removed — they remain
 - Not registered as a scheduled task in `db/tasks.php` — may not run reliably
 - Conflicts with `local/assignrelative` — two systems fighting over deadline dates
 
+**Fix applied (2026-02-03):**
+- Changed `cutoffdate` from `strtotime("+1 day", $duedate)` to `0` (lines 78, 101)
+- New overrides no longer block submissions — learners can submit late
+
 ---
 
 ## ISSUE #6: `local/learner/process.php` — No Authentication
 
-**Status:** Diagnosed
+**Status:** ✅ FIXED (2026-02-01)
 **Severity:** CRITICAL (security)
-**File:** `local/learner/process.php` (lines 26-94)
+**File:** `local/learner/process.php`
 
-**Problems:**
+**Problems (were):**
 - No `require_login()` — unauthenticated access possible
 - No `sesskey` validation — no CSRF protection
 - No `require_capability()` — no permission check
 - Directly activates/deactivates users via `$_REQUEST`
 - Any unauthenticated request could suspend any user account
+
+**Fix applied:**
+- Added `require_login()` at line 29
+- Added `require_sesskey()` at line 30
+- Added `require_capability('local/learner:view', $context)` at line 33
+- Changed from `$_REQUEST` to `required_param()`/`optional_param()` with proper type validation
 
 ---
 

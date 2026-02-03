@@ -248,7 +248,7 @@ Plugin `lib.php` navigation hooks still exist for compatibility with other theme
 
 The primary custom plugin. Manages learner accounts, tutor caseloads, user registration, and activity tracking.
 
-**Version:** 2026020206 (1.2.2) | **Capability:** `local/learner:view` (manager only)
+**Version:** 2026020208 (1.2.4) | **Capability:** `local/learner:view` (manager only)
 
 #### Database Tables
 
@@ -419,6 +419,24 @@ All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading 
 - **Download Report:** New button on `aireport.php` for print/PDF export with print-optimized CSS (preserves sentence highlighting)
 - **Fixed database prefix errors:** `tutor.php` and `tutorlearners.php` now use `{table}` syntax instead of hardcoded `mdl_` prefix (fixes "Error reading from database" on production which uses `r6ua_` prefix)
 - **GPTZero table existence check:** `markallocation.php` checks if `plagiarism_gptzero_files` table exists before querying (prevents errors when GPTZero plugin not installed)
+
+#### Submission Deadline Fix (v1.2.3 - February 2026)
+
+- **Fixed "Back to Normal" function:** Changed all "Login As" links to use custom `loginasfun.php` instead of Moodle's core `/course/loginas.php`. This ensures `$SESSION->realuser` is set properly so `backurl.php` can restore the original user session after impersonating a learner.
+- **Files updated:** `view.php`, `edit.php`, `inactiveview.php`, `tutorlearners.php`
+
+#### Late Submission Handling (v1.2.3 - February 2026)
+
+- **Removed hard cutoff dates:** Changed `overrides_cron.php` and `duedates.php` to set `cutoffdate = 0` instead of `strtotime("+1 day", $duedate)`. Learners can now submit after the due date (marked as late, not blocked).
+- **Late status indicator:** Added "Status" column to `markallocation.php` for `mark` and `resub` actions showing orange "LATE (X days)" badge or green "On Time" badge.
+- **Override detection:** Checks `assign_overrides` table for per-user due dates first, falls back to global assignment due date.
+
+#### AI Detection Question Filtering (v1.2.4 - February 2026)
+
+- **Question filtering:** `aicheck.php` now filters out assignment questions/prompts before sending to GPTZero to conserve API word quota. Only student-written answers are scanned.
+- **Patterns filtered:** Numbered questions (1., Q1, Question 1), lines ending with ?, task instructions (Task:, Instructions:), ALL CAPS headers, question starters (Describe..., Explain..., Discuss...), mark allocations ((10 marks), [5 points]).
+- **DOCX text extraction:** For Word documents, text is extracted from the DOCX XML, filtered, then sent as text instead of the raw file.
+- **Helper functions:** `filter_questions_from_text()` and `extract_text_from_docx()` added to `aicheck.php`.
 
 #### Data Queries (v1.1.0 — 4 queries total)
 
