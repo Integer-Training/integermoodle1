@@ -225,7 +225,7 @@ foreach ($learners as $u) {
 
     // URLs.
     $edit_url = new moodle_url('/local/learner/edit.php', ['id' => $u->id]);
-    $loginas_url = new moodle_url('/course/loginas.php', ['id' => 1, 'user' => $u->id, 'sesskey' => sesskey()]);
+    $loginas_url = new moodle_url('/local/learner/loginasfun.php', ['id' => $u->id]);
     $sendlogin_url = new moodle_url('/local/learner/email.php', ['id' => $u->id]);
 
     $learner_rows[] = [

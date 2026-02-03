@@ -103,7 +103,7 @@ $data['action_url'] = $action_url;
 $user_obj = $DB->get_record('user',['id'=>$id]);
 $data['fullname'] = fullname($user_obj);
 $data['back_url'] = new moodle_url('/local/learner/view.php');
-$login_as = new moodle_url('/course/loginas.php',['id'=>1,'user'=>$user_obj->id,'sesskey'=>\sesskey()]);
+$login_as = new moodle_url('/local/learner/loginasfun.php', ['id' => $user_obj->id]);
 //
 $data['username'] = $user_obj->username;
 $data['login_as'] = $login_as;

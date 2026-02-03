@@ -249,7 +249,7 @@ if($fromform && !$action){
             //
             //$row['status'] =  (!$record->suspended)?'Active':'Inactive';
             $edit_url = new moodle_url('/local/learner/edit.php',['id'=>$record->id]);
-            $login_as = new moodle_url('/course/loginas.php',['id'=>1,'user'=>$record->id,'sesskey'=>\sesskey()]);
+            $login_as = new moodle_url('/local/learner/loginasfun.php', ['id' => $record->id]);
             $send_login = new moodle_url('/local/learner/email.php',['id'=>$record->id]);
 
             $row['edit'] =  '<a href="'.$edit_url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
@@ -385,7 +385,7 @@ if($fromform && !$action){
             }
             //$row['status'] =  (!$record->suspended)?'Active':'Inactive';
             $edit_url = new moodle_url('/local/learner/edit.php',['id'=>$record->id]);
-            $login_as = new moodle_url('/course/loginas.php',['id'=>1,'user'=>$record->id,'sesskey'=>\sesskey()]);
+            $login_as = new moodle_url('/local/learner/loginasfun.php', ['id' => $record->id]);
             $send_login = new moodle_url('/local/learner/email.php',['id'=>$record->id]);
 
             $row['edit'] =  '<a href="'.$edit_url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
