@@ -248,7 +248,7 @@ Plugin `lib.php` navigation hooks still exist for compatibility with other theme
 
 The primary custom plugin. Manages learner accounts, tutor caseloads, user registration, and activity tracking.
 
-**Version:** 2026020202 (1.1.0) | **Capability:** `local/learner:view` (manager only)
+**Version:** 2026020204 (1.2.1) | **Capability:** `local/learner:view` (manager only)
 
 #### Database Tables
 
@@ -282,6 +282,7 @@ The primary custom plugin. Manages learner accounts, tutor caseloads, user regis
 | `contact.php` | `/local/learner/contact.php` | Contact form (sends to student.support@integertraining.com) |
 | `process.php` | `/local/learner/process.php` | AJAX: activate/deactivate user, get group members |
 | `aicheck.php` | `/local/learner/aicheck.php` | AJAX: manual GPTZero AI detection scan for submissions |
+| `aireport.php?id={submissionid}` | `/local/learner/aireport.php` | Detailed AI detection report with sentence-level highlights |
 | `sessions.php` | `/local/learner/sessions.php` | Session/batch tracking with Total Learning Time column |
 | `duedates.php` | `/local/learner/duedates.php` | Assignment due dates view |
 
@@ -395,16 +396,22 @@ All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading 
 - **Toggle icon colors:** GREEN (`bi-toggle-on`) = active user, RED (`bi-toggle-off`) = suspended user — reflects user state, not action
 - **Bootstrap Icons only:** Standardized on Bootstrap Icons CDN, removed Font Awesome/Ionic dependencies
 
-#### Manual AI Check (v1.2.0 - February 2026)
+#### Manual AI Check (v1.2.1 - February 2026)
 
 - **New `aicheck.php` AJAX endpoint:** Secure endpoint for manual GPTZero AI detection scanning
+- **New `aireport.php` detailed report page:** Shows sentence-level AI probability highlights with color-coded text
 - **AI Check column in markallocation.php:** Added to `mark` and `resub` views for tutors
 - **On-demand scanning:** Conserves GPTZero API word quota by only scanning when tutor clicks the button
 - **Confirmation dialog:** Prevents accidental quota usage with learner/assignment details shown
 - **Color-coded results:** Human (green #8AD4BA), AI (orange #FEBD69), Mixed (purple #E9D2FF)
-- **Scan URL linking:** Results are clickable links to the full GPTZero report
+- **Clickable results:** Results badge links to detailed report page with sentence-level analysis
+- **Detailed report features:**
+  - Overall AI probability score with color-coded circle (Human/AI/Mixed)
+  - Statistics grid: Total Sentences, AI-Detected, Human-Written, AI Percentage
+  - Full text with highlighted sentences based on AI probability (high ≥80% orange, medium 50-80% light orange, low <50% transparent)
+  - Hover tooltips showing exact AI probability percentage per sentence
 - **Result caching:** Uses existing `plagiarism_gptzero_files` table — subsequent clicks return cached result
-- **Security:** `aicheck.php` requires `require_login()`, `require_sesskey()`, `require_capability('mod/assign:grade')`
+- **Security:** Both `aicheck.php` and `aireport.php` require `require_login()`, `require_capability('mod/assign:grade')`
 
 #### Data Queries (v1.1.0 — 4 queries total)
 

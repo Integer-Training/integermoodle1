@@ -644,10 +644,18 @@ function runAICheck(btn) {
             btn.disabled = false;
             btn.classList.remove("loading");
             btn.innerHTML = \'<i class="fa fa-exclamation-triangle"></i> Retry\';
+            var errMsg = error;
+            try {
+                var resp = JSON.parse(xhr.responseText);
+                errMsg = resp.error || resp.errorcode || error;
+            } catch(e) {
+                errMsg = xhr.responseText || error;
+            }
             resultSpan.textContent = "Error";
             resultSpan.className = "ai-result ai-error";
-            resultSpan.title = "Request failed: " + error;
-            console.error("AI Check error:", error);
+            resultSpan.title = errMsg;
+            console.error("AI Check error:", errMsg, xhr.responseText);
+            alert("AI Check Error: " + errMsg);
         }
     });
 }

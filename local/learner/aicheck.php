@@ -79,13 +79,14 @@ try {
     ]);
 
     if ($existingscan && !empty($existingscan->predicted_class)) {
-        // Return existing results.
+        // Return existing results with link to detailed report.
+        $reporturl = new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]);
         echo json_encode([
             'success' => true,
             'cached' => true,
             'predicted_class' => $existingscan->predicted_class,
             'class_probability' => round($existingscan->class_probability * 100),
-            'scan_url' => $existingscan->scanurl,
+            'scan_url' => $reporturl->out(false),
             'learner_name' => fullname($learner),
             'assignment_name' => $assignment->name
         ]);
@@ -198,13 +199,14 @@ try {
         $DB->insert_record('plagiarism_gptzero_files', $plagiarismfile);
     }
 
-    // Return success with results.
+    // Return success with results - include link to detailed report.
+    $reporturl = new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]);
     echo json_encode([
         'success' => true,
         'cached' => false,
         'predicted_class' => $response['results']['predicted_class'],
         'class_probability' => round($response['results']['class_probability'] * 100),
-        'scan_url' => $response['results']['scanUrl'] ?? '',
+        'scan_url' => $reporturl->out(false),
         'learner_name' => fullname($learner),
         'assignment_name' => $assignment->name
     ]);
