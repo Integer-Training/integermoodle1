@@ -82,7 +82,7 @@ if($action == 'store' && $action){
                 $override_obj->userid = $v;
                 $override_obj->allowsubmissionsfromdate = strtotime($start_date);
                 $override_obj->duedate = strtotime($end_date);
-                $override_obj->cutoffdate = strtotime("+1 day",$override_obj->duedate);
+                $override_obj->cutoffdate = 0; // No hard cutoff - allow late submissions
                 $rec_exits = $DB->get_record('assign_overrides',['userid'=>$v,'assignid'=>$assignment_obj->id]);
                 if($rec_exits){
                     $override_obj->id = $rec_exits->id;

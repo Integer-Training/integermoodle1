@@ -75,7 +75,7 @@ foreach($records as $rec){
             $override_obj->userid = $course->userid;
             $override_obj->allowsubmissionsfromdate = $course->firstaccess;
             $override_obj->duedate = strtotime("+ ".OVERRIDE_DAYS." days",$course->firstaccess);
-            $override_obj->cutoffdate = strtotime("+1 day",$override_obj->duedate);
+            $override_obj->cutoffdate = 0; // No hard cutoff - allow late submissions
             $rec_exits = $DB->get_record('assign_overrides',['userid'=>$course->userid,'assignid'=>$assignment_obj->id]);
             //print_object($override_obj);die;
             if($rec_exits){
@@ -98,7 +98,7 @@ foreach($records as $rec){
             $days = OVERRIDE_DAYS * $i;
             //echo $days;die;
             $override_obj->duedate = strtotime("+ ".$days." days",$course->firstaccess);
-            $override_obj->cutoffdate = strtotime("+1 day",$override_obj->duedate);
+            $override_obj->cutoffdate = 0; // No hard cutoff - allow late submissions
             $rec_exits = $DB->get_record('assign_overrides',['userid'=>$course->userid,'assignid'=>$assignment_obj->id]);
             //print_object($override_obj);die;
             if($rec_exits){
