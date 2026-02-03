@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/draftfeedback/db" VERSION="20260203" COMMENT="Draft Feedback plugin database tables">
+  <TABLES>
+    <TABLE NAME="local_draftfeedback" COMMENT="Stores draft feedback requests from learners">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="cmid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Course module ID (assignment)"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Learner user ID"/>
+        <FIELD NAME="submissionid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="FK to assign_submission.id"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending" COMMENT="pending, reviewed, revised"/>
+        <FIELD NAME="drafttext" TYPE="text" NOTNULL="false" COMMENT="Draft text content if online text submission"/>
+        <FIELD NAME="draftfile" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Draft filename if file submission"/>
+        <FIELD NAME="feedback" TYPE="text" NOTNULL="false" COMMENT="Tutor feedback text"/>
+        <FIELD NAME="feedbackby" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Tutor user ID who gave feedback"/>
+        <FIELD NAME="feedbacktime" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Timestamp of feedback"/>
+        <FIELD NAME="aicheck_result" TYPE="char" LENGTH="20" NOTNULL="false" COMMENT="human, ai, mixed"/>
+        <FIELD NAME="aicheck_probability" TYPE="number" LENGTH="5" DECIMALS="2" NOTNULL="false" COMMENT="AI probability percentage"/>
+        <FIELD NAME="aicheck_data" TYPE="text" NOTNULL="false" COMMENT="Full AI check JSON response"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="cmid_fk" TYPE="foreign" FIELDS="cmid" REFTABLE="course_modules" REFFIELDS="id"/>
+        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="feedbackby_fk" TYPE="foreign" FIELDS="feedbackby" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="status_idx" UNIQUE="false" FIELDS="status"/>
+        <INDEX NAME="cmid_userid_idx" UNIQUE="false" FIELDS="cmid, userid"/>
+        <INDEX NAME="userid_status_idx" UNIQUE="false" FIELDS="userid, status"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

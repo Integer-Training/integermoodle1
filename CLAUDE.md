@@ -1196,6 +1196,121 @@ All patches include fallback to original code if the performance plugin is disab
 
 ---
 
+### `local/draftfeedback` — Draft Feedback System
+
+Enables learners to submit assignment drafts for tutor feedback before final submission. Integrates with existing tutor and admin dashboards. Includes GPTZero AI detection integration for draft review.
+
+**Version:** 2026020300 (1.0.0) | **Capabilities:** `local/draftfeedback:submit` (student), `local/draftfeedback:viewown` (student), `local/draftfeedback:review` (teacher, editingteacher), `local/draftfeedback:viewall` (manager)
+
+#### Database Table
+
+| Table | Purpose | Key Fields |
+|-------|---------|------------|
+| `local_draftfeedback` | Draft feedback requests | `cmid` (course_module), `userid` (learner), `submissionid` (FK to assign_submission), `status` (pending/reviewed/revised), `feedback` (text), `feedbackby` (tutor), `feedbacktime`, `aicheck_result` (human/ai/mixed), `aicheck_probability`, `timecreated`, `timemodified` |
+
+#### File Structure
+
+```
+local/draftfeedback/
+├── version.php                      # Plugin metadata (component: local_draftfeedback)
+├── lib.php                          # Button injection via before_footer callback + pluginfile
+├── submit.php                       # Learner draft submission form
+├── index.php                        # Tutor draft list page
+├── view.php                         # View draft detail with AI check
+├── feedback.php                     # Tutor feedback form
+├── classes/manager.php              # Business logic (submit, fetch, feedback, counts)
+├── db/
+│   ├── access.php                   # 4 capabilities
+│   ├── install.xml                  # Table schema
+│   └── messages.php                 # Notification provider
+├── lang/en/local_draftfeedback.php  # Language strings
+└── templates/
+    └── draft_list.mustache          # Tutor draft list with DataTable
+```
+
+#### Entry Points
+
+| File | URL | Purpose |
+|------|-----|---------|
+| `submit.php` | `/local/draftfeedback/submit.php?cmid={cmid}` | Learner submits draft for feedback (file upload or text) |
+| `index.php` | `/local/draftfeedback/index.php` | Tutor views list of drafts awaiting feedback |
+| `view.php` | `/local/draftfeedback/view.php?id={draftid}` | View draft detail with AI Check button |
+| `feedback.php` | `/local/draftfeedback/feedback.php?id={draftid}` | Tutor provides written feedback |
+
+#### User Workflow
+
+**Learner Experience:**
+1. Views assignment → sees "Submit Draft for Feedback" button (injected via `lib.php`)
+2. Clicks button → uploads draft file or enters text
+3. Draft saved with `status = 'pending'`
+4. Receives notification when tutor provides feedback
+5. Can revise and submit final version
+
+**Tutor Experience:**
+1. Dashboard shows "Awaiting Draft Feedback" card with count
+2. Clicks card → sees list of pending drafts at `index.php`
+3. Can view draft, run AI check (GPTZero), provide written feedback
+4. Feedback saved → learner notified via Moodle messaging
+
+**Admin Experience:**
+1. Dashboard shows global "Awaiting Draft Feedback" count
+2. Per-tutor breakdown in tutor table
+
+#### Manager Class (`classes/manager.php`)
+
+| Method | Purpose |
+|--------|---------|
+| `submit_draft($cmid, $userid, $content, $itemid)` | Create draft feedback request |
+| `get_pending_drafts_for_tutor($tutorid)` | Get drafts from learners in tutor's groups |
+| `count_pending_drafts_for_tutor($tutorid)` | Count for dashboard card |
+| `get_draft($id)` | Get single draft with user/assignment details |
+| `save_feedback($draftid, $feedback, $tutorid)` | Save tutor feedback + notify learner |
+| `has_pending_draft($cmid, $userid)` | Check if learner has pending draft |
+| `run_aicheck($draftid)` | Run GPTZero AI detection on draft content |
+
+#### Button Injection (`lib.php`)
+
+Uses `local_draftfeedback_before_footer()` callback to inject button on assignment pages:
+
+1. Detects `$PAGE->pagetype === 'mod-assign-view'`
+2. Checks `local/draftfeedback:submit` capability
+3. Checks no pending draft exists for this user/assignment
+4. Injects purple "Submit Draft for Feedback" button via JavaScript DOM manipulation
+5. Button appears alongside "Add submission" button
+
+#### Dashboard Integration
+
+**Tutor Dashboard (`local/learner/tutordash.php`):**
+- Query Block 11 fetches draft feedback count via `manager::count_pending_drafts_for_tutor()`
+- Template context: `draft_feedback_count`, `draft_feedback_url`, `has_draft_feedback`
+- Purple alert card with `bi-file-earmark-text` icon
+
+**Admin Dashboard (`local/admindashboard/index.php`):**
+- Query Block H fetches global + per-tutor draft counts
+- Uses same exclusions (IAG, ID Proof, Case Studies)
+- Purple alert card matching tutor dashboard design
+
+#### CSS Namespace
+
+All CSS classes use `df-` prefix: `df-container`, `df-header`, `df-table-wrapper`, `df-table`, `df-pill`, `df-btn`, etc.
+
+#### Design System
+
+Purple accent color (`#9C27B0` / `#E9D2FF`) for draft-related UI elements. Matches existing editorial design: Libre Baskerville headings, navy/blue/teal palette.
+
+#### AI Check Integration
+
+Reuses existing GPTZero integration from `plagiarism/gptzero`:
+- `view.php` includes AI Check button
+- Results stored in `local_draftfeedback.aicheck_result` and `aicheck_probability`
+- Color-coded pills: Human (green), AI (orange), Mixed (purple)
+
+#### Notifications
+
+Message provider `draftfeedback` registered in `db/messages.php`. Sends notification to learner when tutor provides feedback (popup + email enabled by default).
+
+---
+
 ## Project Documentation Files
 
 The repository contains documentation files that track known issues, planned features, and development context:
@@ -1392,6 +1507,16 @@ When modifying grading/marking queries, these files must all be updated together
 | `~/markallocation.php` | `public_html/local/learner/markallocation.php` |
 | `~/admindash.php` | `public_html/local/learner/admindash.php` |
 | `~/admindashboard_index.php` | `public_html/local/admindashboard/index.php` (rename to `index.php`) |
+
+When modifying draft feedback queries, these files must all be updated together:
+
+| File | What it affects |
+|------|-----------------|
+| `local/draftfeedback/classes/manager.php` | Core business logic for draft counts and queries |
+| `local/learner/tutordash.php` | Query Block 11 — tutor's draft feedback count |
+| `local/admindashboard/index.php` | Query Block H — global + per-tutor draft counts |
+| `local/learner/templates/tutordash.mustache` | Draft feedback alert card and table row |
+| `local/admindashboard/templates/admindash.mustache` | Draft feedback alert card |
 
 When modifying sidebar navigation, update:
 

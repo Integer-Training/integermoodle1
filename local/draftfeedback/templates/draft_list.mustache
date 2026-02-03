@@ -1,0 +1,382 @@
+{{!
+    @template local_draftfeedback/draft_list
+
+    Draft feedback list for tutors/managers.
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * data-id - Draft ID for action buttons
+
+    Context variables required for this template:
+    * drafts - Array of draft objects
+    * has_drafts - Boolean whether any drafts exist
+    * no_drafts_message - Message to show when no drafts
+    * wwwroot - Site root URL
+
+    Example context (json):
+    {
+        "drafts": [
+            {
+                "id": 1,
+                "learner_name": "John Doe",
+                "assignment_name": "Essay 1",
+                "course_name": "English 101",
+                "submitted_date": "01 Feb 2026 14:30",
+                "status": "Pending",
+                "status_class": "df-status--pending",
+                "ai_result_html": "<span class='df-ai-pill df-ai-pill--human'>Human (95%)</span>",
+                "has_ai_result": true,
+                "view_url": "/local/draftfeedback/view.php?id=1",
+                "feedback_url": "/local/draftfeedback/feedback.php?id=1"
+            }
+        ],
+        "has_drafts": true,
+        "no_drafts_message": "No drafts awaiting feedback",
+        "wwwroot": "https://example.com"
+    }
+}}
+
+<style>
+.df-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.df-header {
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+    color: white;
+    padding: 28px 32px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.df-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: white !important;
+    font-family: 'Libre Baskerville', Georgia, serif;
+}
+
+.df-header-count {
+    background: rgba(255,255,255,0.2);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.df-table-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.df-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.df-table thead {
+    background: #f8f9fa;
+}
+
+.df-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    color: #1a2238;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #eee;
+}
+
+.df-table td {
+    padding: 16px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.df-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.df-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.df-learner-name {
+    font-weight: 600;
+    color: #1a2238;
+}
+
+.df-assignment-name {
+    color: #3a5ba0;
+    font-weight: 500;
+}
+
+.df-course-name {
+    color: #666;
+    font-size: 13px;
+}
+
+.df-date {
+    color: #888;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.df-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.df-status--pending {
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+.df-status--reviewed {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.df-status--revised {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.df-ai-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.df-ai-pill--human {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.df-ai-pill--ai {
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+.df-ai-pill--mixed {
+    background: #F3E5F5;
+    color: #7B1FA2;
+}
+
+.df-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.df-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.df-btn--view {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.df-btn--view:hover {
+    background: #e0e0e0;
+    color: #333;
+    text-decoration: none;
+}
+
+.df-btn--feedback {
+    background: #9C27B0;
+    color: white;
+}
+
+.df-btn--feedback:hover {
+    background: #7B1FA2;
+    color: white;
+    text-decoration: none;
+}
+
+.df-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.df-empty-icon {
+    font-size: 48px;
+    color: #ccc;
+    margin-bottom: 16px;
+}
+
+.df-empty-text {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.df-empty-subtext {
+    font-size: 14px;
+    color: #888;
+}
+
+/* DataTables customization */
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-left: 8px;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 6px !important;
+    margin: 0 2px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #9C27B0 !important;
+    border-color: #9C27B0 !important;
+    color: white !important;
+}
+
+.dataTables_wrapper .dataTables_info {
+    color: #666;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .df-header {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .df-actions {
+        flex-direction: column;
+    }
+
+    .df-table-wrapper {
+        overflow-x: auto;
+    }
+}
+</style>
+
+<div class="df-container">
+    <div class="df-header">
+        <h1><i class="bi bi-file-earmark-text"></i> Drafts Awaiting Feedback</h1>
+        {{#has_drafts}}
+        <span class="df-header-count">{{drafts.length}} pending</span>
+        {{/has_drafts}}
+    </div>
+
+    {{#has_drafts}}
+    <div class="df-table-wrapper">
+        <table class="df-table" id="df-drafts-table">
+            <thead>
+                <tr>
+                    <th>Learner</th>
+                    <th>Assignment</th>
+                    <th>Course</th>
+                    <th>Submitted</th>
+                    <th>Status</th>
+                    <th>AI Check</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#drafts}}
+                <tr data-id="{{id}}">
+                    <td class="df-learner-name">{{learner_name}}</td>
+                    <td class="df-assignment-name">{{assignment_name}}</td>
+                    <td class="df-course-name">{{course_name}}</td>
+                    <td class="df-date">{{submitted_date}}</td>
+                    <td><span class="df-status {{status_class}}">{{status}}</span></td>
+                    <td>
+                        {{#has_ai_result}}
+                        {{{ai_result_html}}}
+                        {{/has_ai_result}}
+                        {{^has_ai_result}}
+                        <span style="color: #999; font-size: 13px;">Not scanned</span>
+                        {{/has_ai_result}}
+                    </td>
+                    <td class="df-actions">
+                        <a href="{{view_url}}" class="df-btn df-btn--view">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                        <a href="{{feedback_url}}" class="df-btn df-btn--feedback">
+                            <i class="bi bi-chat-square-text"></i> Feedback
+                        </a>
+                    </td>
+                </tr>
+                {{/drafts}}
+            </tbody>
+        </table>
+    </div>
+    {{/has_drafts}}
+
+    {{^has_drafts}}
+    <div class="df-table-wrapper">
+        <div class="df-empty">
+            <div class="df-empty-icon"><i class="bi bi-inbox"></i></div>
+            <div class="df-empty-text">{{no_drafts_message}}</div>
+            <div class="df-empty-subtext">New draft submissions will appear here</div>
+        </div>
+    </div>
+    {{/has_drafts}}
+</div>
+
+{{#js}}
+require(['jquery'], function($) {
+    // Initialize DataTable if available
+    if ($.fn.DataTable) {
+        $('#df-drafts-table').DataTable({
+            pageLength: 25,
+            order: [[3, 'asc']], // Sort by submitted date ascending (oldest first)
+            language: {
+                search: "Search:",
+                lengthMenu: "Show _MENU_ entries",
+                info: "Showing _START_ to _END_ of _TOTAL_ drafts",
+                emptyTable: "No drafts awaiting feedback"
+            },
+            columnDefs: [
+                { orderable: false, targets: [6] } // Disable sorting on Actions column
+            ]
+        });
+    }
+});
+{{/js}}

@@ -358,6 +358,7 @@ foreach ($tutors_raw as $traw) {
     $tutor_data[] = [
         'fullname'          => fullname($t),
         'email'             => $t->email,
+        'userid'            => $t->id,
         'learner_count'     => $learner_count,
         'awaiting_overdue'  => $awaiting_overdue,
         'awaiting_ok'       => $awaiting_ok,
@@ -585,6 +586,45 @@ if ($gptzero_table_exists) {
 }
 
 // ============================================================
+// QUERY BLOCK H: Draft Feedback Pending (local_draftfeedback plugin)
+// ============================================================
+
+$global_draft_feedback = 0;
+$draft_feedback_per_tutor = [];
+$draftfeedback_table_exists = $DB->get_manager()->table_exists('local_draftfeedback');
+
+if ($draftfeedback_table_exists) {
+    // Global count of pending draft feedback requests.
+    $global_draft_feedback = $DB->count_records_sql(
+        "SELECT COUNT(DISTINCT df.id)
+         FROM {local_draftfeedback} df
+         JOIN {course_modules} cm ON cm.id = df.cmid
+         JOIN {assign} a ON a.id = cm.instance
+         JOIN {user} u ON u.id = df.userid AND u.suspended = 0 AND u.deleted = 0
+         WHERE df.status = 'pending'
+         AND a.name NOT LIKE '%IAG%'
+         AND a.name NOT LIKE '%ID Proof%'
+         AND a.name NOT LIKE '%Case Stud%'"
+    );
+
+    // Per-tutor draft feedback counts using the manager's count method.
+    if (class_exists('\local_draftfeedback\manager')) {
+        foreach ($tutors_raw as $traw) {
+            $count = \local_draftfeedback\manager::count_pending_drafts_for_tutor($traw->userid);
+            $draft_feedback_per_tutor[$traw->userid] = $count;
+        }
+    }
+}
+
+// Add draft feedback counts to tutor_data array.
+foreach ($tutor_data as &$td) {
+    $userid = $td['userid'] ?? 0;
+    $td['draft_feedback_count'] = $draft_feedback_per_tutor[$userid] ?? 0;
+    $td['has_draft_feedback'] = ($td['draft_feedback_count'] > 0);
+}
+unset($td); // Break reference
+
+// ============================================================
 // ASSEMBLE TEMPLATE CONTEXT
 // ============================================================
 
@@ -643,6 +683,13 @@ $templatecontext = [
     'has_ai_checks'        => !empty($ai_checks),
     'ai_checks_count'      => number_format($ai_checks_count),
     'gptzero_enabled'      => $gptzero_table_exists,
+
+    // Draft Feedback.
+    'global_draft_feedback'     => number_format($global_draft_feedback),
+    'global_draft_feedback_raw' => $global_draft_feedback,
+    'has_draft_feedback'        => ($global_draft_feedback > 0),
+    'draft_feedback_url'        => (new moodle_url('/local/draftfeedback/index.php'))->out(),
+    'draftfeedback_enabled'     => $draftfeedback_table_exists,
 ];
 
 // Monthly enrollment data.

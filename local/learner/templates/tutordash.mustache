@@ -134,6 +134,15 @@
       <i class="bi bi-arrow-right td-alert-arrow"></i>
     </a>
 
+    <a href="{{{draft_feedback_url}}}" class="td-alert td-alert--draft">
+      <div class="td-alert-icon"><i class="bi bi-file-earmark-text"></i></div>
+      <div class="td-alert-content">
+        <span class="td-alert-label">Awaiting Draft Feedback</span>
+        <span class="td-alert-value">{{{draft_feedback_count}}}</span>
+      </div>
+      <i class="bi bi-arrow-right td-alert-arrow"></i>
+    </a>
+
   </div>
 
   <!-- ===== SECTION 2: CHARTS ===== -->
@@ -199,6 +208,11 @@
             <td class="td-cell-name"><i class="bi bi-check2-all" style="color:#166534;"></i> Total Graded (All Time)</td>
             <td class="text-center"><span class="td-pill td-pill--green">{{{graded}}}</span></td>
             <td class="text-center"></td>
+          </tr>
+          <tr>
+            <td class="td-cell-name"><i class="bi bi-file-earmark-text" style="color:#9C27B0;"></i> Awaiting Draft Feedback</td>
+            <td class="text-center"><span class="td-pill td-pill--purple">{{{draft_feedback_count}}}</span></td>
+            <td class="text-center"><a href="{{{draft_feedback_url}}}" class="td-action-link">View <i class="bi bi-arrow-right"></i></a></td>
           </tr>
         </tbody>
       </table>
@@ -667,6 +681,7 @@ a.td-kpi-card--link:hover {
 .td-pill--green { background: #dcfce7; color: #166534; }
 .td-pill--amber { background: #fef3c7; color: #92400e; }
 .td-pill--teal { background: #ccfbf1; color: #115e59; }
+.td-pill--purple { background: #F3E5F5; color: #7B1FA2; }
 
 /* Action links */
 .td-action-link {
@@ -696,11 +711,14 @@ a.td-kpi-card--link:hover {
    ========================================================================== */
 .td-alerts {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
     margin-bottom: 28px;
 }
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+    .td-alerts { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
     .td-alerts { grid-template-columns: 1fr; }
 }
 
@@ -729,6 +747,7 @@ a.td-kpi-card--link:hover {
 .td-alert--danger::before { background: #dc2626; }
 .td-alert--warning::before { background: #f7c873; }
 .td-alert--info::before { background: #3a5ba0; }
+.td-alert--draft::before { background: #9C27B0; }
 
 .td-alert:hover {
     transform: translateY(-2px);
@@ -749,6 +768,7 @@ a.td-kpi-card--link:hover {
 .td-alert--danger .td-alert-icon { background: #fee2e2; color: #dc2626; }
 .td-alert--warning .td-alert-icon { background: #fef3c7; color: #92400e; }
 .td-alert--info .td-alert-icon { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.td-alert--draft .td-alert-icon { background: #F3E5F5; color: #9C27B0; }
 
 .td-alert-content {
     flex: 1;

@@ -319,6 +319,14 @@ if (!empty($learner_ids)) {
 }
 
 // ============================================================
+// 11. DRAFT FEEDBACK PENDING (from local_draftfeedback plugin)
+// ============================================================
+$draft_feedback_count = 0;
+if ($DB->get_manager()->table_exists('local_draftfeedback')) {
+    $draft_feedback_count = \local_draftfeedback\manager::count_pending_drafts_for_tutor($tutorid);
+}
+
+// ============================================================
 // BUILD TEMPLATE CONTEXT
 // ============================================================
 $templatecontext = [
@@ -353,6 +361,11 @@ $templatecontext = [
     'inactive_learners_link' => new moodle_url('/local/learner/tutorlearners.php', ['id' => $USER->id, 'action' => 'inactive']),
     'progressions_url'      => new moodle_url('/local/learnerprogression/index.php'),
     'mycourse_link'         => new moodle_url('/my/courses.php'),
+
+    // Draft feedback.
+    'draft_feedback_count' => $draft_feedback_count,
+    'draft_feedback_url'   => new moodle_url('/local/draftfeedback/index.php'),
+    'has_draft_feedback'   => ($draft_feedback_count > 0),
 ];
 
 echo $OUTPUT->render_from_template('local_learner/tutordash', $templatecontext);

@@ -268,7 +268,7 @@
   </div>
 
   <!-- ===== SECTION 5: ALERT CARDS ===== -->
-  <div class="admindash-alerts">
+  <div class="admindash-alerts admindash-alerts--4cols">
 
     <a href="{{{inactive_link}}}" class="admindash-alert admindash-alert--danger">
       <div class="admindash-alert-icon"><i class="bi bi-person-slash"></i></div>
@@ -297,6 +297,20 @@
       <i class="bi bi-arrow-right admindash-alert-arrow"></i>
     </a>
 
+    {{#draftfeedback_enabled}}
+    <a href="{{{draft_feedback_url}}}" class="admindash-alert admindash-alert--draft">
+      <div class="admindash-alert-icon"><i class="bi bi-file-earmark-text"></i></div>
+      <div class="admindash-alert-content">
+        <span class="admindash-alert-label">Awaiting Draft Feedback</span>
+        <span class="admindash-alert-value">{{{global_draft_feedback}}}</span>
+      </div>
+      <i class="bi bi-arrow-right admindash-alert-arrow"></i>
+    </a>
+    {{/draftfeedback_enabled}}
+
+  </div>
+
+  <div class="admindash-alerts admindash-alerts--single">
     <div class="admindash-alert admindash-alert--gptzero">
       <div class="admindash-alert-icon"><i class="bi bi-robot"></i></div>
       <div class="admindash-alert-content">
@@ -310,7 +324,6 @@
         </span>
       </div>
     </div>
-
   </div>
 
   <!-- ===== SECTION 6: AI DETECTION CHECKS ===== -->
@@ -1005,8 +1018,19 @@ document.addEventListener('DOMContentLoaded', function() {
     gap: 20px;
     margin-bottom: 20px;
 }
+.admindash-alerts--4cols {
+    grid-template-columns: repeat(4, 1fr);
+}
+.admindash-alerts--single {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+}
+@media (max-width: 1100px) {
+    .admindash-alerts--4cols { grid-template-columns: repeat(2, 1fr); }
+}
 @media (max-width: 900px) {
     .admindash-alerts { grid-template-columns: 1fr; }
+    .admindash-alerts--4cols { grid-template-columns: 1fr; }
 }
 
 .admindash-alert {
@@ -1034,6 +1058,7 @@ document.addEventListener('DOMContentLoaded', function() {
 .admindash-alert--danger::before { background: #dc2626; }
 .admindash-alert--warning::before { background: #f7c873; }
 .admindash-alert--info::before { background: #3a5ba0; }
+.admindash-alert--draft::before { background: #9C27B0; }
 
 .admindash-alert:hover {
     transform: translateY(-2px);
@@ -1055,6 +1080,7 @@ document.addEventListener('DOMContentLoaded', function() {
 .admindash-alert--warning .admindash-alert-icon { background: #fef3c7; color: #92400e; }
 .admindash-alert--info .admindash-alert-icon { background: rgba(58,91,160,0.1); color: #3a5ba0; }
 .admindash-alert--gptzero .admindash-alert-icon { background: rgba(110,163,193,0.15); color: #6ea3c1; }
+.admindash-alert--draft .admindash-alert-icon { background: #F3E5F5; color: #9C27B0; }
 .admindash-alert--gptzero::before { background: #6ea3c1; }
 .admindash-alert--gptzero { cursor: default; }
 .admindash-alert--gptzero:hover { transform: none; }
