@@ -438,6 +438,18 @@ All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading 
 - **DOCX text extraction:** For Word documents, text is extracted from the DOCX XML, filtered, then sent as text instead of the raw file.
 - **Helper functions:** `filter_questions_from_text()` and `extract_text_from_docx()` added to `aicheck.php`.
 
+#### Conservative Filter Fix (v1.2.5 - February 2026)
+
+- **Filter rewrite:** The original question filter in v1.2.4 was too aggressive — it filtered student answers that started with action verbs like "Describe", "Explain", "Discuss". Rewrote `filter_questions_from_text()` to be much more conservative.
+- **New patterns (conservative):** Only filters obvious question patterns:
+  - Lines with AC reference codes (e.g., "(AC 1.1)", "AC 2.2, 4.2")
+  - Section headers (Discussion Questions, Reflective Prompt, Short Answer Questions, Case Study)
+  - Bulleted questions starting with question words AND ending with ? (e.g., "- Which pieces of legislation...?")
+  - Unit/Module title headers (e.g., "Unit Title:", "Module:", "AC M1:")
+  - Standalone mark allocation lines (e.g., "(10 marks)", "[5 points]")
+  - Very short all-caps headers (under 50 chars with no lowercase letters)
+- **What is kept:** All student answers, including those starting with action verbs, rhetorical questions, longer instructional-looking text that is actually answer content.
+
 #### Data Queries (v1.1.0 — 4 queries total)
 
 | Query | Source | Purpose |

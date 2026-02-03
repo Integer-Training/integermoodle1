@@ -51,7 +51,6 @@ function filter_questions_from_text($text) {
     // Split into lines for processing.
     $lines = preg_split('/\r\n|\r|\n/', $text);
     $filtered = [];
-    $skipnext = false;
 
     foreach ($lines as $i => $line) {
         $trimmed = trim($line);
@@ -62,55 +61,40 @@ function filter_questions_from_text($text) {
             continue;
         }
 
-        // Pattern 1: Numbered questions - "1.", "1)", "Q1", "Q1.", "Q1)", "Question 1"
-        if (preg_match('/^(?:Q(?:uestion)?\s*)?(\d+)[\.\)\:]/', $trimmed)) {
-            // Check if this line ends with ? (definitely a question)
-            if (preg_match('/\?\s*$/', $trimmed)) {
-                continue; // Skip this line.
-            }
-            // Check if it's short (likely just a question number/header)
-            if (strlen($trimmed) < 150 && !preg_match('/\b(?:because|therefore|however|additionally|furthermore|my|our|the answer|I believe|I think)\b/i', $trimmed)) {
-                continue; // Skip short numbered lines without answer indicators.
-            }
+        // Pattern 1: Lines with AC reference codes - these are assignment questions
+        // e.g., "(AC 1.1)", "(AC 2.2, 4.2)", "AC 3.3"
+        if (preg_match('/\(?\s*AC\s*\d+\.\d+/i', $trimmed) && strlen($trimmed) < 200) {
+            continue; // Skip - this is an assessment criteria question.
         }
 
-        // Pattern 2: Lines ending with question mark that are short (likely questions).
-        if (preg_match('/\?\s*$/', $trimmed) && strlen($trimmed) < 200) {
-            // Check if it looks like a rhetorical question in an answer (keep those).
-            if (!preg_match('/\b(?:why|how|what|when|where|who|which|is it|do you|does|can|could|would|should)\s+\w/i', substr($trimmed, 0, 50))) {
-                // Doesn't start like a question - might be rhetorical, keep it.
-                $filtered[] = $line;
-            }
-            // Otherwise skip - it's likely an assignment question.
-            continue;
+        // Pattern 2: Discussion Questions / Reflective Prompt headers
+        if (preg_match('/^(?:Discussion\s+Questions?|Reflective\s+Prompt|Short\s+Answer\s+Questions?|Case\s+Study\s+\d+)\s*[\:\-]?/i', $trimmed)) {
+            continue; // Skip section headers.
         }
 
-        // Pattern 3: Task/instruction lines - "Task:", "Instructions:", "Describe...", "Explain...", "Discuss..."
-        if (preg_match('/^(?:Task|Instructions?|Note|Hint|Tip|Learning (?:Outcome|Objective)|Assessment Criteria|Marking Criteria|Criteria)\s*[\:\-]/i', $trimmed)) {
-            continue; // Skip instruction lines.
+        // Pattern 3: Lines that are clearly just a question starting with - or bullet
+        // e.g., "- Which pieces of legislation..." or "- How can Fatima promote..."
+        if (preg_match('/^[\-\•\*]\s*(?:Which|What|How|Why|When|Where|Who)\s+/i', $trimmed) && preg_match('/\?\s*$/', $trimmed)) {
+            continue; // Skip bulleted questions.
         }
 
-        // Pattern 4: Lines that are ALL CAPS or mostly caps (likely headers).
-        $upper = preg_replace('/[^A-Z]/', '', $trimmed);
+        // Pattern 4: Unit/Module title headers
+        if (preg_match('/^(?:Unit\s*(?:Title)?|Module|AC\s*M\d+|Case\s+Study)\s*[\:\-]/i', $trimmed)) {
+            continue; // Skip unit headers.
+        }
+
+        // Pattern 5: Mark allocation lines - "(10 marks)", "[5 points]"
+        if (preg_match('/^\s*(?:\(|\[)?\s*\d+\s*(?:marks?|points?)\s*(?:\)|\])?\s*$/i', $trimmed)) {
+            continue; // Skip standalone mark allocation lines.
+        }
+
+        // Pattern 6: Very short lines that are just headers (under 50 chars, no lowercase)
         $lower = preg_replace('/[^a-z]/', '', $trimmed);
-        if (strlen($upper) > 10 && strlen($lower) < 3) {
-            continue; // Skip all-caps headers.
+        if (strlen($trimmed) < 50 && strlen($lower) < 5 && !preg_match('/\d/', $trimmed)) {
+            continue; // Skip short all-caps headers.
         }
 
-        // Pattern 5: Lines starting with action verbs commonly used in questions.
-        if (preg_match('/^(?:Describe|Explain|Discuss|Analyse|Analyze|Evaluate|Compare|Contrast|Outline|Identify|List|Define|State|Calculate|Determine|Assess|Critically|Consider|Reflect|Review|Summarise|Summarize|Demonstrate|Provide|Give|Write|Complete|Answer|Read|Research|Investigate|Examine|Explore|Support|Justify|Show|Illustrate|Apply)\s+(?:how|what|why|the|your|a|an|each|all|both|this|these|and)\b/i', $trimmed)) {
-            // This looks like an instruction - check length.
-            if (strlen($trimmed) < 250) {
-                continue; // Skip - likely a question/task.
-            }
-        }
-
-        // Pattern 6: Criterion/mark allocation lines - "(10 marks)", "[5 points]", "Worth: 20%"
-        if (preg_match('/(?:\(|\[)?\s*\d+\s*(?:marks?|points?|%)\s*(?:\)|\])?/i', $trimmed) && strlen($trimmed) < 100) {
-            continue; // Skip mark allocation lines.
-        }
-
-        // Keep this line.
+        // Keep this line - it's likely student content.
         $filtered[] = $line;
     }
 
