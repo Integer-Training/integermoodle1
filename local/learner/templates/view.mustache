@@ -145,7 +145,7 @@
           <tbody>
             {{#learners}}
             <tr class="lv-learner-row" data-courses='{{{courses_json}}}' data-course-names="{{course_names}}">
-              <td class="lv-toggle-cell"><span class="lv-toggle-btn"><i class="bi bi-plus-circle"></i></span></td>
+              <td class="lv-toggle-cell"><span class="lv-toggle-btn" title="Expand courses"><i class="bi bi-plus-circle"></i></span></td>
               <td class="lv-cell-name">{{{firstname}}} {{{lastname}}}</td>
               <td class="lv-cell-email">{{{email}}}</td>
               <td class="lv-cell-tutor">{{{tutor_name}}}</td>
@@ -774,6 +774,50 @@ document.addEventListener('DOMContentLoaded', function() {
     background: rgba(58,91,160,0.18);
     transform: scale(1.1);
 }
+/* Tooltip for toggle button */
+.lv-toggle-btn {
+    position: relative;
+}
+.lv-toggle-btn::before {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background: #1a2238;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    margin-bottom: 6px;
+    z-index: 100;
+}
+.lv-toggle-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1a2238;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    margin-bottom: -4px;
+    z-index: 100;
+}
+.lv-toggle-btn:hover::before,
+.lv-toggle-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
 tr.shown .lv-toggle-btn {
     background: #3a5ba0;
     color: #fff;
@@ -799,6 +843,51 @@ tr.shown .lv-toggle-btn {
     opacity: 0.8;
     transform: translateY(-1px);
     text-decoration: none;
+}
+
+/* Tooltips — styled CSS tooltips above icons */
+.lv-action-btn {
+    position: relative;
+}
+.lv-action-btn::before {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background: #1a2238;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: 4px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    margin-bottom: 6px;
+    z-index: 100;
+}
+.lv-action-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1a2238;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    margin-bottom: -4px;
+    z-index: 100;
+}
+.lv-action-btn:hover::before,
+.lv-action-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
 }
 .lv-action-btn--edit       { background: rgba(59,130,246,0.12); color: #3b82f6; }
 .lv-action-btn--login      { background: rgba(58,91,160,0.12);  color: #3a5ba0; }
