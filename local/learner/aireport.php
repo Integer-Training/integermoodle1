@@ -45,15 +45,19 @@ $cm = $DB->get_record('course_modules', [
     'module' => $module->id
 ], '*', MUST_EXIST);
 
-// Check capability.
-$context = context_module::instance($cm->id);
-require_capability('mod/assign:grade', $context);
+// Check capability using module context.
+$modcontext = context_module::instance($cm->id);
+require_capability('mod/assign:grade', $modcontext);
 
-// Setup page.
+// Setup page using course context (avoids cm mismatch errors for local plugin).
+$coursecontext = context_course::instance($course->id);
 $PAGE->set_url(new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]));
-$PAGE->set_context($context);
+$PAGE->set_context($coursecontext);
 $PAGE->set_title('AI Detection Report - ' . $assignment->name);
 $PAGE->set_heading('AI Detection Report');
+
+// Use module context for file access.
+$context = $modcontext;
 
 // Get submission content.
 $content = '';
