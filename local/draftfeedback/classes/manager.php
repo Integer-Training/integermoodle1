@@ -340,6 +340,25 @@ class manager {
     }
 
     /**
+     * Get the learner's most recent draft for an assignment.
+     *
+     * @param int $cmid Course module ID
+     * @param int $userid User ID
+     * @return object|false Draft record or false if not found
+     */
+    public static function get_learner_draft($cmid, $userid) {
+        global $DB;
+
+        // Return the most recent draft (by timecreated DESC).
+        $drafts = $DB->get_records('local_draftfeedback', [
+            'cmid' => $cmid,
+            'userid' => $userid,
+        ], 'timecreated DESC', '*', 0, 1);
+
+        return $drafts ? reset($drafts) : false;
+    }
+
+    /**
      * Send notification to learner about feedback.
      *
      * @param object $draft Draft record

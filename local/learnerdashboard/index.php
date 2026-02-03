@@ -332,6 +332,92 @@ foreach ($month_names as $num => $name) {
     $hours_chart_data[] = ['name' => $name, 'y' => $val];
 }
 
+// ===== QUERY 6: DRAFT FEEDBACKS =====
+$draft_feedbacks = [];
+$feedback_count = 0;
+$draftfeedback_table_exists = $DB->get_manager()->table_exists('local_draftfeedback');
+
+if ($draftfeedback_table_exists) {
+    $feedback_sql = "SELECT df.id, df.status, df.feedback, df.feedbacktime, df.timecreated,
+                            df.aicheck_result, df.aicheck_probability,
+                            a.name AS assignmentname,
+                            c.fullname AS coursename, c.shortname AS courseshortname,
+                            fb.firstname AS tutor_firstname, fb.lastname AS tutor_lastname
+                     FROM {local_draftfeedback} df
+                     JOIN {course_modules} cm ON cm.id = df.cmid
+                     JOIN {assign} a ON a.id = cm.instance
+                     JOIN {course} c ON c.id = cm.course
+                     LEFT JOIN {user} fb ON fb.id = df.feedbackby
+                     WHERE df.userid = :userid
+                     ORDER BY df.timemodified DESC";
+
+    $feedback_records = $DB->get_records_sql($feedback_sql, ['userid' => $userid]);
+
+    foreach ($feedback_records as $fr) {
+        $status_class = 'ld-status--pending';
+        $status_label = 'Awaiting Feedback';
+        if ($fr->status === 'reviewed') {
+            $status_class = 'ld-status--reviewed';
+            $status_label = 'Feedback Received';
+        } else if ($fr->status === 'revised') {
+            $status_class = 'ld-status--revised';
+            $status_label = 'Revised';
+        }
+
+        $draft_feedbacks[] = [
+            'id' => $fr->id,
+            'assignmentname' => $fr->assignmentname,
+            'coursename' => $fr->courseshortname,
+            'status' => $status_label,
+            'status_class' => $status_class,
+            'has_feedback' => !empty($fr->feedback),
+            'tutor_name' => $fr->tutor_firstname ? $fr->tutor_firstname . ' ' . $fr->tutor_lastname : '',
+            'feedback_date' => $fr->feedbacktime ? date('d M Y', $fr->feedbacktime) : '',
+            'submitted_date' => date('d M Y', $fr->timecreated),
+            'view_url' => (new moodle_url('/local/draftfeedback/view.php', ['id' => $fr->id]))->out(false),
+        ];
+    }
+    $feedback_count = count($draft_feedbacks);
+}
+$has_feedbacks = !empty($draft_feedbacks);
+
+// ===== QUERY 7: ASSIGNED TUTOR =====
+$tutor_info = null;
+$has_tutor = false;
+
+// Find tutor via group membership (tutor = teacher in same group as learner)
+if (!empty($allcourseids)) {
+    list($tutor_cid_sql, $tutor_cid_params) = $DB->get_in_or_equal($allcourseids, SQL_PARAMS_NAMED, 'tcid');
+    $tutor_cid_params['userid'] = $userid;
+
+    $tutor_sql = "SELECT DISTINCT u.id, u.firstname, u.lastname, u.email, u.picture, u.imagealt
+                  FROM {groups_members} gm_s
+                  JOIN {groups} g ON g.id = gm_s.groupid
+                  JOIN {groups_members} gm_t ON gm_t.groupid = g.id AND gm_t.userid != gm_s.userid
+                  JOIN {role_assignments} ra ON ra.userid = gm_t.userid
+                  JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50
+                  JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('teacher', 'editingteacher')
+                  JOIN {user} u ON u.id = gm_t.userid AND u.deleted = 0 AND u.suspended = 0
+                  WHERE gm_s.userid = :userid
+                    AND g.courseid {$tutor_cid_sql}
+                  LIMIT 1";
+
+    $tutor_record = $DB->get_record_sql($tutor_sql, $tutor_cid_params);
+
+    if ($tutor_record) {
+        $tutor_info = [
+            'id' => $tutor_record->id,
+            'fullname' => $tutor_record->firstname . ' ' . $tutor_record->lastname,
+            'firstname' => $tutor_record->firstname,
+            'email' => $tutor_record->email,
+            'picture_url' => (new moodle_url('/user/pix.php/' . $tutor_record->id . '/f1.jpg'))->out(false),
+            'profile_url' => (new moodle_url('/user/profile.php', ['id' => $tutor_record->id]))->out(false),
+            'message_url' => (new moodle_url('/local/mail/view.php', ['c' => reset($allcourseids)]))->out(false),
+        ];
+        $has_tutor = true;
+    }
+}
+
 // ===== BUILD PROGRESSION DATA =====
 $progression_courses = [];
 foreach ($course_progression as $cid => $cd) {
@@ -378,6 +464,16 @@ $templatecontext = [
     'contact_link'          => (new moodle_url('/local/learner/contact.php'))->out(false),
     'progression_link'      => (new moodle_url('/local/learnerprogression/index.php'))->out(false),
     'wwwroot'               => $CFG->wwwroot,
+
+    // Draft feedback.
+    'draft_feedbacks'       => $draft_feedbacks,
+    'has_feedbacks'         => $has_feedbacks,
+    'feedback_count'        => $feedback_count,
+    'feedbacks_link'        => (new moodle_url('/local/draftfeedback/myfeedbacks.php'))->out(false),
+
+    // Tutor info.
+    'tutor_info'            => $tutor_info,
+    'has_tutor'             => $has_tutor,
 ];
 
 echo $OUTPUT->render_from_template('local_learnerdashboard/dashboard', $templatecontext);

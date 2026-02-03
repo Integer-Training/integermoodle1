@@ -36,8 +36,8 @@ if (!$draft) {
 }
 
 $cm = get_coursemodule_from_id('assign', $draft->cmid, 0, false, MUST_EXIST);
-$context = context_module::instance($cm->id);
-$course = $DB->get_record('course', ['id' => $draft->courseid], '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+$context = context_course::instance($course->id);
 
 // Check permission.
 $canreview = has_capability('local/draftfeedback:review', $context) ||
@@ -49,6 +49,7 @@ if (!$canreview) {
 
 $PAGE->set_url(new moodle_url('/local/draftfeedback/feedback.php', ['id' => $id]));
 $PAGE->set_context($context);
+$PAGE->set_course($course);
 $PAGE->set_title(get_string('providefeedback', 'local_draftfeedback'));
 $PAGE->set_heading(get_string('providefeedback', 'local_draftfeedback'));
 

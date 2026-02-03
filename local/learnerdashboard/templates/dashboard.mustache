@@ -96,6 +96,70 @@
     </div>
   </div>
 
+  <!-- ===== TUTOR + FEEDBACKS ROW ===== -->
+  <div class="ld-grid-2">
+
+    <!-- My Tutor -->
+    <div class="ld-card ld-card--tutor">
+      <div class="ld-card-hdr" style="background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);">
+        <h3><i class="bi bi-person-badge"></i> My Tutor</h3>
+      </div>
+      {{#has_tutor}}
+      <div class="ld-card-body">
+        <div class="ld-tutor">
+          <div class="ld-tutor-avatar">
+            <img src="{{{tutor_info.picture_url}}}" alt="{{{tutor_info.fullname}}}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <span class="ld-tutor-initials">{{{tutor_info.firstname}}}</span>
+          </div>
+          <div class="ld-tutor-info">
+            <div class="ld-tutor-name">{{{tutor_info.fullname}}}</div>
+            <div class="ld-tutor-email">{{{tutor_info.email}}}</div>
+          </div>
+          <div class="ld-tutor-actions">
+            <a href="{{{tutor_info.message_url}}}" class="ld-btn-contact">
+              <i class="bi bi-envelope"></i> Contact Tutor
+            </a>
+          </div>
+        </div>
+      </div>
+      {{/has_tutor}}
+      {{^has_tutor}}
+      <div class="ld-card-body">
+        <div class="ld-empty"><i class="bi bi-person-x"></i><p>No tutor assigned yet</p></div>
+      </div>
+      {{/has_tutor}}
+    </div>
+
+    <!-- Draft Feedbacks -->
+    <div class="ld-card ld-card--feedbacks">
+      <div class="ld-card-hdr" style="background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);">
+        <h3><i class="bi bi-chat-square-text"></i> Draft Feedbacks</h3>
+        <span class="ld-card-badge">{{{feedback_count}}} total</span>
+      </div>
+      {{#has_feedbacks}}
+      <div class="ld-card-body ld-card-body--flush">
+        {{#draft_feedbacks}}
+        <a href="{{{view_url}}}" class="ld-feedback-item">
+          <div class="ld-feedback-left">
+            <div class="ld-feedback-name">{{{assignmentname}}}</div>
+            <div class="ld-feedback-meta">{{{coursename}}} &middot; {{{submitted_date}}}</div>
+          </div>
+          <div class="ld-feedback-right">
+            <span class="ld-feedback-status {{{status_class}}}">{{{status}}}</span>
+          </div>
+        </a>
+        {{/draft_feedbacks}}
+      </div>
+      {{/has_feedbacks}}
+      {{^has_feedbacks}}
+      <div class="ld-card-body">
+        <div class="ld-empty"><i class="bi bi-chat-square"></i><p>No draft feedbacks yet</p></div>
+      </div>
+      {{/has_feedbacks}}
+    </div>
+
+  </div>
+
   <!-- ===== TWO-COLUMN: DUE DATES + MESSAGES ===== -->
   <div class="ld-grid-2">
 
@@ -585,6 +649,57 @@ document.addEventListener('DOMContentLoaded', function() {
 .ld-st--pending { background: #dbeafe; color: #1e40af; }
 .ld-st--submitted { background: #e0e7ff; color: #4338ca; }
 .ld-st--none { background: #f1f5f9; color: #94a3b8; }
+
+/* ===== TUTOR CARD ===== */
+.ld-tutor {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.ld-tutor-avatar {
+    width: 64px; height: 64px; border-radius: 50%; overflow: hidden;
+    background: linear-gradient(135deg, #9C27B0, #E1BEE7); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+}
+.ld-tutor-avatar img {
+    width: 100%; height: 100%; object-fit: cover;
+}
+.ld-tutor-initials {
+    font-size: 24px; font-weight: 700; color: white; display: none;
+}
+.ld-tutor-info { flex: 1; min-width: 120px; }
+.ld-tutor-name { font-size: 18px; font-weight: 700; color: #0f172a; }
+.ld-tutor-email { font-size: 13px; color: #64748b; margin-top: 2px; }
+.ld-tutor-actions { flex-shrink: 0; }
+.ld-btn-contact {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px; border-radius: 10px; text-decoration: none;
+    background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+    color: white; font-weight: 600; font-size: 14px;
+    transition: all 0.2s; box-shadow: 0 4px 12px rgba(156,39,176,0.3);
+}
+.ld-btn-contact:hover {
+    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(156,39,176,0.4);
+    color: white; text-decoration: none;
+}
+
+/* ===== FEEDBACKS CARD ===== */
+.ld-feedback-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 28px; border-bottom: 1px solid #f1f5f9;
+    text-decoration: none; color: inherit; transition: background .15s;
+}
+.ld-feedback-item:last-child { border-bottom: none; }
+.ld-feedback-item:hover { background: rgba(241,245,249,0.5); text-decoration: none; color: inherit; }
+.ld-feedback-left { flex: 1; min-width: 0; }
+.ld-feedback-name { font-size: 14px; font-weight: 600; color: #0f172a; }
+.ld-feedback-meta { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+.ld-feedback-right { flex-shrink: 0; }
+.ld-feedback-status {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 5px 12px;
+    border-radius: 20px; text-transform: uppercase;
+}
+.ld-status--pending { background: #FFF3E0; color: #E65100; }
+.ld-status--reviewed { background: #E8F5E9; color: #2E7D32; }
+.ld-status--revised { background: #E3F2FD; color: #1565C0; }
 
 /* ===== EMPTY STATES ===== */
 .ld-empty { text-align: center; padding: 40px 16px; }

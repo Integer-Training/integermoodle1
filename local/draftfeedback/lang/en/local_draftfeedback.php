@@ -39,6 +39,7 @@ $string['submitdraft'] = 'Submit Draft for Feedback';
 $string['draftlist'] = 'Drafts Awaiting Feedback';
 $string['viewdraft'] = 'View Draft';
 $string['providefeedback'] = 'Provide Feedback';
+$string['aireport'] = 'AI Detection Report';
 
 // Buttons and actions.
 $string['submitdraftforfeedback'] = 'Submit Draft for Feedback';
@@ -93,3 +94,4 @@ $string['invalidcmid'] = 'Invalid course module ID';
 $string['invaliddraftid'] = 'Invalid draft ID';
 $string['nopermission'] = 'You do not have permission to perform this action';
 $string['assignmentonly'] = 'Draft feedback is only available for assignments';
+$string['noaicheckdata'] = 'No AI check data available for this draft';

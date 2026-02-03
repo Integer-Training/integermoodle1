@@ -53,38 +53,77 @@ function local_draftfeedback_before_footer() {
         return;
     }
 
-    // Check if already has pending draft.
-    if (\local_draftfeedback\manager::has_pending_draft($cm->id, $USER->id)) {
-        // Show "Draft Pending" badge instead.
-        $html = '
-        <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var addSubmissionBtn = document.querySelector("[data-action=\\"add-submission\\"]");
-            if (!addSubmissionBtn) {
-                // Try finding the "Add submission" button by text.
-                var buttons = document.querySelectorAll(".btn");
-                for (var i = 0; i < buttons.length; i++) {
-                    if (buttons[i].textContent.indexOf("Add submission") !== -1) {
-                        addSubmissionBtn = buttons[i];
-                        break;
+    // Check if learner has any draft for this assignment.
+    $draft = \local_draftfeedback\manager::get_learner_draft($cm->id, $USER->id);
+
+    if ($draft) {
+        if ($draft->status === 'reviewed') {
+            // Feedback received - show "View Feedback" button.
+            $viewurl = new moodle_url('/local/draftfeedback/view.php', ['id' => $draft->id]);
+            $html = '
+            <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var addSubmissionBtn = document.querySelector("[data-action=\\"add-submission\\"]");
+                if (!addSubmissionBtn) {
+                    var buttons = document.querySelectorAll(".btn");
+                    for (var i = 0; i < buttons.length; i++) {
+                        if (buttons[i].textContent.indexOf("Add submission") !== -1 ||
+                            buttons[i].textContent.indexOf("Edit submission") !== -1) {
+                            addSubmissionBtn = buttons[i];
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (addSubmissionBtn) {
-                var badge = document.createElement("span");
-                badge.className = "badge badge-warning ml-2";
-                badge.innerHTML = "<i class=\"bi bi-hourglass-split\"></i> Draft Pending Feedback";
-                badge.style.cssText = "background: #FFF3E0; color: #E65100; padding: 8px 12px; border-radius: 6px; font-size: 13px; margin-left: 10px;";
-                addSubmissionBtn.parentNode.insertBefore(badge, addSubmissionBtn.nextSibling);
-            }
-        });
-        </script>';
-        echo $html;
+                if (addSubmissionBtn) {
+                    var feedbackBtn = document.createElement("a");
+                    feedbackBtn.href = "' . $viewurl->out() . '";
+                    feedbackBtn.className = "btn ml-2";
+                    feedbackBtn.innerHTML = "<i class=\\"bi bi-chat-square-text\\"></i> View Draft Feedback";
+                    feedbackBtn.style.cssText = "background: #4CAF50; color: white; border: none; margin-left: 10px;";
+                    feedbackBtn.onmouseover = function() { this.style.background = "#45a049"; };
+                    feedbackBtn.onmouseout = function() { this.style.background = "#4CAF50"; };
+                    addSubmissionBtn.parentNode.insertBefore(feedbackBtn, addSubmissionBtn.nextSibling);
+                }
+            });
+            </script>';
+            echo $html;
+        } else {
+            // Draft pending - show status badge.
+            $viewurl = new moodle_url('/local/draftfeedback/view.php', ['id' => $draft->id]);
+            $html = '
+            <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                var addSubmissionBtn = document.querySelector("[data-action=\\"add-submission\\"]");
+                if (!addSubmissionBtn) {
+                    var buttons = document.querySelectorAll(".btn");
+                    for (var i = 0; i < buttons.length; i++) {
+                        if (buttons[i].textContent.indexOf("Add submission") !== -1 ||
+                            buttons[i].textContent.indexOf("Edit submission") !== -1) {
+                            addSubmissionBtn = buttons[i];
+                            break;
+                        }
+                    }
+                }
+
+                if (addSubmissionBtn) {
+                    var statusLink = document.createElement("a");
+                    statusLink.href = "' . $viewurl->out() . '";
+                    statusLink.className = "ml-2";
+                    statusLink.innerHTML = "<i class=\\"bi bi-hourglass-split\\"></i> Draft Awaiting Feedback";
+                    statusLink.style.cssText = "background: #FFF3E0; color: #E65100; padding: 8px 16px; border-radius: 6px; font-size: 13px; margin-left: 10px; text-decoration: none; display: inline-block;";
+                    statusLink.onmouseover = function() { this.style.background = "#FFE0B2"; };
+                    statusLink.onmouseout = function() { this.style.background = "#FFF3E0"; };
+                    addSubmissionBtn.parentNode.insertBefore(statusLink, addSubmissionBtn.nextSibling);
+                }
+            });
+            </script>';
+            echo $html;
+        }
         return;
     }
 
-    // Inject button.
+    // No draft - show "Submit Draft for Feedback" button.
     $submiturl = new moodle_url('/local/draftfeedback/submit.php', ['cmid' => $cm->id]);
 
     $html = '
@@ -92,10 +131,10 @@ function local_draftfeedback_before_footer() {
     document.addEventListener("DOMContentLoaded", function() {
         var addSubmissionBtn = document.querySelector("[data-action=\\"add-submission\\"]");
         if (!addSubmissionBtn) {
-            // Try finding the "Add submission" button by text.
             var buttons = document.querySelectorAll(".btn");
             for (var i = 0; i < buttons.length; i++) {
-                if (buttons[i].textContent.indexOf("Add submission") !== -1) {
+                if (buttons[i].textContent.indexOf("Add submission") !== -1 ||
+                    buttons[i].textContent.indexOf("Edit submission") !== -1) {
                     addSubmissionBtn = buttons[i];
                     break;
                 }

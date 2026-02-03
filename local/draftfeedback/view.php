@@ -37,8 +37,9 @@ if (!$draft) {
 }
 
 $cm = get_coursemodule_from_id('assign', $draft->cmid, 0, false, MUST_EXIST);
-$context = context_module::instance($cm->id);
-$course = $DB->get_record('course', ['id' => $draft->courseid], '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+$context = context_course::instance($course->id);
+$modcontext = context_module::instance($cm->id); // For file operations
 
 // Check permission - owner, tutor with review, or manager with viewall.
 $canview = false;
@@ -59,6 +60,7 @@ $canreview = has_capability('local/draftfeedback:review', $context) ||
 
 $PAGE->set_url(new moodle_url('/local/draftfeedback/view.php', ['id' => $id]));
 $PAGE->set_context($context);
+$PAGE->set_course($course);
 $PAGE->set_title(get_string('viewdraft', 'local_draftfeedback'));
 $PAGE->set_heading(get_string('viewdraft', 'local_draftfeedback'));
 
@@ -342,7 +344,7 @@ echo $OUTPUT->header();
                     <span style="font-size: 22px;"><?php echo round($draft->aicheck_probability); ?>%</span>
                     <span style="font-size: 11px; text-transform: uppercase;"><?php echo ucfirst($draft->aicheck_result); ?></span>
                 </div>
-                <div>
+                <div style="flex: 1;">
                     <strong>Detection Result: <?php echo ucfirst($draft->aicheck_result); ?> Generated</strong>
                     <p style="margin: 8px 0 0 0; color: #666;">
                         <?php
@@ -356,6 +358,9 @@ echo $OUTPUT->header();
                         ?>
                     </p>
                 </div>
+                <a href="<?php echo new moodle_url('/local/draftfeedback/aireport.php', ['id' => $id]); ?>" class="df-btn df-btn--primary" style="white-space: nowrap;">
+                    <i class="bi bi-file-text"></i> View Report
+                </a>
             </div>
         </div>
     </div>
@@ -385,7 +390,7 @@ echo $OUTPUT->header();
                 $fs = get_file_storage();
                 $file = $content['file'];
                 $url = moodle_url::make_pluginfile_url(
-                    $context->id,
+                    $modcontext->id,
                     'local_draftfeedback',
                     'draftfiles',
                     $draft->id,
