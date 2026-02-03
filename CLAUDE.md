@@ -1109,17 +1109,18 @@ $templatecontext = [
     'has_feedbacks', 'feedback_count',
 
     // Assigned tutor (v1.2.0+)
-    'tutor_info' => [],          // id, fullname, firstname, email, picture_url, message_url
+    'tutor_info' => [],          // id, fullname, firstname, email, picture_url, message_url (compose with tutor pre-filled)
     'has_tutor',
+    'has_unread',                // Boolean for unread badge on Messages KPI
 ];
 ```
 
 #### Template Features (Modern Glassmorphism Design)
 
 - **Dark gradient header** (navy-to-teal) with quick action buttons (My Courses, Mail Inbox, Contact Support)
-- **5 color-themed KPI cards:** Blue (Enrolled), Amber (Due), Green (Completed), Cyan (Progress with SVG ring), Purple (Messages)
+- **5 color-themed KPI cards:** Blue (Enrolled), Amber (Due), Green (Completed), Cyan (Progress with SVG ring), Purple (Messages with red unread badge)
 - **Glassmorphism cards** with backdrop-filter blur, dark slate gradient headers
-- **My Tutor card** (v1.2.0+): Shows assigned tutor with avatar, name, email, and "Contact Tutor" button (purple gradient)
+- **My Tutor card** (v1.2.0+): Shows assigned tutor with avatar, name, email, and "Contact Tutor" button (opens local_mail compose with tutor pre-filled)
 - **Draft Feedbacks card** (v1.2.0+): Lists all draft feedback submissions with status badges (pending/reviewed/revised)
 - **Two-column layout:** Due Dates + Messages row, then Tutor + Feedbacks row
 - **My Progression panel:** SVG progress ring + expandable per-course rows with assignment status tables
