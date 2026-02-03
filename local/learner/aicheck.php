@@ -34,6 +34,131 @@ require_sesskey();
 // Set JSON header.
 header('Content-Type: application/json');
 
+/**
+ * Filter out assignment questions from submission text to save API quota.
+ *
+ * Removes lines that appear to be questions or task prompts rather than
+ * student-written answers. This helps conserve GPTZero word quota.
+ *
+ * @param string $text The full submission text
+ * @return string Filtered text with questions removed
+ */
+function filter_questions_from_text($text) {
+    if (empty($text)) {
+        return $text;
+    }
+
+    // Split into lines for processing.
+    $lines = preg_split('/\r\n|\r|\n/', $text);
+    $filtered = [];
+    $skipnext = false;
+
+    foreach ($lines as $i => $line) {
+        $trimmed = trim($line);
+
+        // Skip empty lines but keep them for structure.
+        if (empty($trimmed)) {
+            $filtered[] = '';
+            continue;
+        }
+
+        // Pattern 1: Numbered questions - "1.", "1)", "Q1", "Q1.", "Q1)", "Question 1"
+        if (preg_match('/^(?:Q(?:uestion)?\s*)?(\d+)[\.\)\:]/', $trimmed)) {
+            // Check if this line ends with ? (definitely a question)
+            if (preg_match('/\?\s*$/', $trimmed)) {
+                continue; // Skip this line.
+            }
+            // Check if it's short (likely just a question number/header)
+            if (strlen($trimmed) < 150 && !preg_match('/\b(?:because|therefore|however|additionally|furthermore|my|our|the answer|I believe|I think)\b/i', $trimmed)) {
+                continue; // Skip short numbered lines without answer indicators.
+            }
+        }
+
+        // Pattern 2: Lines ending with question mark that are short (likely questions).
+        if (preg_match('/\?\s*$/', $trimmed) && strlen($trimmed) < 200) {
+            // Check if it looks like a rhetorical question in an answer (keep those).
+            if (!preg_match('/\b(?:why|how|what|when|where|who|which|is it|do you|does|can|could|would|should)\s+\w/i', substr($trimmed, 0, 50))) {
+                // Doesn't start like a question - might be rhetorical, keep it.
+                $filtered[] = $line;
+            }
+            // Otherwise skip - it's likely an assignment question.
+            continue;
+        }
+
+        // Pattern 3: Task/instruction lines - "Task:", "Instructions:", "Describe...", "Explain...", "Discuss..."
+        if (preg_match('/^(?:Task|Instructions?|Note|Hint|Tip|Learning (?:Outcome|Objective)|Assessment Criteria|Marking Criteria|Criteria)\s*[\:\-]/i', $trimmed)) {
+            continue; // Skip instruction lines.
+        }
+
+        // Pattern 4: Lines that are ALL CAPS or mostly caps (likely headers).
+        $upper = preg_replace('/[^A-Z]/', '', $trimmed);
+        $lower = preg_replace('/[^a-z]/', '', $trimmed);
+        if (strlen($upper) > 10 && strlen($lower) < 3) {
+            continue; // Skip all-caps headers.
+        }
+
+        // Pattern 5: Lines starting with action verbs commonly used in questions.
+        if (preg_match('/^(?:Describe|Explain|Discuss|Analyse|Analyze|Evaluate|Compare|Contrast|Outline|Identify|List|Define|State|Calculate|Determine|Assess|Critically|Consider|Reflect|Review|Summarise|Summarize|Demonstrate|Provide|Give|Write|Complete|Answer|Read|Research|Investigate|Examine|Explore|Support|Justify|Show|Illustrate|Apply)\s+(?:how|what|why|the|your|a|an|each|all|both|this|these|and)\b/i', $trimmed)) {
+            // This looks like an instruction - check length.
+            if (strlen($trimmed) < 250) {
+                continue; // Skip - likely a question/task.
+            }
+        }
+
+        // Pattern 6: Criterion/mark allocation lines - "(10 marks)", "[5 points]", "Worth: 20%"
+        if (preg_match('/(?:\(|\[)?\s*\d+\s*(?:marks?|points?|%)\s*(?:\)|\])?/i', $trimmed) && strlen($trimmed) < 100) {
+            continue; // Skip mark allocation lines.
+        }
+
+        // Keep this line.
+        $filtered[] = $line;
+    }
+
+    // Rejoin and clean up excessive blank lines.
+    $result = implode("\n", $filtered);
+    $result = preg_replace('/\n{4,}/', "\n\n\n", $result); // Max 3 newlines.
+    $result = trim($result);
+
+    return $result;
+}
+
+/**
+ * Extract plain text from a DOCX file.
+ *
+ * DOCX files are ZIP archives containing XML. This function extracts
+ * the text content from word/document.xml.
+ *
+ * @param string $filepath Path to the DOCX file
+ * @return string Extracted text content
+ */
+function extract_text_from_docx($filepath) {
+    if (!file_exists($filepath)) {
+        return '';
+    }
+
+    $text = '';
+    $zip = new ZipArchive();
+
+    if ($zip->open($filepath) === true) {
+        // Read the main document content.
+        $content = $zip->getFromName('word/document.xml');
+        $zip->close();
+
+        if ($content) {
+            // Remove XML tags but preserve paragraph breaks.
+            $content = str_replace('</w:p>', "\n", $content);
+            $content = str_replace('</w:tr>', "\n", $content); // Table rows.
+            $text = strip_tags($content);
+            // Clean up whitespace.
+            $text = preg_replace('/[ \t]+/', ' ', $text);
+            $text = preg_replace('/\n{3,}/', "\n\n", $text);
+            $text = trim($text);
+        }
+    }
+
+    return $text;
+}
+
 // Get parameters.
 $submissionid = required_param('submissionid', PARAM_INT);
 $action = optional_param('action', 'scan', PARAM_ALPHA);
@@ -105,7 +230,8 @@ try {
     ]);
 
     if ($onlinetext && !empty($onlinetext->onlinetext)) {
-        $content = strip_tags($onlinetext->onlinetext);
+        $rawcontent = strip_tags($onlinetext->onlinetext);
+        $content = filter_questions_from_text($rawcontent);
     }
 
     // Check for file submission.
@@ -122,6 +248,33 @@ try {
     if (!empty($files)) {
         $file = reset($files); // Get first file.
         $hasfile = true;
+
+        // Try to extract text from file so we can filter out questions.
+        $mimetype = $file->get_mimetype();
+        $filename = strtolower($file->get_filename());
+        $filecontent = '';
+
+        // Extract text based on file type.
+        if ($mimetype === 'text/plain' || substr($filename, -4) === '.txt') {
+            // Plain text file - read directly.
+            $filecontent = $file->get_content();
+        } else if (substr($filename, -5) === '.docx' || $mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            // Word document - extract text from XML.
+            $temppath = make_request_directory() . '/' . $file->get_filename();
+            $file->copy_content_to($temppath);
+            $filecontent = extract_text_from_docx($temppath);
+            @unlink($temppath);
+        }
+
+        // If we extracted text, filter it and use text submission instead of file.
+        if (!empty($filecontent)) {
+            $filteredcontent = filter_questions_from_text(strip_tags($filecontent));
+            if (!empty($filteredcontent) && strlen($filteredcontent) > 50) {
+                // Use filtered text instead of file.
+                $content = $filteredcontent;
+                $hasfile = false; // Don't send file, send filtered text.
+            }
+        }
     }
 
     // Ensure we have something to scan.
