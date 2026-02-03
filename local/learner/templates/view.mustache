@@ -145,7 +145,7 @@
           <tbody>
             {{#learners}}
             <tr class="lv-learner-row" data-courses='{{{courses_json}}}' data-course-names="{{course_names}}">
-              <td class="lv-toggle-cell"><span class="lv-toggle-btn" title="Expand courses"><i class="bi bi-plus-circle"></i></span></td>
+              <td class="lv-toggle-cell"><span class="lv-toggle-btn" data-tooltip="Expand"><i class="bi bi-plus-circle"></i></span></td>
               <td class="lv-cell-name">{{{firstname}}} {{{lastname}}}</td>
               <td class="lv-cell-email">{{{email}}}</td>
               <td class="lv-cell-tutor">{{{tutor_name}}}</td>
@@ -154,14 +154,14 @@
               <td class="lv-cell-login" data-order="{{{last_login_ts}}}">{{{last_login}}}</td>
               <td class="lv-cell-status">{{{status}}}</td>
               <td class="lv-cell-actions">
-                <a href="{{{edit_url}}}" class="lv-action-btn lv-action-btn--edit" title="Edit"><i class="bi bi-pencil-square"></i></a>
-                <a href="{{{loginas_url}}}" target="_blank" class="lv-action-btn lv-action-btn--login" title="Login As"><i class="bi bi-box-arrow-in-right"></i></a>
-                <a href="{{{sendlogin_url}}}" class="lv-action-btn lv-action-btn--email" title="Send Login"><i class="bi bi-envelope-fill"></i></a>
+                <a href="{{{edit_url}}}" class="lv-action-btn lv-action-btn--edit" data-tooltip="Edit"><i class="bi bi-pencil-square"></i></a>
+                <a href="{{{loginas_url}}}" target="_blank" class="lv-action-btn lv-action-btn--login" data-tooltip="Login As"><i class="bi bi-box-arrow-in-right"></i></a>
+                <a href="{{{sendlogin_url}}}" class="lv-action-btn lv-action-btn--email" data-tooltip="Send Login"><i class="bi bi-envelope-fill"></i></a>
                 {{#is_suspended}}
-                <a href="#" class="lv-action-btn lv-action-btn--activate" data-userid="{{id}}" title="Activate"><i class="bi bi-toggle-off"></i></a>
+                <a href="#" class="lv-action-btn lv-action-btn--activate" data-userid="{{id}}" data-tooltip="Activate"><i class="bi bi-toggle-off"></i></a>
                 {{/is_suspended}}
                 {{^is_suspended}}
-                <a href="#" class="lv-action-btn lv-action-btn--deactivate" data-userid="{{id}}" title="Deactivate"><i class="bi bi-toggle-on"></i></a>
+                <a href="#" class="lv-action-btn lv-action-btn--deactivate" data-userid="{{id}}" data-tooltip="Deactivate"><i class="bi bi-toggle-on"></i></a>
                 {{/is_suspended}}
               </td>
             </tr>
@@ -778,8 +778,8 @@ document.addEventListener('DOMContentLoaded', function() {
 .lv-toggle-btn {
     position: relative;
 }
-.lv-toggle-btn::before {
-    content: attr(title);
+.lv-toggle-btn[data-tooltip]::before {
+    content: attr(data-tooltip);
     position: absolute;
     bottom: 100%;
     left: 50%;
@@ -798,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-bottom: 6px;
     z-index: 100;
 }
-.lv-toggle-btn::after {
+.lv-toggle-btn[data-tooltip]::after {
     content: '';
     position: absolute;
     bottom: 100%;
@@ -813,8 +813,8 @@ document.addEventListener('DOMContentLoaded', function() {
     margin-bottom: -4px;
     z-index: 100;
 }
-.lv-toggle-btn:hover::before,
-.lv-toggle-btn:hover::after {
+.lv-toggle-btn[data-tooltip]:hover::before,
+.lv-toggle-btn[data-tooltip]:hover::after {
     opacity: 1;
     visibility: visible;
 }
@@ -849,8 +849,8 @@ tr.shown .lv-toggle-btn {
 .lv-action-btn {
     position: relative;
 }
-.lv-action-btn::before {
-    content: attr(title);
+.lv-action-btn[data-tooltip]::before {
+    content: attr(data-tooltip);
     position: absolute;
     bottom: 100%;
     left: 50%;
@@ -869,7 +869,7 @@ tr.shown .lv-toggle-btn {
     margin-bottom: 6px;
     z-index: 100;
 }
-.lv-action-btn::after {
+.lv-action-btn[data-tooltip]::after {
     content: '';
     position: absolute;
     bottom: 100%;
@@ -884,8 +884,8 @@ tr.shown .lv-toggle-btn {
     margin-bottom: -4px;
     z-index: 100;
 }
-.lv-action-btn:hover::before,
-.lv-action-btn:hover::after {
+.lv-action-btn[data-tooltip]:hover::before,
+.lv-action-btn[data-tooltip]:hover::after {
     opacity: 1;
     visibility: visible;
 }
