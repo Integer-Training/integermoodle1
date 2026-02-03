@@ -450,6 +450,21 @@ All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading 
   - Very short all-caps headers (under 50 chars with no lowercase letters)
 - **What is kept:** All student answers, including those starting with action verbs, rhetorical questions, longer instructional-looking text that is actually answer content.
 
+#### AI Report Enhancements (v1.2.6 - February 2026)
+
+- **3-pill probability display:** AI detection results now show all 3 GPTZero percentages (AI %, Mixed %, Human %) instead of just the predicted class. Displayed as styled pills matching GPTZero's interface design.
+- **aireport.php updates:**
+  - New probability pills section showing AI (orange), Mixed (amber), Human (green) percentages
+  - Human pill highlighted when that's the predicted class
+  - Usage Statistics panel showing: Words used / 300,000 quota, Scans made this month, Next reset date, Remaining words
+- **markallocation.php updates:**
+  - AI Check results now show all 3 probability pills instead of single "MIXED - 45%" badge
+  - Both existing scans and new scan results display the 3-pill layout
+- **aicheck.php updates:**
+  - Returns all 3 class probabilities (`ai_pct`, `mixed_pct`, `human_pct`) in JSON response
+  - Extracts from GPTZero's `class_probabilities` object when available
+  - Fallback calculation from single `class_probability` for cached results
+
 #### Data Queries (v1.1.0 — 4 queries total)
 
 | Query | Source | Purpose |

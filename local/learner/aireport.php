@@ -280,7 +280,114 @@ echo $OUTPUT->header();
 
 .ai-score-message {
     color: #666;
+    margin: 0 0 12px 0;
+}
+
+.ai-probability-pills {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+}
+
+.ai-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #ddd;
+    background: #f5f5f5;
+    color: #666;
+}
+
+.ai-pill-ai {
+    background: #fff3e0;
+    border-color: #ffcc80;
+    color: #e65100;
+}
+
+.ai-pill-mixed {
+    background: #fff8e1;
+    border-color: #ffe082;
+    color: #f57f17;
+}
+
+.ai-pill-human {
+    background: #e8f5e9;
+    border-color: #a5d6a7;
+    color: #2e7d32;
+}
+
+.ai-pill-human.highlighted {
+    background: #2e7d32;
+    border-color: #2e7d32;
+    color: white;
+    font-weight: 600;
+}
+
+.ai-usage-panel {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-top: 24px;
+    border: 1px solid #e9ecef;
+}
+
+.ai-usage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.ai-usage-header h4 {
     margin: 0;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.ai-usage-header .period {
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.ai-usage-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 20px;
+}
+
+.ai-usage-stat {
+    text-align: left;
+}
+
+.ai-usage-stat-label {
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.ai-usage-stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1.2;
+}
+
+.ai-usage-stat-value .total {
+    font-size: 16px;
+    font-weight: 400;
+    color: #6c757d;
+}
+
+.ai-usage-stat-sub {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 2px;
 }
 
 .ai-legend {
@@ -535,9 +642,10 @@ echo $OUTPUT->header();
     <?php if ($doc): ?>
     <?php
     $predictedClass = $doc['predicted_class'] ?? 'unknown';
-    $confidence = isset($doc['class_probabilities'][$predictedClass])
-        ? round($doc['class_probabilities'][$predictedClass] * 100)
-        : (isset($doc['confidence_score']) ? round($doc['confidence_score'] * 100) : 0);
+    $classProbs = $doc['class_probabilities'] ?? [];
+    $aiPct = isset($classProbs['ai']) ? round($classProbs['ai'] * 100) : 0;
+    $mixedPct = isset($classProbs['mixed']) ? round($classProbs['mixed'] * 100) : 0;
+    $humanPct = isset($classProbs['human']) ? round($classProbs['human'] * 100) : 0;
     $resultMessage = $doc['result_message'] ?? '';
     $sentences = $doc['sentences'] ?? [];
 
@@ -554,12 +662,16 @@ echo $OUTPUT->header();
 
     <div class="ai-score-card">
         <div class="ai-score-circle <?php echo $predictedClass; ?>">
-            <span class="ai-score-percent"><?php echo $confidence; ?>%</span>
-            <span class="ai-score-label"><?php echo ucfirst($predictedClass); ?></span>
+            <span class="ai-score-label" style="font-size: 18px; margin-bottom: 4px;"><?php echo ucfirst($predictedClass); ?></span>
         </div>
         <div class="ai-score-details">
-            <h3>Detection Result: <?php echo ucfirst($predictedClass); ?> Generated</h3>
+            <h3>Detection Result</h3>
             <p class="ai-score-message"><?php echo s($resultMessage); ?></p>
+            <div class="ai-probability-pills">
+                <span class="ai-pill ai-pill-ai">AI <?php echo $aiPct; ?>%</span>
+                <span class="ai-pill ai-pill-mixed">Mixed <?php echo $mixedPct; ?>%</span>
+                <span class="ai-pill ai-pill-human <?php echo $predictedClass === 'human' ? 'highlighted' : ''; ?>">Human <?php echo $humanPct; ?>%</span>
+            </div>
         </div>
     </div>
 
@@ -626,6 +738,42 @@ echo $OUTPUT->header();
         <strong>No scan data available.</strong> The submission may not have been scanned yet or the scan failed.
     </div>
     <?php endif; ?>
+
+    <?php
+    // Usage Statistics Panel
+    $wordsUsed = (int)get_config('plagiarism_gptzero', 'words_used');
+    $scansCount = (int)get_config('plagiarism_gptzero', 'scans_count');
+    $wordsLimit = 300000; // GPTZero monthly limit
+    $nextReset = date('F j', strtotime('first day of next month'));
+    ?>
+    <div class="ai-usage-panel">
+        <div class="ai-usage-header">
+            <h4>Usage Statistics</h4>
+            <span class="period">This Month</span>
+        </div>
+        <div class="ai-usage-stats">
+            <div class="ai-usage-stat">
+                <div class="ai-usage-stat-label">Words</div>
+                <div class="ai-usage-stat-value"><?php echo number_format($wordsUsed); ?> <span class="total">/ <?php echo number_format($wordsLimit); ?></span></div>
+                <div class="ai-usage-stat-sub">credits (words) used this month</div>
+            </div>
+            <div class="ai-usage-stat">
+                <div class="ai-usage-stat-label">Scans</div>
+                <div class="ai-usage-stat-value"><?php echo $scansCount; ?></div>
+                <div class="ai-usage-stat-sub">scans made this month</div>
+            </div>
+            <div class="ai-usage-stat">
+                <div class="ai-usage-stat-label">Next Reset</div>
+                <div class="ai-usage-stat-value"><?php echo $nextReset; ?></div>
+                <div class="ai-usage-stat-sub">credit reset scheduled</div>
+            </div>
+            <div class="ai-usage-stat">
+                <div class="ai-usage-stat-label">Remaining</div>
+                <div class="ai-usage-stat-value"><?php echo number_format(max(0, $wordsLimit - $wordsUsed)); ?></div>
+                <div class="ai-usage-stat-sub">words remaining this month</div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <?php

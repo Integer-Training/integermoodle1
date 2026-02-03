@@ -190,11 +190,34 @@ try {
     if ($existingscan && !empty($existingscan->predicted_class)) {
         // Return existing results with link to detailed report.
         $reporturl = new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]);
+
+        // Estimate all 3 percentages from cached data.
+        $cls = strtolower($existingscan->predicted_class);
+        $prob = round($existingscan->class_probability * 100);
+        $aiPct = 0;
+        $mixedPct = 0;
+        $humanPct = 0;
+
+        if ($cls === 'ai') {
+            $aiPct = $prob;
+            $humanPct = 100 - $prob;
+        } else if ($cls === 'human') {
+            $humanPct = $prob;
+            $aiPct = 100 - $prob;
+        } else {
+            $mixedPct = $prob;
+            $aiPct = round((100 - $prob) / 2);
+            $humanPct = 100 - $prob - $aiPct;
+        }
+
         echo json_encode([
             'success' => true,
             'cached' => true,
             'predicted_class' => $existingscan->predicted_class,
-            'class_probability' => round($existingscan->class_probability * 100),
+            'class_probability' => $prob,
+            'ai_pct' => $aiPct,
+            'mixed_pct' => $mixedPct,
+            'human_pct' => $humanPct,
             'scan_url' => $reporturl->out(false),
             'learner_name' => fullname($learner),
             'assignment_name' => $assignment->name
@@ -355,6 +378,33 @@ try {
         set_config('last_scan_time', time(), 'plagiarism_gptzero');
     }
 
+    // Extract all 3 class probabilities if available.
+    $classProbs = $response['results']['class_probabilities'] ?? null;
+    $aiPct = 0;
+    $mixedPct = 0;
+    $humanPct = 0;
+
+    if ($classProbs) {
+        $aiPct = round(($classProbs['ai'] ?? 0) * 100);
+        $mixedPct = round(($classProbs['mixed'] ?? 0) * 100);
+        $humanPct = round(($classProbs['human'] ?? 0) * 100);
+    } else {
+        // Fallback: use single class_probability for predicted class.
+        $cls = strtolower($response['results']['predicted_class']);
+        $prob = round($response['results']['class_probability'] * 100);
+        if ($cls === 'ai') {
+            $aiPct = $prob;
+            $humanPct = 100 - $prob;
+        } else if ($cls === 'human') {
+            $humanPct = $prob;
+            $aiPct = 100 - $prob;
+        } else {
+            $mixedPct = $prob;
+            $aiPct = round((100 - $prob) / 2);
+            $humanPct = 100 - $prob - $aiPct;
+        }
+    }
+
     // Return success with results - include link to detailed report.
     $reporturl = new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]);
     echo json_encode([
@@ -362,6 +412,9 @@ try {
         'cached' => false,
         'predicted_class' => $response['results']['predicted_class'],
         'class_probability' => round($response['results']['class_probability'] * 100),
+        'ai_pct' => $aiPct,
+        'mixed_pct' => $mixedPct,
+        'human_pct' => $humanPct,
         'scan_url' => $reporturl->out(false),
         'learner_name' => fullname($learner),
         'assignment_name' => $assignment->name
