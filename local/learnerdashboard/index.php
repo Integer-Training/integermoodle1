@@ -405,6 +405,13 @@ if (!empty($allcourseids)) {
     $tutor_record = $DB->get_record_sql($tutor_sql, $tutor_cid_params);
 
     if ($tutor_record) {
+        // Build compose URL with tutor pre-filled as recipient.
+        $compose_url = new moodle_url('/local/mail/create.php', [
+            'course' => reset($allcourseids),
+            'recipients' => $tutor_record->id,
+            'sesskey' => sesskey(),
+        ]);
+
         $tutor_info = [
             'id' => $tutor_record->id,
             'fullname' => $tutor_record->firstname . ' ' . $tutor_record->lastname,
@@ -412,7 +419,7 @@ if (!empty($allcourseids)) {
             'email' => $tutor_record->email,
             'picture_url' => (new moodle_url('/user/pix.php/' . $tutor_record->id . '/f1.jpg'))->out(false),
             'profile_url' => (new moodle_url('/user/profile.php', ['id' => $tutor_record->id]))->out(false),
-            'message_url' => (new moodle_url('/local/mail/view.php', ['c' => reset($allcourseids)]))->out(false),
+            'message_url' => $compose_url->out(false),
         ];
         $has_tutor = true;
     }
@@ -443,6 +450,8 @@ foreach ($course_progression as $cid => $cd) {
 $has_progression = !empty($progression_courses);
 
 // ===== TEMPLATE CONTEXT =====
+$has_unread = ($unread_count > 0);
+
 $templatecontext = [
     'name'                  => $USER->firstname,
     'fullname'              => fullname($USER),
@@ -451,6 +460,7 @@ $templatecontext = [
     'completed_assignments' => $total_submitted,
     'overall_progress'      => $overall_progress,
     'unread_messages'       => $unread_count,
+    'has_unread'            => $has_unread,
     'upcoming_due'          => $upcoming_due,
     'has_upcoming_due'      => $has_upcoming_due,
     'upcoming_count'        => count($upcoming_due),
