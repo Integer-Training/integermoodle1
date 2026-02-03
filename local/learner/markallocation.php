@@ -313,14 +313,36 @@ if($results){
            $row['grade'] = '<a href="'.$url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
 
            // AI Check button - manual GPTZero scan.
-           $row['aicheck'] = '<button type="button" class="btn btn-ai-check"
-               data-submissionid="'.$record->submision_id.'"
-               data-learnername="'.s(fullname($user_object)).'"
-               data-assignname="'.s($assign_obj->name).'"
-               onclick="runAICheck(this)">
-               <i class="fa fa-search"></i> AI Check
-           </button>
-           <span class="ai-result" id="ai-result-'.$record->submision_id.'"></span>';
+           // Check for existing scan result.
+           $existing_scan = $DB->get_record('plagiarism_gptzero_files', [
+               'cm' => $cm->id,
+               'userid' => $record->userid
+           ]);
+
+           if ($existing_scan && !empty($existing_scan->predicted_class)) {
+               // Show existing result with View Report button.
+               $cls = strtolower($existing_scan->predicted_class);
+               $pct = round($existing_scan->class_probability * 100);
+               $label = ucfirst($cls) . ' - ' . $pct . '%';
+               $report_url = new moodle_url('/local/learner/aireport.php', ['id' => $record->submision_id]);
+
+               $row['aicheck'] = '<a href="'.$report_url.'" class="btn btn-view-report" title="View detailed AI report">
+                   <i class="fa fa-file-text"></i> View Report
+               </a>
+               <span class="ai-result ai-'.$cls.'">
+                   <a href="'.$report_url.'">'.$label.'</a>
+               </span>';
+           } else {
+               // Show AI Check button for new scan.
+               $row['aicheck'] = '<button type="button" class="btn btn-ai-check"
+                   data-submissionid="'.$record->submision_id.'"
+                   data-learnername="'.s(fullname($user_object)).'"
+                   data-assignname="'.s($assign_obj->name).'"
+                   onclick="runAICheck(this)">
+                   <i class="fa fa-search"></i> AI Check
+               </button>
+               <span class="ai-result" id="ai-result-'.$record->submision_id.'"></span>';
+           }
         }else if($action == 'overdue'){
             $row['submission_date'] = date('d-m-Y',$DB->get_field('assign_submission','timemodified',['id'=>$record->submision_id]));
             $today    = new DateTime("today");
@@ -527,6 +549,26 @@ echo '<style>
             background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .btn-view-report {
+            background: linear-gradient(135deg, #3a5ba0 0%, #6ea3c1 100%);
+            color: white !important;
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none !important;
+            margin-right: 8px;
+        }
+        .btn-view-report:hover {
+            background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(58, 91, 160, 0.4);
+            color: white !important;
         }
         .btn-ai-check:disabled {
             opacity: 0.6;

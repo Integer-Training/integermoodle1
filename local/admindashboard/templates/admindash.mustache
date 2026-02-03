@@ -297,6 +297,20 @@
       <i class="bi bi-arrow-right admindash-alert-arrow"></i>
     </a>
 
+    <div class="admindash-alert admindash-alert--gptzero">
+      <div class="admindash-alert-icon"><i class="bi bi-robot"></i></div>
+      <div class="admindash-alert-content">
+        <span class="admindash-alert-label">GPTZero AI Detection Quota</span>
+        <span class="admindash-alert-value">{{{gptzero_words_used}}} / {{{gptzero_words_limit}}}</span>
+        <div class="admindash-gptzero-bar">
+          <div class="admindash-gptzero-fill" style="width: {{{gptzero_words_pct}}}%;"></div>
+        </div>
+        <span class="admindash-gptzero-meta">
+          <i class="bi bi-search"></i> {{{gptzero_scans_count}}} scans &middot; Last: {{{gptzero_last_scan}}}
+        </span>
+      </div>
+    </div>
+
   </div>
 
 </div>
@@ -971,6 +985,32 @@ document.addEventListener('DOMContentLoaded', function() {
 .admindash-alert--danger .admindash-alert-icon { background: #fee2e2; color: #dc2626; }
 .admindash-alert--warning .admindash-alert-icon { background: #fef3c7; color: #92400e; }
 .admindash-alert--info .admindash-alert-icon { background: rgba(58,91,160,0.1); color: #3a5ba0; }
+.admindash-alert--gptzero .admindash-alert-icon { background: rgba(110,163,193,0.15); color: #6ea3c1; }
+.admindash-alert--gptzero::before { background: #6ea3c1; }
+.admindash-alert--gptzero { cursor: default; }
+.admindash-alert--gptzero:hover { transform: none; }
+
+.admindash-gptzero-bar {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+.admindash-gptzero-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6ea3c1, #3a5ba0);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+.admindash-gptzero-meta {
+    display: block;
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 6px;
+}
+.admindash-gptzero-meta i { margin-right: 4px; }
 
 .admindash-alert-content {
     flex: 1;

@@ -199,6 +199,25 @@ try {
         $DB->insert_record('plagiarism_gptzero_files', $plagiarismfile);
     }
 
+    // Track word usage for quota monitoring.
+    $wordcount = 0;
+    if ($hasfile && $file) {
+        // For files, estimate word count from content (if text-based).
+        $filecontent = $file->get_content();
+        $wordcount = str_word_count(strip_tags($filecontent));
+    } else if (!empty($content)) {
+        $wordcount = str_word_count($content);
+    }
+
+    if ($wordcount > 0) {
+        // Get current total and add this scan's words.
+        $currenttotal = (int)get_config('plagiarism_gptzero', 'words_used');
+        $currentscans = (int)get_config('plagiarism_gptzero', 'scans_count');
+        set_config('words_used', $currenttotal + $wordcount, 'plagiarism_gptzero');
+        set_config('scans_count', $currentscans + 1, 'plagiarism_gptzero');
+        set_config('last_scan_time', time(), 'plagiarism_gptzero');
+    }
+
     // Return success with results - include link to detailed report.
     $reporturl = new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]);
     echo json_encode([

@@ -576,6 +576,15 @@ $templatecontext = [
     'online_admin_count'   => $online_admin_count,
     'online_users'         => $online_users,
     'has_online_users'     => !empty($online_users),
+
+    // GPTZero AI Detection Usage.
+    'gptzero_words_used'   => number_format((int)get_config('plagiarism_gptzero', 'words_used')),
+    'gptzero_words_limit'  => number_format(300000),
+    'gptzero_scans_count'  => number_format((int)get_config('plagiarism_gptzero', 'scans_count')),
+    'gptzero_last_scan'    => ((int)get_config('plagiarism_gptzero', 'last_scan_time') > 0)
+        ? userdate((int)get_config('plagiarism_gptzero', 'last_scan_time'), '%d %b %Y %H:%M')
+        : 'Never',
+    'gptzero_words_pct'    => min(100, round(((int)get_config('plagiarism_gptzero', 'words_used') / 300000) * 100, 1)),
 ];
 
 // Monthly enrollment data.
