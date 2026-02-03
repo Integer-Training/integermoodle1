@@ -60,11 +60,12 @@ if($action == 'mark'){
         'Course Title',
         'Assignment Name',
         'Submission Date',
+        'Status',
         'Grade',
         'AI Check',
         'Tutor',
     );
-    $mark_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id
+    $mark_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id,sub.timemodified as subtime
             FROM {$prefix}groups_members gm_t
             JOIN {$prefix}groups g
                 ON g.id = gm_t.groupid
@@ -118,11 +119,12 @@ if($action == 'mark'){
         'Course Title',
         'Assignment Name',
         'Submission Date',
+        'Status',
         'Grade',
         'AI Check',
         'Tutor',
     );
-    $resub_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id
+    $resub_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id,sub.timemodified as subtime
             FROM {$prefix}groups_members gm_t
             JOIN {$prefix}groups g
                 ON g.id = gm_t.groupid
@@ -306,7 +308,20 @@ if($results){
             continue;
         }
         if($action == 'mark' || $action == 'resub'){
-            $row['submission_date'] = date('d-m-Y',$DB->get_field('assign_submission','timemodified',['id'=>$record->submision_id]));
+            $sub_time = $record->subtime;
+            $row['submission_date'] = date('d-m-Y', $sub_time);
+
+            // Check if submission is late (compare with override or global duedate).
+            $override = $DB->get_record('assign_overrides', ['assignid' => $record->assign_id, 'userid' => $record->userid]);
+            $duedate = $override && $override->duedate ? $override->duedate : $assign_obj->duedate;
+
+            if ($duedate && $sub_time > $duedate) {
+                $days_late = ceil(($sub_time - $duedate) / 86400);
+                $row['status'] = '<span class="badge badge-late" style="background:#f59e0b;color:#fff;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;">LATE (' . $days_late . ' day' . ($days_late > 1 ? 's' : '') . ')</span>';
+            } else {
+                $row['status'] = '<span class="badge badge-ontime" style="background:#22c55e;color:#fff;padding:4px 10px;border-radius:4px;font-size:11px;font-weight:600;">On Time</span>';
+            }
+
             $cm = $DB->get_record('course_modules',['course'=>$record->course,'instance'=>$record->assign_id,'module'=>$mod_id]);
             $url = new moodle_url('/mod/assign/view.php',['action'=>'grader','userid'=>$record->userid,'id'=>$cm->id]);
 
