@@ -313,6 +313,67 @@
 
   </div>
 
+  <!-- ===== SECTION 6: AI DETECTION CHECKS ===== -->
+  {{#gptzero_enabled}}
+  <div class="admindash-panel">
+    <div class="admindash-panel-hdr admindash-panel-hdr--ai">
+      <div>
+        <h3><i class="bi bi-robot"></i> AI Detection Checks <span class="admindash-ai-badge">{{{ai_checks_count}}}</span></h3>
+        <p>GPTZero AI detection scan history</p>
+      </div>
+    </div>
+    <div class="admindash-panel-body">
+      {{#has_ai_checks}}
+      <table id="aiChecksTable" class="admindash-table display" style="width:100%">
+        <thead>
+          <tr>
+            <th>Learner</th>
+            <th>Assignment</th>
+            <th>Course</th>
+            <th>Result</th>
+            <th>Probability</th>
+            <th>Scan Date</th>
+            <th>Report</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#ai_checks}}
+          <tr>
+            <td class="admindash-cell-name">{{{learner_name}}}</td>
+            <td>{{{assignment_name}}}</td>
+            <td class="admindash-cell-email">{{{course_name}}}</td>
+            <td class="text-center">
+              {{#is_human}}<span class="admindash-ai-pill admindash-ai-pill--human">Human</span>{{/is_human}}
+              {{#is_ai}}<span class="admindash-ai-pill admindash-ai-pill--ai">AI</span>{{/is_ai}}
+              {{#is_mixed}}<span class="admindash-ai-pill admindash-ai-pill--mixed">Mixed</span>{{/is_mixed}}
+            </td>
+            <td class="text-center"><strong>{{{probability}}}</strong></td>
+            <td class="text-center">{{{scan_date}}}</td>
+            <td class="text-center">
+              {{#has_report}}
+              <a href="{{{report_url}}}" class="admindash-view-report-btn">
+                <i class="bi bi-file-text"></i> View Report
+              </a>
+              {{/has_report}}
+              {{^has_report}}
+              <span class="text-muted">—</span>
+              {{/has_report}}
+            </td>
+          </tr>
+          {{/ai_checks}}
+        </tbody>
+      </table>
+      {{/has_ai_checks}}
+      {{^has_ai_checks}}
+      <div class="admindash-empty-state">
+        <i class="bi bi-robot"></i>
+        <p>No AI detection scans have been performed yet</p>
+      </div>
+      {{/has_ai_checks}}
+    </div>
+  </div>
+  {{/gptzero_enabled}}
+
 </div>
 
 <!-- ===== CDN: DataTables Buttons ===== -->
@@ -513,6 +574,14 @@ document.addEventListener('DOMContentLoaded', function() {
             language: { emptyTable: 'No users currently online' },
             pageLength: 10
         });
+    }
+
+    // AI Checks table.
+    if ($('#aiChecksTable').length) {
+        $('#aiChecksTable').DataTable(Object.assign({}, dtDefaults, {
+            order: [[5, 'desc']], // Order by scan date descending
+            pageLength: 15
+        }));
     }
 });
 </script>
@@ -1269,5 +1338,69 @@ tr.shown .admindash-toggle-btn {
     font-size: 14px;
     font-style: italic;
     margin: 0;
+}
+
+/* ==========================================================================
+   AI DETECTION CHECKS SECTION
+   ========================================================================== */
+.admindash-panel-hdr--ai {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.admindash-ai-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 2px 12px;
+    border-radius: 20px;
+    margin-left: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.admindash-ai-pill {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.admindash-ai-pill--human {
+    background: #dcfce7;
+    color: #166534;
+}
+.admindash-ai-pill--ai {
+    background: #fef3c7;
+    color: #92400e;
+}
+.admindash-ai-pill--mixed {
+    background: #f3e8ff;
+    color: #7c3aed;
+}
+.admindash-view-report-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(135deg, #3a5ba0 0%, #6ea3c1 100%);
+    color: #fff !important;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.admindash-view-report-btn:hover {
+    background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(58, 91, 160, 0.3);
+    color: #fff !important;
+    text-decoration: none !important;
 }
 </style>

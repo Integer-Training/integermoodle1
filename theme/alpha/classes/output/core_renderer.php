@@ -1400,13 +1400,8 @@ class core_renderer extends \core_renderer {
                 }
             }
             if(is_siteadmin($USER)){
-                $admindash_link = new moodle_url('/local/learner/admindash.php');
-                $html .= '<li class="rui-sidebar-nav-item">
-                            <a href="'.$admindash_link.'" id="itemAdminDash" class="rui-sidebar-nav-item-link">
-                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
-                                <span class="rui-sidebar-nav-text">Admin Dashboard</span>
-                            </a>
-                        </li>';
+                // Admin Dashboard link comes from local/admindashboard/lib.php navigation hook
+                // (goes to /local/admindashboard/index.php)
                 $prog_link = new moodle_url('/local/learnerprogression/index.php');
                 $html .= '<li class="rui-sidebar-nav-item">
                             <a href="'.$prog_link.'" id="itemProgression" class="rui-sidebar-nav-item-link">

@@ -533,6 +533,58 @@ foreach ($online_users_raw as $ou) {
 $online_count = count($online_users_raw);
 
 // ============================================================
+// QUERY BLOCK G: AI Detection Checks (GPTZero)
+// ============================================================
+
+$ai_checks = [];
+$ai_checks_count = 0;
+$gptzero_table_exists = $DB->get_manager()->table_exists('plagiarism_gptzero_files');
+
+if ($gptzero_table_exists) {
+    // Get recent AI checks (last 50) with learner and assignment info.
+    $ai_checks_raw = $DB->get_records_sql(
+        "SELECT pf.id, pf.cm, pf.userid, pf.filename, pf.predicted_class, pf.class_probability, pf.timesubmitted,
+                u.firstname, u.lastname, u.email,
+                a.name AS assignment_name, c.fullname AS course_name,
+                sub.id AS submission_id
+         FROM {plagiarism_gptzero_files} pf
+         JOIN {user} u ON u.id = pf.userid
+         JOIN {course_modules} cm ON cm.id = pf.cm
+         JOIN {assign} a ON a.id = cm.instance
+         JOIN {course} c ON c.id = a.course
+         LEFT JOIN {assign_submission} sub ON sub.assignment = a.id AND sub.userid = pf.userid AND sub.latest = 1
+         WHERE pf.predicted_class IS NOT NULL AND pf.predicted_class != ''
+         ORDER BY pf.timesubmitted DESC
+         LIMIT 50"
+    );
+
+    $ai_checks_count = $DB->count_records_sql(
+        "SELECT COUNT(*) FROM {plagiarism_gptzero_files} WHERE predicted_class IS NOT NULL AND predicted_class != ''"
+    );
+
+    foreach ($ai_checks_raw as $check) {
+        $cls = strtolower($check->predicted_class);
+        $pct = round($check->class_probability * 100);
+
+        $ai_checks[] = [
+            'learner_name'    => $check->firstname . ' ' . $check->lastname,
+            'assignment_name' => $check->assignment_name,
+            'course_name'     => $check->course_name,
+            'predicted_class' => ucfirst($cls),
+            'probability'     => $pct . '%',
+            'scan_date'       => userdate($check->timesubmitted, '%d %b %Y %H:%M'),
+            'is_human'        => ($cls === 'human'),
+            'is_ai'           => ($cls === 'ai'),
+            'is_mixed'        => ($cls === 'mixed'),
+            'report_url'      => $check->submission_id
+                ? (new moodle_url('/local/learner/aireport.php', ['id' => $check->submission_id]))->out()
+                : '',
+            'has_report'      => !empty($check->submission_id),
+        ];
+    }
+}
+
+// ============================================================
 // ASSEMBLE TEMPLATE CONTEXT
 // ============================================================
 
@@ -585,6 +637,12 @@ $templatecontext = [
         ? userdate((int)get_config('plagiarism_gptzero', 'last_scan_time'), '%d %b %Y %H:%M')
         : 'Never',
     'gptzero_words_pct'    => min(100, round(((int)get_config('plagiarism_gptzero', 'words_used') / 300000) * 100, 1)),
+
+    // AI Checks history.
+    'ai_checks'            => $ai_checks,
+    'has_ai_checks'        => !empty($ai_checks),
+    'ai_checks_count'      => number_format($ai_checks_count),
+    'gptzero_enabled'      => $gptzero_table_exists,
 ];
 
 // Monthly enrollment data.
@@ -611,11 +669,8 @@ if ($learner_plugin_exists) {
 // Course list link.
 $templatecontext['courses_link'] = (new moodle_url('/course/index.php'))->out();
 
-// Marking link — check if local/tutors exists.
-$tutors_plugin_exists = file_exists($CFG->dirroot . '/local/tutors/view.php');
-$templatecontext['marking_link'] = $tutors_plugin_exists
-    ? (new moodle_url('/local/tutors/view.php'))->out()
-    : (new moodle_url('/mod/assign/index.php'))->out();
+// Marking link — outstanding marking for all tutors.
+$templatecontext['marking_link'] = (new moodle_url('/local/learner/markallocation.php', ['action' => 'mark']))->out();
 
 echo $OUTPUT->render_from_template('local_admindashboard/admindash', $templatecontext);
 

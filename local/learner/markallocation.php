@@ -313,11 +313,15 @@ if($results){
            $row['grade'] = '<a href="'.$url.'" class="btn btn-info"><i class="ionicons ion-edit"></i></a>';
 
            // AI Check button - manual GPTZero scan.
-           // Check for existing scan result.
-           $existing_scan = $DB->get_record('plagiarism_gptzero_files', [
-               'cm' => $cm->id,
-               'userid' => $record->userid
-           ]);
+           // Check for existing scan result (only if GPTZero table exists).
+           $existing_scan = null;
+           $gptzero_table_exists = $DB->get_manager()->table_exists('plagiarism_gptzero_files');
+           if ($gptzero_table_exists) {
+               $existing_scan = $DB->get_record('plagiarism_gptzero_files', [
+                   'cm' => $cm->id,
+                   'userid' => $record->userid
+               ]);
+           }
 
            if ($existing_scan && !empty($existing_scan->predicted_class)) {
                // Show existing result with View Report button.
@@ -332,8 +336,8 @@ if($results){
                <span class="ai-result ai-'.$cls.'">
                    <a href="'.$report_url.'">'.$label.'</a>
                </span>';
-           } else {
-               // Show AI Check button for new scan.
+           } else if ($gptzero_table_exists && get_config('plagiarism_gptzero', 'gptzero_apikey')) {
+               // Show AI Check button for new scan (only if GPTZero is configured).
                $row['aicheck'] = '<button type="button" class="btn btn-ai-check"
                    data-submissionid="'.$record->submision_id.'"
                    data-learnername="'.s(fullname($user_object)).'"
@@ -342,6 +346,9 @@ if($results){
                    <i class="fa fa-search"></i> AI Check
                </button>
                <span class="ai-result" id="ai-result-'.$record->submision_id.'"></span>';
+           } else {
+               // GPTZero not configured - show N/A.
+               $row['aicheck'] = '<span class="text-muted">N/A</span>';
            }
         }else if($action == 'overdue'){
             $row['submission_date'] = date('d-m-Y',$DB->get_field('assign_submission','timemodified',['id'=>$record->submision_id]));
@@ -662,19 +669,20 @@ function runAICheck(btn) {
                 var label = cls.charAt(0).toUpperCase() + cls.slice(1) + " - " + pct + "%";
 
                 if (response.scan_url) {
-                    resultSpan.innerHTML = \'<a href="\' + response.scan_url + \'" target="_blank">\' + label + \'</a>\';
+                    resultSpan.innerHTML = \'<a href="\' + response.scan_url + \'">\' + label + \'</a>\';
                 } else {
                     resultSpan.textContent = label;
                 }
                 resultSpan.className = "ai-result ai-" + cls;
 
-                // Update button to show its been scanned
-                if (response.cached) {
-                    btn.innerHTML = \'<i class="fa fa-check"></i> Cached\';
-                } else {
-                    btn.innerHTML = \'<i class="fa fa-check"></i> Done\';
-                }
-                btn.style.background = "#28a745";
+                // Replace button with View Report link
+                var reportUrl = response.scan_url || (wwwroot + "/local/learner/aireport.php?id=" + submissionId);
+                var viewReportBtn = document.createElement("a");
+                viewReportBtn.href = reportUrl;
+                viewReportBtn.className = "btn btn-view-report";
+                viewReportBtn.title = "View detailed AI report";
+                viewReportBtn.innerHTML = \'<i class="fa fa-file-text"></i> View Report\';
+                btn.parentNode.replaceChild(viewReportBtn, btn);
             } else {
                 resultSpan.textContent = "Error";
                 resultSpan.className = "ai-result ai-error";

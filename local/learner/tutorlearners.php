@@ -31,11 +31,16 @@ require_once("filter_form.php");
 global $DB,$CFG;
 
 require_login();
-$action = optional_param('action','',PARAM_RAW);
+$action = optional_param('action', '', PARAM_ALPHA);
 //
-$id = optional_param('id','',PARAM_RAW);
+$id = required_param('id', PARAM_INT);
 //
-$contextparam = optional_param('context','',PARAM_RAW);
+$contextparam = optional_param('context', '', PARAM_RAW);
+// Parse context param safely - comma-separated course IDs.
+$contextcids = [];
+if (!empty($contextparam)) {
+    $contextcids = array_filter(array_map('intval', explode(',', $contextparam)));
+}
 
 $context = context_system::instance();
 echo '<link href="https://gecko.atomlms.co.uk/scripts/css/font-awesome/css/font-awesome.min.css" rel=stylesheet>';
@@ -58,48 +63,56 @@ $PAGE->requires->css('/local/learner/js/jquery.dataTables.min.css',true);
 $result = '';
 //
 //print_object($contextparam);die;
-if($action == 'inactive'){
-    $sql = "SELECT s.* 
-                FROM mdl_groups_members gm_teacher
-                JOIN mdl_groups g ON g.id = gm_teacher.groupid
-                JOIN mdl_course c ON c.id = g.courseid
-                -- teacher
-                JOIN mdl_user t ON t.id = ".$id."
-                JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
-                JOIN mdl_user s ON s.id = gm_students.userid
-                JOIN mdl_role_assignments ra ON ra.userid = s.id
-                JOIN mdl_context ctx ON ctx.id = ra.contextid
-                JOIN mdl_role r ON r.id = ra.roleid
+if ($action == 'inactive') {
+    $thirtyDaysAgo = time() - (30 * 24 * 60 * 60);
+    $sql = "SELECT DISTINCT s.*
+                FROM {groups_members} gm_teacher
+                JOIN {groups} g ON g.id = gm_teacher.groupid
+                JOIN {course} c ON c.id = g.courseid
+                JOIN {user} t ON t.id = :teacherid
+                JOIN {groups_members} gm_students ON gm_students.groupid = g.id
+                JOIN {user} s ON s.id = gm_students.userid
+                JOIN {role_assignments} ra ON ra.userid = s.id
+                JOIN {context} ctx ON ctx.id = ra.contextid
+                JOIN {role} r ON r.id = ra.roleid
                 WHERE
-                    gm_teacher.userid = ".$id."
+                    gm_teacher.userid = :tutorid
                     AND ctx.contextlevel = 50
                     AND ctx.instanceid = c.id
                     AND r.shortname = 'student'
-                    AND (
-                        s.lastaccess IS NOT NULL AND s.lastaccess!=0
-                        AND s.lastaccess < UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL 30 DAY))
-                    ) AND s.deleted=0 AND s.suspended=0
+                    AND s.lastaccess IS NOT NULL AND s.lastaccess != 0
+                    AND s.lastaccess < :inactivethreshold
+                    AND s.deleted = 0 AND s.suspended = 0
                 ORDER BY c.fullname, g.name, s.firstname";
-    $records = $DB->get_records_sql($sql);
-}else{
-   $sql = "SELECT s.* 
-                FROM mdl_groups_members gm_teacher
-                JOIN mdl_groups g ON g.id = gm_teacher.groupid
-                JOIN mdl_course c ON c.id = g.courseid
-                -- teacher
-                JOIN mdl_user t ON t.id = ".$id."
-                JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
-                JOIN mdl_user s ON s.id = gm_students.userid
-                JOIN mdl_role_assignments ra ON ra.userid = s.id
-                JOIN mdl_context ctx ON ctx.id = ra.contextid
-                JOIN mdl_role r ON r.id = ra.roleid
-                WHERE
-                    gm_teacher.userid = ".$id."
-                    AND ctx.contextlevel = 50
-                    AND ctx.instanceid in(".$contextparam.")
-                    AND r.shortname = 'student'
-                ORDER BY c.fullname, g.name, s.firstname";
-    $records = $DB->get_records_sql($sql); 
+    $records = $DB->get_records_sql($sql, [
+        'teacherid' => $id,
+        'tutorid' => $id,
+        'inactivethreshold' => $thirtyDaysAgo
+    ]);
+} else {
+    // Build parameterized query for learner list.
+    $records = [];
+    if (!empty($contextcids)) {
+        list($cids_sql, $cids_params) = $DB->get_in_or_equal($contextcids, SQL_PARAMS_NAMED, 'ctx');
+        $sql = "SELECT DISTINCT s.*
+                    FROM {groups_members} gm_teacher
+                    JOIN {groups} g ON g.id = gm_teacher.groupid
+                    JOIN {course} c ON c.id = g.courseid
+                    JOIN {user} t ON t.id = :teacherid
+                    JOIN {groups_members} gm_students ON gm_students.groupid = g.id
+                    JOIN {user} s ON s.id = gm_students.userid
+                    JOIN {role_assignments} ra ON ra.userid = s.id
+                    JOIN {context} ctx ON ctx.id = ra.contextid
+                    JOIN {role} r ON r.id = ra.roleid
+                    WHERE
+                        gm_teacher.userid = :tutorid
+                        AND ctx.contextlevel = 50
+                        AND ctx.instanceid $cids_sql
+                        AND r.shortname = 'student'
+                    ORDER BY c.fullname, g.name, s.firstname";
+        $query_params = array_merge(['teacherid' => $id, 'tutorid' => $id], $cids_params);
+        $records = $DB->get_records_sql($sql, $query_params);
+    }
 }
 
 //print_object($records);die;
@@ -133,14 +146,14 @@ if($records){
         $row['lc'] = 'Gecko';
         $row['sup'] = 'Gecko (Integer)';
         //
-        $sql = "SELECT c.id,c.fullname
+        $sql = "SELECT c.id, c.fullname
                 FROM {user_enrolments} ue
                 JOIN {enrol} en ON ue.enrolid = en.id
                 JOIN {course} c ON c.id = en.courseid
                 JOIN {user} uu ON uu.id = ue.userid
-                WHERE uu.id=".$record->id."  AND en.enrol='manual' AND c.visible=1";
+                WHERE uu.id = :userid AND en.enrol = 'manual' AND c.visible = 1";
         //
-        $enrol_courses = $DB->get_records_sql($sql);
+        $enrol_courses = $DB->get_records_sql($sql, ['userid' => $record->id]);
         $import_arr = array();
         $timespent = array();
         foreach($enrol_courses as $val){
@@ -153,37 +166,36 @@ if($records){
         $row['Courses'] = count($enrol_courses)?implode('<br><br>',$import_arr):'N/A';
         //
         
-        if($enrol_courses && $record->id){
-            $sql = "SELECT 
+        if ($enrol_courses && $record->id && !empty($timespent)) {
+            // Use parameterized query for time spent calculation.
+            list($cids_sql, $cids_params) = $DB->get_in_or_equal($timespent, SQL_PARAMS_NAMED, 'crs');
+            $yearstart = mktime(0, 0, 0, 1, 1, (int)date('Y'));
+            $sql = "SELECT
                     userid,
                     TIME_FORMAT(SEC_TO_TIME(SUM(diff_seconds)), '%H:%i') AS total_time
                     FROM (
-                        SELECT 
+                        SELECT
                             userid,
                             IF(
                                 @prev_user = userid,
                                 timecreated - @prev_time,
                                 0
                             ) AS diff_seconds,
-
                             @prev_user := userid,
                             @prev_time := timecreated
-
-                        FROM mdl_logstore_standard_log
+                        FROM {logstore_standard_log}
                         CROSS JOIN (SELECT @prev_user := NULL, @prev_time := NULL) vars
-
-                        WHERE courseid IN (".implode(',',$timespent).")
+                        WHERE courseid $cids_sql
                           AND component = 'mod_hvp'
-                          AND userid = ".$record->id."
-                          AND YEAR(FROM_UNIXTIME(timecreated)) = YEAR(CURDATE())
-
+                          AND userid = :learnerid
+                          AND timecreated >= :yearstart
                         ORDER BY userid, timecreated
                     ) t
                     GROUP BY userid";
-                    //echo $sql;die;
-            $recordset = $DB->get_record_sql($sql);
-            $row['timespent'] = ($recordset->total_time)?$recordset->total_time:'00:00';
-        }else{
+            $query_params = array_merge(['learnerid' => $record->id, 'yearstart' => $yearstart], $cids_params);
+            $recordset = $DB->get_record_sql($sql, $query_params);
+            $row['timespent'] = (!empty($recordset->total_time)) ? $recordset->total_time : '00:00';
+        } else {
             $row['timespent'] = '00:00';
         }
         //status changed on conditons

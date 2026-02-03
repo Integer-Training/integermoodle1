@@ -248,7 +248,7 @@ Plugin `lib.php` navigation hooks still exist for compatibility with other theme
 
 The primary custom plugin. Manages learner accounts, tutor caseloads, user registration, and activity tracking.
 
-**Version:** 2026020204 (1.2.1) | **Capability:** `local/learner:view` (manager only)
+**Version:** 2026020206 (1.2.2) | **Capability:** `local/learner:view` (manager only)
 
 #### Database Tables
 
@@ -413,6 +413,13 @@ All queries follow the patterns in "Critical SQL Patterns for Dashboard Grading 
 - **Result caching:** Uses existing `plagiarism_gptzero_files` table — subsequent clicks return cached result
 - **Security:** Both `aicheck.php` and `aireport.php` require `require_login()`, `require_capability('mod/assign:grade')`
 
+#### AI Check Enhancements (v1.2.2 - February 2026)
+
+- **View Report auto-change:** After scan completes, "Done" button automatically changes to "View Report" link (no page refresh needed)
+- **Download Report:** New button on `aireport.php` for print/PDF export with print-optimized CSS (preserves sentence highlighting)
+- **Fixed database prefix errors:** `tutor.php` and `tutorlearners.php` now use `{table}` syntax instead of hardcoded `mdl_` prefix (fixes "Error reading from database" on production which uses `r6ua_` prefix)
+- **GPTZero table existence check:** `markallocation.php` checks if `plagiarism_gptzero_files` table exists before querying (prevents errors when GPTZero plugin not installed)
+
 #### Data Queries (v1.1.0 — 4 queries total)
 
 | Query | Source | Purpose |
@@ -511,9 +518,16 @@ All grading queries follow the patterns in "Critical SQL Patterns for Dashboard 
 
 #### Features (v1.2.0)
 
-- **Clickable KPI cards:** Total Learners → learner list, Total Tutors → tutor list, Active Courses → course index, Awaiting Marking → marking view
+- **Clickable KPI cards:** Total Learners → learner list, Total Tutors → tutor list, Active Courses → course index, Awaiting Marking → outstanding marking page
 - **Online Users section:** Green-header panel between charts and tutor table showing users active in last 5 minutes, with role-colored pills and DataTable
 - **Alert cards:** Inactive learners, overdue assignments, imminent deadlines — all clickable
+
+#### AI Checks Panel (v1.2.2)
+
+- **Query Block G:** Fetches all AI detection scans from `plagiarism_gptzero_files` table (guarded with table existence check)
+- **AI Detection Checks panel:** DataTable showing Learner, Assignment, Course, Result (color-coded pill), Probability, Scan Date, View Report button
+- **Color-coded AI pills:** Human (green), AI (orange), Mixed (purple) — matches marking page styling
+- **View Report links:** Direct links to `/local/learner/aireport.php?id={submissionid}` for detailed sentence-level analysis
 
 #### Relationship to `local/learner/admindash.php`
 

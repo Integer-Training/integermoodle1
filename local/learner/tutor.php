@@ -100,14 +100,14 @@ if($records){
         $row['firstname'] = $record->firstname;
         $row['lastname'] = $record->lastname;
         $row['email'] =  $record->email;
-        $sql = "SELECT c.id,c.fullname
+        $sql = "SELECT c.id, c.fullname
                 FROM {user_enrolments} ue
                 JOIN {enrol} en ON ue.enrolid = en.id
                 JOIN {course} c ON c.id = en.courseid
                 JOIN {user} uu ON uu.id = ue.userid
-                WHERE uu.id=".$record->id."  AND en.enrol='manual' AND c.visible=1";
+                WHERE uu.id = :userid AND en.enrol = 'manual' AND c.visible = 1";
         //
-        $enrol_courses = $DB->get_records_sql($sql);
+        $enrol_courses = $DB->get_records_sql($sql, ['userid' => $record->id]);
         $import_arr = array();
         $cids = array();
         foreach($enrol_courses as $val){
@@ -120,32 +120,36 @@ if($records){
         //print_object(implode('<br>',$import_arr));die;
         $row['Courses'] = count($enrol_courses)?implode('<br><br>',$import_arr):'N/A';
         //
-        $sql = "SELECT s.id AS studentid,
-                    c.id AS courseid,
-                    c.fullname AS coursename,
-                    g.id AS groupid,
-                    g.name AS groupname,
-                    CONCAT(s.firstname, ' ', s.lastname) AS studentname,
-                    s.email
-                FROM mdl_groups_members gm_teacher
-                JOIN mdl_groups g ON g.id = gm_teacher.groupid
-                JOIN mdl_course c ON c.id = g.courseid
-                -- teacher
-                JOIN mdl_user t ON t.id = ".$record->id."
-                JOIN mdl_groups_members gm_students ON gm_students.groupid = g.id
-                JOIN mdl_user s ON s.id = gm_students.userid
-                JOIN mdl_role_assignments ra ON ra.userid = s.id
-                JOIN mdl_context ctx ON ctx.id = ra.contextid
-                JOIN mdl_role r ON r.id = ra.roleid
-                WHERE
-                    gm_teacher.userid = ".$record->id."
-                    AND ctx.contextlevel = 50
-                    AND ctx.instanceid in(".implode(',',$cids).")
-                    AND r.shortname = 'student'
-
-                ORDER BY c.fullname, g.name, s.firstname";
-        //
-        $caseload = $DB->get_records_sql($sql);
+        // Build parameterized query for caseload.
+        $caseload = [];
+        if (!empty($cids)) {
+            list($cids_sql, $cids_params) = $DB->get_in_or_equal($cids, SQL_PARAMS_NAMED, 'cid');
+            $sql = "SELECT s.id AS studentid,
+                        c.id AS courseid,
+                        c.fullname AS coursename,
+                        g.id AS groupid,
+                        g.name AS groupname,
+                        CONCAT(s.firstname, ' ', s.lastname) AS studentname,
+                        s.email
+                    FROM {groups_members} gm_teacher
+                    JOIN {groups} g ON g.id = gm_teacher.groupid
+                    JOIN {course} c ON c.id = g.courseid
+                    JOIN {user} t ON t.id = :teacherid
+                    JOIN {groups_members} gm_students ON gm_students.groupid = g.id
+                    JOIN {user} s ON s.id = gm_students.userid
+                    JOIN {role_assignments} ra ON ra.userid = s.id
+                    JOIN {context} ctx ON ctx.id = ra.contextid
+                    JOIN {role} r ON r.id = ra.roleid
+                    WHERE
+                        gm_teacher.userid = :tutorid
+                        AND ctx.contextlevel = 50
+                        AND ctx.instanceid $cids_sql
+                        AND r.shortname = 'student'
+                    ORDER BY c.fullname, g.name, s.firstname";
+            //
+            $query_params = array_merge(['teacherid' => $record->id, 'tutorid' => $record->id], $cids_params);
+            $caseload = $DB->get_records_sql($sql, $query_params);
+        }
         $url = new moodle_url('/local/learner/tutorlearners.php',['id'=>$record->id,'context'=>trim(implode(',',$cids))]);
         $row['caseload_count'] = '<center><a href="'.$url.'" target="_blank" style="text-align:center">'.count($caseload).'</a></center>';
         //

@@ -207,6 +207,7 @@ echo $OUTPUT->header();
 .ai-report-header h1 {
     margin: 0 0 10px 0;
     font-size: 24px;
+    color: white !important;
 }
 
 .ai-report-meta {
@@ -396,12 +397,118 @@ echo $OUTPUT->header();
     color: white;
     text-decoration: none;
 }
+
+.print-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: #4CAF50;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    margin-bottom: 20px;
+    margin-left: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.print-button:hover {
+    background: #45a049;
+    color: white;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+/* Print-specific styles */
+@media print {
+    .action-buttons,
+    .back-button,
+    .print-button,
+    #page-header,
+    #page-footer,
+    .drawer,
+    .navbar,
+    nav,
+    aside {
+        display: none !important;
+    }
+
+    .ai-report-container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .ai-report-header {
+        background: #1a2238 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .ai-score-circle {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    .ai-score-circle.human { background: #4CAF50 !important; }
+    .ai-score-circle.ai { background: #FF9800 !important; }
+    .ai-score-circle.mixed { background: #9C27B0 !important; }
+
+    .ai-sentence.high-ai {
+        background-color: #FEBD69 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .ai-sentence.medium-ai {
+        background-color: #FFE4B5 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .ai-legend-color {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .ai-legend-color.high-ai { background: #FEBD69 !important; }
+    .ai-legend-color.medium-ai { background: #FFE4B5 !important; }
+    .ai-legend-color.low-ai { background: #E8F5E9 !important; }
+
+    body {
+        background: white !important;
+    }
+
+    .ai-score-card,
+    .ai-stat-card,
+    .ai-text-panel {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+
+    @page {
+        margin: 1cm;
+    }
+}
 </style>
 
 <div class="ai-report-container">
-    <a href="<?php echo new moodle_url('/local/learner/markallocation.php', ['action' => 'mark']); ?>" class="back-button">
-        <i class="fa fa-arrow-left"></i> Back to Marking
-    </a>
+    <div class="action-buttons">
+        <a href="<?php echo new moodle_url('/local/learner/markallocation.php', ['action' => 'mark']); ?>" class="back-button">
+            <i class="fa fa-arrow-left"></i> Back to Marking
+        </a>
+        <button onclick="window.print();" class="print-button">
+            <i class="fa fa-download"></i> Download Report
+        </button>
+    </div>
 
     <div class="ai-report-header">
         <h1><i class="fa fa-shield"></i> AI Detection Report</h1>
