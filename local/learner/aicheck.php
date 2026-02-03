@@ -63,35 +63,47 @@ function filter_questions_from_text($text) {
 
         // Pattern 1: Lines with AC reference codes - these are assignment questions
         // e.g., "(AC 1.1)", "(AC 2.2, 4.2)", "AC 3.3"
-        if (preg_match('/\(?\s*AC\s*\d+\.\d+/i', $trimmed) && strlen($trimmed) < 200) {
+        if (preg_match('/\(?\s*AC\s*\d+\.\d+/i', $trimmed)) {
             continue; // Skip - this is an assessment criteria question.
         }
 
-        // Pattern 2: Discussion Questions / Reflective Prompt headers
-        if (preg_match('/^(?:Discussion\s+Questions?|Reflective\s+Prompt|Short\s+Answer\s+Questions?|Case\s+Study\s+\d+)\s*[\:\-]?/i', $trimmed)) {
+        // Pattern 2: Discussion Questions / Reflective Prompt / Task headers
+        if (preg_match('/^(?:Discussion\s+Questions?|Reflective\s+Prompt|Short\s+Answer\s+Questions?|Case\s+Study\s+\d+|Task\s*\d*|Question\s*\d+|Activity\s*\d*)\s*[\:\-]?/i', $trimmed)) {
             continue; // Skip section headers.
         }
 
-        // Pattern 3: Lines that are clearly just a question starting with - or bullet
-        // e.g., "- Which pieces of legislation..." or "- How can Fatima promote..."
-        if (preg_match('/^[\-\•\*]\s*(?:Which|What|How|Why|When|Where|Who)\s+/i', $trimmed) && preg_match('/\?\s*$/', $trimmed)) {
-            continue; // Skip bulleted questions.
+        // Pattern 3: Lines that are clearly questions (end with ? and are short)
+        if (preg_match('/\?\s*$/', $trimmed) && strlen($trimmed) < 300) {
+            // Check if it starts with question indicators
+            if (preg_match('/^(?:[\d\.\)\-\•\*]+\s*)?(?:What|Which|How|Why|When|Where|Who|Can|Could|Would|Should|Is|Are|Do|Does|Describe|Explain|Discuss|Identify|List|Outline|Compare|Analyse|Analyze|Evaluate)\s/i', $trimmed)) {
+                continue; // Skip - this is a question.
+            }
         }
 
-        // Pattern 4: Unit/Module title headers
-        if (preg_match('/^(?:Unit\s*(?:Title)?|Module|AC\s*M\d+|Case\s+Study)\s*[\:\-]/i', $trimmed)) {
+        // Pattern 4: Numbered questions without ? - "1. Describe the...", "Q2. Explain..."
+        if (preg_match('/^(?:Q(?:uestion)?\s*)?[\d]+[\.\)\:]\s*(?:Describe|Explain|Discuss|Identify|List|Outline|Compare|Analyse|Analyze|Evaluate|State|Define|What|Which|How|Why)\s/i', $trimmed) && strlen($trimmed) < 300) {
+            continue; // Skip numbered questions/tasks.
+        }
+
+        // Pattern 5: Unit/Module title headers
+        if (preg_match('/^(?:Unit\s*(?:Title)?|Module|AC\s*M\d+|Case\s+Study|Learning\s+Outcome|Assessment\s+Criteria)\s*[\:\-]/i', $trimmed)) {
             continue; // Skip unit headers.
         }
 
-        // Pattern 5: Mark allocation lines - "(10 marks)", "[5 points]"
-        if (preg_match('/^\s*(?:\(|\[)?\s*\d+\s*(?:marks?|points?)\s*(?:\)|\])?\s*$/i', $trimmed)) {
-            continue; // Skip standalone mark allocation lines.
+        // Pattern 6: Mark allocation lines - "(10 marks)", "[5 points]", "Worth 20%"
+        if (preg_match('/(?:\(|\[)?\s*\d+\s*(?:marks?|points?|%)\s*(?:\)|\])?/i', $trimmed) && strlen($trimmed) < 50) {
+            continue; // Skip mark allocation lines.
         }
 
-        // Pattern 6: Very short lines that are just headers (under 50 chars, no lowercase)
+        // Pattern 7: Very short lines that are just headers (under 50 chars, mostly uppercase)
         $lower = preg_replace('/[^a-z]/', '', $trimmed);
-        if (strlen($trimmed) < 50 && strlen($lower) < 5 && !preg_match('/\d/', $trimmed)) {
+        if (strlen($trimmed) < 50 && strlen($lower) < 5) {
             continue; // Skip short all-caps headers.
+        }
+
+        // Pattern 8: Instruction lines - "Read the following...", "Answer all questions"
+        if (preg_match('/^(?:Read\s+the|Answer\s+(?:all|the|each)|Complete\s+the|Use\s+the\s+(?:space|box)|Write\s+your\s+answer|Refer\s+to|Based\s+on\s+the|Consider\s+the)/i', $trimmed) && strlen($trimmed) < 200) {
+            continue; // Skip instruction lines.
         }
 
         // Keep this line - it's likely student content.

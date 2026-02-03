@@ -339,55 +339,12 @@ if($results){
            }
 
            if ($existing_scan && !empty($existing_scan->predicted_class)) {
-               // Show existing result with View Report button and all 3 pills.
-               $cls = strtolower($existing_scan->predicted_class);
+               // Show View Report button only.
                $report_url = new moodle_url('/local/learner/aireport.php', ['id' => $record->submision_id]);
-
-               // Try to get actual class_probabilities from stored JSON scan data.
-               $aiPct = 0;
-               $mixedPct = 0;
-               $humanPct = 0;
-               $gotActualProbs = false;
-
-               if (!empty($existing_scan->scanurl) && strpos($existing_scan->scanurl, '{') === 0) {
-                   $scandata = json_decode($existing_scan->scanurl, true);
-                   if (isset($scandata['documents'][0]['class_probabilities'])) {
-                       $classProbs = $scandata['documents'][0]['class_probabilities'];
-                       $aiPct = round(($classProbs['ai'] ?? 0) * 100);
-                       $mixedPct = round(($classProbs['mixed'] ?? 0) * 100);
-                       $humanPct = round(($classProbs['human'] ?? 0) * 100);
-                       $gotActualProbs = true;
-                   }
-               }
-
-               // Fallback to estimation if no actual data stored.
-               if (!$gotActualProbs) {
-                   $prob = round($existing_scan->class_probability * 100);
-                   if ($cls === 'ai') {
-                       $aiPct = $prob;
-                       $humanPct = 100 - $prob;
-                   } else if ($cls === 'human') {
-                       $humanPct = $prob;
-                       $aiPct = 100 - $prob;
-                   } else {
-                       $mixedPct = $prob;
-                       $aiPct = round((100 - $prob) / 2);
-                       $humanPct = 100 - $prob - $aiPct;
-                   }
-               }
-
-               $humanHighlight = ($cls === 'human') ? ' highlighted' : '';
 
                $row['aicheck'] = '<a href="'.$report_url.'" class="btn btn-view-report" title="View detailed AI report">
                    <i class="fa fa-file-text"></i> View Report
-               </a>
-               <span class="ai-result">
-                   <span class="ai-pills-row">
-                       <span class="ai-pill-sm ai-pill-ai">AI '.$aiPct.'%</span>
-                       <span class="ai-pill-sm ai-pill-mixed">Mixed '.$mixedPct.'%</span>
-                       <span class="ai-pill-sm ai-pill-human'.$humanHighlight.'">Human '.$humanPct.'%</span>
-                   </span>
-               </span>';
+               </a>';
            } else if ($gptzero_table_exists && get_config('plagiarism_gptzero', 'gptzero_apikey')) {
                // Show AI Check button for new scan (only if GPTZero is configured).
                $row['aicheck'] = '<button type="button" class="btn btn-ai-check"
@@ -676,43 +633,6 @@ echo '<style>
         .ai-result a:hover {
             text-decoration: underline;
         }
-        .ai-pills-row {
-            display: inline-flex;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .ai-pill-sm {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 500;
-            border: 1px solid #ddd;
-            background: #f5f5f5;
-            color: #666;
-        }
-        .ai-pill-ai {
-            background: #fff3e0;
-            border-color: #ffcc80;
-            color: #e65100;
-        }
-        .ai-pill-mixed {
-            background: #fff8e1;
-            border-color: #ffe082;
-            color: #f57f17;
-        }
-        .ai-pill-human {
-            background: #e8f5e9;
-            border-color: #a5d6a7;
-            color: #2e7d32;
-        }
-        .ai-pill-human.highlighted {
-            background: #2e7d32;
-            border-color: #2e7d32;
-            color: white;
-            font-weight: 600;
-        }
       </style>';
 
 // AI Check JavaScript - must be after jQuery is loaded
@@ -752,20 +672,9 @@ function runAICheck(btn) {
             btn.classList.remove("loading");
 
             if (response.success) {
-                // Show all 3 probability pills like GPTZero
-                var aiPct = response.ai_pct || 0;
-                var mixedPct = response.mixed_pct || 0;
-                var humanPct = response.human_pct || 0;
-                var predictedClass = response.predicted_class.toLowerCase();
-
-                var pillsHtml = \'<span class="ai-pills-row">\' +
-                    \'<span class="ai-pill-sm ai-pill-ai">AI \' + aiPct + \'%</span>\' +
-                    \'<span class="ai-pill-sm ai-pill-mixed">Mixed \' + mixedPct + \'%</span>\' +
-                    \'<span class="ai-pill-sm ai-pill-human\' + (predictedClass === "human" ? " highlighted" : "") + \'>Human \' + humanPct + \'%</span>\' +
-                    \'</span>\';
-
-                resultSpan.innerHTML = pillsHtml;
-                resultSpan.className = "ai-result";
+                // Clear the result span - just show View Report button
+                resultSpan.innerHTML = "";
+                resultSpan.className = "";
 
                 // Replace button with View Report link
                 var reportUrl = response.scan_url || (wwwroot + "/local/learner/aireport.php?id=" + submissionId);
