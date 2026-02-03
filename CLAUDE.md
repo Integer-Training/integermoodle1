@@ -1046,7 +1046,7 @@ Personalised dashboard for learners showing progression, upcoming due dates, rec
 ```
 local/learnerdashboard/
 ├── version.php                            # Plugin metadata
-├── index.php                              # Main page — 5 queries + template render
+├── index.php                              # Main page — 7 queries + template render
 ├── lib.php                                # Navigation hook (non-functional with Alpha theme)
 ├── classes/observer.php                   # Login redirect — sends students here after login
 ├── db/access.php                          # Capability: local/learnerdashboard:view
@@ -1069,7 +1069,7 @@ The plugin registers a `\core\event\user_loggedin` observer (`classes/observer.p
 - **Deep links respected:** If a student clicks a direct link to an assignment/course, they land there instead
 - **Old URL backward-compatible:** `local/learner/mydash.php` now contains a `redirect()` to the new dashboard
 
-#### Data Queries (5 queries)
+#### Data Queries (7 queries)
 
 | Query | Source | Purpose |
 |-------|--------|---------|
@@ -1078,6 +1078,8 @@ The plugin registers a `\core\event\user_loggedin` observer (`classes/observer.p
 | 3 | `{assign}` + submissions | Upcoming due dates (7 days, not yet submitted, urgency colors) |
 | 4 | `{local_mail_messages}` + `{local_mail_message_users}` | Recent 5 messages + unread count (guarded with `table_exists`) |
 | 5 | `{logstore_standard_log}` | Monthly hours spent — all course activity with 30-min idle cap (standard time-on-site method) |
+| 6 | `{local_draftfeedback}` + joins | Learner's draft feedbacks with assignment/course info (guarded with `table_exists`) |
+| 7 | `{groups_members}` + `{role_assignments}` | Assigned tutor lookup via group membership (teacher in same group as learner) |
 
 All queries use `{table}` Moodle syntax, parameterized params, exclude IAG/ID Proof/Case Studies.
 
@@ -1101,6 +1103,14 @@ $templatecontext = [
     'has_progression',
     'hours_chart_json',          // JSON array for Highcharts [{name: 'January', y: 2.5}, ...]
     'mycourses_link', 'mail_link', 'contact_link', 'progression_link', 'wwwroot',
+
+    // Draft feedback (v1.2.0+)
+    'draft_feedbacks' => [],     // id, assignmentname, coursename, status, status_class, view_url, submitted_date, tutor_name
+    'has_feedbacks', 'feedback_count',
+
+    // Assigned tutor (v1.2.0+)
+    'tutor_info' => [],          // id, fullname, firstname, email, picture_url, message_url
+    'has_tutor',
 ];
 ```
 
@@ -1109,7 +1119,9 @@ $templatecontext = [
 - **Dark gradient header** (navy-to-teal) with quick action buttons (My Courses, Mail Inbox, Contact Support)
 - **5 color-themed KPI cards:** Blue (Enrolled), Amber (Due), Green (Completed), Cyan (Progress with SVG ring), Purple (Messages)
 - **Glassmorphism cards** with backdrop-filter blur, dark slate gradient headers
-- **Two-column layout:** Upcoming Due Dates (left, color-coded urgency) + Recent Messages (right, unread badges with color-coded avatars)
+- **My Tutor card** (v1.2.0+): Shows assigned tutor with avatar, name, email, and "Contact Tutor" button (purple gradient)
+- **Draft Feedbacks card** (v1.2.0+): Lists all draft feedback submissions with status badges (pending/reviewed/revised)
+- **Two-column layout:** Due Dates + Messages row, then Tutor + Feedbacks row
 - **My Progression panel:** SVG progress ring + expandable per-course rows with assignment status tables
 - **Hours Spent chart:** Highcharts areaspline chart from logstore data
 - **Decorative background blobs** with CSS blur for visual depth
@@ -1216,8 +1228,9 @@ local/draftfeedback/
 ├── lib.php                          # Button injection via before_footer callback + pluginfile
 ├── submit.php                       # Learner draft submission form
 ├── index.php                        # Tutor draft list page
-├── view.php                         # View draft detail with AI check
+├── view.php                         # View draft detail with AI check + View Report button
 ├── feedback.php                     # Tutor feedback form
+├── aireport.php                     # Detailed AI detection report with sentence-level highlighting
 ├── classes/manager.php              # Business logic (submit, fetch, feedback, counts)
 ├── db/
 │   ├── access.php                   # 4 capabilities
@@ -1234,8 +1247,9 @@ local/draftfeedback/
 |------|-----|---------|
 | `submit.php` | `/local/draftfeedback/submit.php?cmid={cmid}` | Learner submits draft for feedback (file upload or text) |
 | `index.php` | `/local/draftfeedback/index.php` | Tutor views list of drafts awaiting feedback |
-| `view.php` | `/local/draftfeedback/view.php?id={draftid}` | View draft detail with AI Check button |
+| `view.php` | `/local/draftfeedback/view.php?id={draftid}` | View draft detail with AI Check + View Report button |
 | `feedback.php` | `/local/draftfeedback/feedback.php?id={draftid}` | Tutor provides written feedback |
+| `aireport.php` | `/local/draftfeedback/aireport.php?id={draftid}` | Detailed AI detection report with sentence-level highlighting |
 
 #### User Workflow
 
@@ -1264,19 +1278,23 @@ local/draftfeedback/
 | `get_pending_drafts_for_tutor($tutorid)` | Get drafts from learners in tutor's groups |
 | `count_pending_drafts_for_tutor($tutorid)` | Count for dashboard card |
 | `get_draft($id)` | Get single draft with user/assignment details |
+| `get_learner_draft($cmid, $userid)` | Get learner's most recent draft for an assignment |
 | `save_feedback($draftid, $feedback, $tutorid)` | Save tutor feedback + notify learner |
 | `has_pending_draft($cmid, $userid)` | Check if learner has pending draft |
 | `run_aicheck($draftid)` | Run GPTZero AI detection on draft content |
 
 #### Button Injection (`lib.php`)
 
-Uses `local_draftfeedback_before_footer()` callback to inject button on assignment pages:
+Uses `local_draftfeedback_before_footer()` callback to inject status-aware button on assignment pages:
 
 1. Detects `$PAGE->pagetype === 'mod-assign-view'`
 2. Checks `local/draftfeedback:submit` capability
-3. Checks no pending draft exists for this user/assignment
-4. Injects purple "Submit Draft for Feedback" button via JavaScript DOM manipulation
-5. Button appears alongside "Add submission" button
+3. Checks for existing draft via `manager::get_learner_draft()`
+4. Injects status-specific UI via JavaScript DOM manipulation:
+   - **No draft:** Purple "Submit Draft for Feedback" button → links to `submit.php`
+   - **Pending draft:** Orange "Draft Awaiting Feedback" badge → links to `view.php`
+   - **Reviewed draft:** Green "View Draft Feedback" button → links to `view.php`
+5. Button/badge appears alongside "Add submission" button
 
 #### Dashboard Integration
 
@@ -1301,9 +1319,14 @@ Purple accent color (`#9C27B0` / `#E9D2FF`) for draft-related UI elements. Match
 #### AI Check Integration
 
 Reuses existing GPTZero integration from `plagiarism/gptzero`:
-- `view.php` includes AI Check button
+- `view.php` includes AI Check button with "View Report" link after scan completes
 - Results stored in `local_draftfeedback.aicheck_result` and `aicheck_probability`
 - Color-coded pills: Human (green), AI (orange), Mixed (purple)
+- `aireport.php` provides detailed report with:
+  - Overall AI probability score with color-coded circle
+  - Statistics grid: Total Sentences, AI-Detected, Human-Written, AI Percentage
+  - Full text with sentence-level highlighting (high AI ≥80% = orange, medium 50-80% = light orange)
+  - Print and Download PDF buttons with meaningful filename
 
 #### Notifications
 
