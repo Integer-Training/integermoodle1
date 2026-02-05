@@ -17,431 +17,1537 @@
 {{!
     @template core/loginform
 
-    Moodle template for the login page.
-
-    Context variables required for this template:
-    * autofocusform: Auto focus on form ?,
-    * canloginasguest - Is guest login allowed?,
-    * canloginbyemail - Is login by email allowed?,
-    * cansignup - Signup allowed?,
-    * cookieshelpicon - cookies help icon details
-    * error - Any errors in the form?,
-    * forgotpasswordurl - Forgot password url,
-    * hasidentityproviders - Flag, set to true to hide identity providers,
-    * hasinstructions - Flag, set to true to show instructions,
-    * identityproviders - List of identiy providers,
-    * instructions - Instructions,
-    * instructionsformat - Format of instructions,
-    * loginurl - Login url,
-    * signupurl - Signup url,
-    * errorformatted - Formatted error,
-    * logourl - Flag, logo url,
-    * sitename - Name of site.,
-    * logintoken - Random token to protect login request.,
-    * maintenance - Maintenance message
-
-    Example context (json):
-    {
-        "autofocusform": false,
-        "canloginasguest": "1",
-        "canloginbyemail": false,
-        "cansignup": true,
-        "cookieshelpicon": {
-            "heading": "Cookies must be enabled in your browser",
-            "text": "<div class=\"no-overflow\">Two cookies are used on this site. Both died..</div>",
-            "icon": {
-                "attributes": [
-                    {
-                        "name": "class",
-                        "value": "iconhelp"
-                    },
-                    {
-                        "name": "alt",
-                        "value": "Help with Cookies must be enabled in your browser"
-                    },
-                    {
-                        "name": "title",
-                        "value": "Help with Cookies must be enabled in your browser"
-                    },
-                    {
-                        "name": "src",
-                        "value": "http://localhost/stable_master/theme/image.php?theme=space&component=core&image=help"
-                    }
-                ]
-            },
-            "linktext": null,
-            "title": "Help with Cookies must be enabled in your browser",
-            "url": "http://localhost/stable_master/help.php?component=core&identifier=cookiesenabled&lang=en",
-            "ltr": true
-        },
-        "error": "",
-        "forgotpasswordurl": "http://localhost/stable_master/login/forgot_password.php",
-        "hasidentityproviders": false,
-        "hasinstructions": true,
-        "identityproviders": [],
-        "instructions": "For full access to this site, you first need to create an account.",
-        "instructionsformat": "1",
-        "loginurl": "http://localhost/stable_master/login/index.php",
-        "signupurl": "http://localhost/stable_master/login/signup.php",
-        "cookieshelpiconformatted": "",
-        "errorformatted": "",
-        "logourl": false,
-        "sitename": "Beer & Chips",
-        "logintoken": "randomstring",
-        "maintenance": "For full access to this site, you need to login in as an admin.",
-        "languagemenu": "Choose language"
-    }
-
-
+    Modern Epearl Academy Login Page with animated characters and glassmorphism design.
 }}
 
-<div class="rui-login-layout 
-        {{#loginlayoutimg}}rui-login-layout-img{{/loginlayoutimg}} 
-        {{^loginlayoutimg}}rui-login-layout-simple{{/loginlayoutimg}} 
-        {{#loginlogooutside}}rui-login--logo-outsite{{/loginlogooutside}} 
-        {{#loginlayout1}}rui-login-layout--1{{/loginlayout1}}
-        {{#loginlayout2}}rui-login-layout--2{{/loginlayout2}}
-        {{#loginlayout3}}rui-login-layout--3{{/loginlayout3}}
-        {{#loginlayout4}}rui-login-layout--4{{/loginlayout4}}
-        {{#loginlayout5}}rui-login-layout--5{{/loginlayout5}}
-        ">
+<style>
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* CSS Variables - Lighter Color Scheme */
+:root {
+    --ep-bg-primary: #f0f4f8;
+    --ep-bg-secondary: #e2e8f0;
+    --ep-bg-card: rgba(255, 255, 255, 0.95);
+    --ep-text-primary: #1e293b;
+    --ep-text-secondary: #64748b;
+    --ep-text-muted: #94a3b8;
+    --ep-accent-cyan: #22d3ee;
+    --ep-accent-blue: #3b82f6;
+    --ep-accent-indigo: #6366f1;
+    --ep-accent-purple: #a78bfa;
+    --ep-accent-amber: #f7c873;
+    --ep-border-color: rgba(0, 0, 0, 0.08);
+    --ep-glow-cyan: rgba(34, 211, 238, 0.3);
+    --ep-glow-blue: rgba(59, 130, 246, 0.3);
+    /* Character Colors - Lighter */
+    --char-purple: #8b5cf6;
+    --char-black: #475569;
+    --char-orange: #fb923c;
+    --char-yellow: #fde047;
+}
+
+/* Reset and Base */
+.ep-login-page {
+    min-height: 100vh;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--ep-bg-primary);
+}
+
+.ep-login-page * {
+    box-sizing: border-box;
+}
+
+/* Left Panel - Characters */
+.ep-left-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+    padding: 40px;
+    overflow: hidden;
+}
+
+.ep-left-header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ep-brand-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ep-brand-icon svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+}
+
+.ep-brand-name {
+    color: white;
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+/* Characters Container */
+.ep-characters {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    height: 420px;
+    padding-bottom: 20px;
+}
+
+.ep-characters-inner {
+    position: relative;
+    width: 480px;
+    height: 380px;
+}
+
+/* Character Base Styles */
+.ep-character {
+    position: absolute;
+    bottom: 0;
+    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: bottom center;
+}
+
+/* Purple Character - Tall rectangle, back */
+.ep-char-purple {
+    left: 60px;
+    width: 160px;
+    height: 360px;
+    background: var(--char-purple);
+    border-radius: 10px 10px 0 0;
+    z-index: 1;
+}
+
+.ep-char-purple.typing {
+    height: 400px;
+    transform: skewX(-12deg) translateX(35px);
+}
+
+.ep-char-purple.hiding {
+    transform: skewX(0deg);
+}
+
+/* Black Character - Medium rectangle */
+.ep-char-black {
+    left: 210px;
+    width: 110px;
+    height: 280px;
+    background: var(--char-black);
+    border-radius: 8px 8px 0 0;
+    z-index: 2;
+}
+
+.ep-char-black.typing {
+    transform: skewX(10deg) translateX(15px);
+}
+
+.ep-char-black.hiding {
+    transform: skewX(0deg);
+}
+
+/* Orange Character - Semi-circle, front left */
+.ep-char-orange {
+    left: 0;
+    width: 200px;
+    height: 180px;
+    background: var(--char-orange);
+    border-radius: 100px 100px 0 0;
+    z-index: 3;
+}
+
+/* Yellow Character - Rounded rectangle, front right */
+.ep-char-yellow {
+    left: 280px;
+    width: 130px;
+    height: 210px;
+    background: var(--char-yellow);
+    border-radius: 65px 65px 0 0;
+    z-index: 4;
+}
+
+/* Eyes Container */
+.ep-eyes {
+    position: absolute;
+    display: flex;
+    transition: all 0.2s ease-out;
+}
+
+/* Eyeball with white */
+.ep-eyeball {
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    transition: height 0.15s ease;
+}
+
+.ep-eyeball.blinking {
+    height: 2px;
+}
+
+/* Pupil */
+.ep-pupil {
+    width: 7px;
+    height: 7px;
+    background: #1e293b;
+    border-radius: 50%;
+    transition: transform 0.1s ease-out;
+}
+
+/* Pupil only (no white) */
+.ep-pupil-only {
+    width: 12px;
+    height: 12px;
+    background: #1e293b;
+    border-radius: 50%;
+    transition: transform 0.1s ease-out;
+}
+
+/* Yellow character mouth */
+.ep-mouth {
+    position: absolute;
+    width: 70px;
+    height: 4px;
+    background: #1e293b;
+    border-radius: 2px;
+    transition: all 0.2s ease-out;
+}
+
+/* Purple eyes positioning */
+.ep-char-purple .ep-eyes {
+    gap: 30px;
+    left: 40px;
+    top: 40px;
+}
+
+.ep-char-purple.typing .ep-eyes {
+    left: 50px;
+    top: 60px;
+}
+
+.ep-char-purple.hiding .ep-eyes {
+    left: 20px;
+    top: 35px;
+}
+
+/* Black eyes positioning */
+.ep-char-black .ep-eyes {
+    gap: 24px;
+    left: 24px;
+    top: 32px;
+}
+
+.ep-char-black.typing .ep-eyes {
+    left: 30px;
+    top: 12px;
+}
+
+.ep-char-black.hiding .ep-eyes {
+    left: 10px;
+    top: 28px;
+}
+
+/* Orange eyes positioning */
+.ep-char-orange .ep-eyes {
+    gap: 32px;
+    left: 72px;
+    top: 85px;
+}
+
+.ep-char-orange.hiding .ep-eyes {
+    left: 45px;
+    top: 80px;
+}
+
+/* Yellow eyes positioning */
+.ep-char-yellow .ep-eyes {
+    gap: 24px;
+    left: 45px;
+    top: 40px;
+}
+
+.ep-char-yellow.hiding .ep-eyes {
+    left: 20px;
+    top: 35px;
+}
+
+/* Yellow mouth positioning */
+.ep-char-yellow .ep-mouth {
+    left: 35px;
+    top: 88px;
+}
+
+.ep-char-yellow.hiding .ep-mouth {
+    left: 10px;
+    top: 85px;
+}
+
+/* Quotes Section */
+.ep-quotes {
+    position: relative;
+    z-index: 10;
+    margin-top: auto;
+    padding-top: 20px;
+}
+
+.ep-quotes-inner {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 24px 28px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    position: relative;
+    min-height: 120px;
+}
+
+.ep-quote {
+    opacity: 0;
+    position: absolute;
+    width: calc(100% - 56px);
+    left: 28px;
+    top: 24px;
+    transition: opacity 0.8s ease-in-out;
+}
+
+.ep-quote.active {
+    opacity: 1;
+    position: relative;
+    left: 0;
+    top: 0;
+    width: 100%;
+}
+
+.ep-quote-text {
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: #fff;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.ep-quote-author {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.ep-quotes-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.ep-quote-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: background 0.3s, transform 0.3s;
+}
+
+.ep-quote-dot.active {
+    background: #f7c873;
+    transform: scale(1.2);
+}
+
+.ep-quote-dot:hover {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Decorative Elements */
+.ep-left-decor {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.ep-grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+.ep-blur-circle-1 {
+    position: absolute;
+    top: 20%;
+    right: 20%;
+    width: 250px;
+    height: 250px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    filter: blur(60px);
+}
+
+.ep-blur-circle-2 {
+    position: absolute;
+    bottom: 20%;
+    left: 20%;
+    width: 350px;
+    height: 350px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    filter: blur(80px);
+}
+
+/* Right Panel - Login Form */
+.ep-right-panel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: var(--ep-bg-primary);
+}
+
+.ep-login-wrapper {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Mobile Quotes - Hidden on desktop, shown on mobile */
+.ep-mobile-quotes {
+    display: none;
+}
+
+/* Login Header */
+.ep-login-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.ep-login-header img {
+    max-height: 80px;
+    width: auto;
+    margin-bottom: 24px;
+}
+
+.ep-login-header h1 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--ep-text-primary);
+    margin: 0 0 8px 0;
+    letter-spacing: -0.02em;
+}
+
+.ep-login-header p {
+    color: var(--ep-text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Error Alert */
+.ep-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: ep-shake 0.5s ease-out;
+}
+
+@keyframes ep-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+.ep-error svg {
+    flex-shrink: 0;
+    color: #ef4444;
+}
+
+.ep-error span {
+    color: #dc2626;
+    font-size: 0.875rem;
+}
+
+/* Form */
+.ep-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Input Group */
+.ep-input-group {
+    position: relative;
+}
+
+.ep-input-group label {
+    display: block;
+    color: var(--ep-text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.ep-input-wrapper {
+    position: relative;
+    border-radius: 12px;
+}
+
+/* Input Glow Effect */
+.ep-input-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 14px;
+    background: radial-gradient(
+        400px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+        var(--ep-glow-blue),
+        transparent 40%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.ep-input-wrapper:hover::before,
+.ep-input-wrapper:focus-within::before {
+    opacity: 1;
+}
+
+.ep-input-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+    pointer-events: none;
+}
+
+.ep-input-wrapper:focus-within::after {
+    border-color: var(--ep-accent-blue);
+}
+
+.ep-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: white;
+    border: 1px solid var(--ep-border-color);
+    border-radius: 12px;
+    color: var(--ep-text-primary);
+    font-size: 1rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.ep-input::placeholder {
+    color: var(--ep-text-muted);
+}
+
+.ep-input:hover {
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+.ep-input:focus {
+    border-color: var(--ep-accent-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.ep-input-with-toggle {
+    padding-right: 48px;
+}
+
+/* Password Toggle */
+.ep-password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--ep-text-muted);
+    transition: color 0.2s ease;
+    z-index: 2;
+}
+
+.ep-password-toggle:hover {
+    color: var(--ep-text-secondary);
+}
+
+/* Forgot Link */
+.ep-forgot-link {
+    display: block;
+    color: var(--ep-accent-blue);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+    text-align: right;
+    margin-top: -8px;
+    transition: color 0.2s ease;
+}
+
+.ep-forgot-link:hover {
+    color: var(--ep-accent-indigo);
+    text-decoration: underline;
+}
+
+/* Submit Button */
+.ep-submit-btn {
+    position: relative;
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, var(--ep-accent-blue), var(--ep-accent-indigo));
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+.ep-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px -15px rgba(59, 130, 246, 0.4);
+}
+
+.ep-submit-btn:active {
+    transform: translateY(0);
+}
+
+/* Bottom Gradient Effect */
+.ep-submit-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--ep-accent-amber), transparent);
+    transition: width 0.4s ease;
+}
+
+.ep-submit-btn:hover::after {
+    width: 80%;
+}
+
+/* Divider */
+.ep-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 8px 0;
+}
+
+.ep-divider-line {
+    flex: 1;
+    height: 1px;
+    background: var(--ep-border-color);
+}
+
+.ep-divider-text {
+    color: var(--ep-text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Identity Providers */
+.ep-idp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ep-idp-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid var(--ep-border-color);
+    border-radius: 10px;
+    color: var(--ep-text-primary);
+    font-size: 0.9rem;
+    font-family: inherit;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.ep-idp-btn:hover {
+    background: var(--ep-bg-secondary);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.ep-idp-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Guest Section */
+.ep-guest-section {
+    padding-top: 16px;
+    border-top: 1px solid var(--ep-border-color);
+    margin-top: 8px;
+}
+
+.ep-guest-text {
+    color: var(--ep-text-muted);
+    font-size: 0.8rem;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.ep-guest-btn {
+    width: 100%;
+    padding: 12px 16px;
+    background: transparent;
+    border: 1px solid var(--ep-border-color);
+    border-radius: 10px;
+    color: var(--ep-text-secondary);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ep-guest-btn:hover {
+    background: var(--ep-bg-secondary);
+    color: var(--ep-text-primary);
+}
+
+/* Signup Link */
+.ep-signup-section {
+    text-align: center;
+    margin-top: 24px;
+}
+
+.ep-signup-text {
+    color: var(--ep-text-secondary);
+    font-size: 0.9rem;
+}
+
+.ep-signup-link {
+    color: var(--ep-text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.ep-signup-link:hover {
+    color: var(--ep-accent-blue);
+    text-decoration: underline;
+}
 
 
-    {{#cansignup}}
-        {{#customsignupoutside}}
-            <div class="rui-login-top-btn">
-                <form action="{{signupurl}}" method="get" id="signup">
-                    {{#stringca}}<span class="rui-login-calabel mr-2">{{{stringca}}}</span>{{/stringca}} <button type="submit" class="btn-link--clean">{{#str}}startsignup{{/str}}</button>
-                </form>
-            </div>
-        {{/customsignupoutside}}
-    {{/cansignup}}
+/* Cookie Notice */
+.ep-cookie-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: white;
+    border: 1px solid var(--ep-border-color);
+    border-radius: 10px;
+    color: var(--ep-text-secondary);
+    font-size: 0.8rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
 
+.ep-cookie-btn:hover {
+    background: var(--ep-bg-secondary);
+    color: var(--ep-text-primary);
+}
 
-    {{#loginlayoutimg}}
-        <div class="rui-login-wrapper">
-            <div class="rui-login-top-wrapper">
-    {{/loginlayoutimg}}
+/* Hide Original Moodle Elements */
+.rui-login-layout,
+.btn--cookie {
+    display: none !important;
+}
 
-    {{#loginlogooutside}}
-        <div class="rui-login-logo-container my-6">
-            {{#loginlayoutimg}}
-                <div class="rui-login-top">
-            {{/loginlayoutimg}}
-            <div>
-                {{#customloginlogo}}
-                    <a href="{{{ config.wwwroot }}}" class="text-decoration-none"><img src="{{customloginlogo}}" title="{{sitename}}" alt="{{sitename}}" class="rui-login-logo img-fluid" /></a>
-                {{/customloginlogo}}
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+    .ep-login-page {
+        grid-template-columns: 1fr;
+    }
 
-                {{^customloginlogo}}
-                    {{#logourl}}
-                        <a href="{{{ config.wwwroot }}}"><img src="{{logourl}}" title="{{sitename}}" alt="{{sitename}}" class="rui-login-logo img-fluid" /></a>
-                    {{/logourl}}
+    .ep-left-panel {
+        display: none;
+    }
 
-                    {{^logourl}}
-                        <a href="{{{ config.wwwroot }}}" class="text-decoration-none">
-                            <h1 class="rui-login-logo-name">{{sitename}}</h1>
-                        </a>
-                    {{/logourl}}
-                {{/customloginlogo}}
-            </div>
-            {{#loginlayoutimg}}
-        </div>{{/loginlayoutimg}}
-</div>
-{{/loginlogooutside}}
+    .ep-right-panel {
+        min-height: 100vh;
+        padding: 24px 20px;
+        align-items: flex-start;
+        padding-top: 40px;
+    }
 
-{{#loginhtmlcontent1}}
-    <div class="rui-login-html-1">
-        {{{loginhtmlcontent1}}}
-    </div>
-{{/loginhtmlcontent1}}
+    .ep-login-wrapper {
+        max-width: 100%;
+        width: 100%;
+    }
 
-{{#loginlayoutimg}}
-    </div>
-    </div>
-{{/loginlayoutimg}}
+    .ep-mobile-quotes {
+        display: block;
+        margin-top: 32px;
+    }
 
-{{#loginlayoutimg}}
-    <div class="rui-login-wrapper row no-gutters align-items-center justify-content-center w-100">
-        <div class="rui-login-container row no-gutters">
+    .ep-mobile-quotes .ep-quotes-inner {
+        background: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+        border-radius: 16px;
+        padding: 24px;
+        border: none;
+        min-height: auto;
+    }
 
-{{/loginlayoutimg}}
+    .ep-mobile-quotes .ep-quote {
+        position: relative;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
 
-<div class="rui-login-box">
-    <div class="rui-login-content">
-        {{#cansignup}}
-            <div class="sr-only">
-                <a href="{{signupurl}}">{{#str}} tocreatenewaccount {{/str}}</a>
-            </div>
-        {{/cansignup}}
+    .ep-mobile-quotes .ep-quote-text {
+        font-size: 1rem;
+        line-height: 1.5;
+    }
 
-        <div class="rui-loginpage-intro">
-            {{^loginlogooutside}}
-                <div class="rui-loginpage-intro-logo {{#customlogindmlogo}}dark-mode-logo{{/customlogindmlogo}} ">
-                    {{#customloginlogo}}
-                        <a href="{{{ config.wwwroot }}}" class="text-decoration-none">
-                            <h1><img src="{{customloginlogo}}" title="{{sitename}}" alt="{{sitename}}" class="rui-login-logo img-fluid" /></h1>
-                            {{#customlogindmlogo}}<h1><img src="{{customlogindmlogo}}" alt="{{sitename}}" class="rui-custom-dmlogo ml-2 img-fluid" /></h1>{{/customlogindmlogo}}
-                        </a>
-                    {{/customloginlogo}}
+    .ep-mobile-quotes .ep-quote-author {
+        font-size: 0.8rem;
+    }
 
-                    {{^customloginlogo}}
-                        {{#logourl}}
-                            <a href="{{{ config.wwwroot }}}" class="text-decoration-none">
-                                <h1><img src="{{logourl}}" title="{{sitename}}" alt="{{sitename}}" class="rui-login-logo img-fluid" /></h1>
-                            </a>
-                        {{/logourl}}
+    .ep-mobile-quotes .ep-quotes-dots {
+        margin-top: 16px;
+    }
 
-                        {{^logourl}}
-                            <a href="{{{ config.wwwroot }}}" class="text-decoration-none">
-                                <h1>{{sitename}}</h1>
-                            </a>
-                        {{/logourl}}
-                    {{/customloginlogo}}
-                </div>
-            {{/loginlogooutside}}
+    .ep-login-header {
+        margin-bottom: 24px;
+    }
 
-            {{#loginintrotext}}
-                <div class="rui-loginpage-intro-content mb-3 text-center">
-                    {{{loginintrotext}}}
-                </div>
-            {{/loginintrotext}}
+    .ep-login-header img {
+        max-height: 70px;
+    }
 
+    .ep-login-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 640px) {
+    .ep-right-panel {
+        padding: 20px 16px;
+        padding-top: 32px;
+    }
+
+    .ep-login-header {
+        margin-bottom: 20px;
+    }
+
+    .ep-login-header img {
+        max-height: 60px;
+        margin-bottom: 16px;
+    }
+
+    .ep-login-header h1 {
+        font-size: 1.375rem;
+    }
+
+    .ep-login-header p {
+        font-size: 0.85rem;
+    }
+
+    .ep-input {
+        padding: 12px 14px;
+        font-size: 16px;
+    }
+
+    .ep-submit-btn {
+        padding: 14px 20px;
+    }
+
+    .ep-mobile-quotes {
+        margin-top: 24px;
+    }
+
+    .ep-mobile-quotes .ep-quotes-inner {
+        padding: 20px;
+    }
+
+    .ep-mobile-quotes .ep-quote-text {
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    .ep-mobile-quotes .ep-quote-author {
+        font-size: 0.75rem;
+    }
+
+    .ep-cookie-btn {
+        bottom: 12px;
+        left: 12px;
+        padding: 8px 12px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+    .ep-right-panel {
+        padding: 16px 12px;
+        padding-top: 24px;
+    }
+
+    .ep-login-header img {
+        max-height: 50px;
+    }
+
+    .ep-login-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .ep-mobile-quotes .ep-quote-text {
+        font-size: 0.85rem;
+    }
+}
+
+</style>
+
+<div class="ep-login-page">
+    <!-- Left Panel - Characters -->
+    <div class="ep-left-panel">
+        <div class="ep-left-decor">
+            <div class="ep-grid-overlay"></div>
+            <div class="ep-blur-circle-1"></div>
+            <div class="ep-blur-circle-2"></div>
         </div>
 
-        {{#error}}
-            <div class="loginerrors mt-3">
-                <a href="#" id="loginerrormessage" class="accesshide">{{error}}</a>
-                <div class="alert alert-danger" role="alert" data-aria-autofocus="true">{{error}}</div>
+        <div class="ep-left-header">
+            <div class="ep-brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 3l1.5 4.5H18l-3.5 2.5 1.5 4.5-4-3-4 3 1.5-4.5L6 7.5h4.5z"/>
+                </svg>
             </div>
-        {{/error}}
+            <span class="ep-brand-name">Epearl Academy</span>
+        </div>
 
-        {{#loginidprovtop}}
-            {{#hasidentityproviders}}
-                <div class="rui-potentialidplist login-identityproviders mt-3 text-center">
-                    <p class="small text-center">{{#str}} potentialidps, auth {{/str}}</p>
-                    <div class="row no-gutters mt-1">
+        <div class="ep-characters" id="charactersContainer">
+            <div class="ep-characters-inner">
+                <!-- Purple Character -->
+                <div class="ep-character ep-char-purple" id="charPurple">
+                    <div class="ep-eyes">
+                        <div class="ep-eyeball" id="purpleEye1">
+                            <div class="ep-pupil" id="purplePupil1"></div>
+                        </div>
+                        <div class="ep-eyeball" id="purpleEye2">
+                            <div class="ep-pupil" id="purplePupil2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Black Character -->
+                <div class="ep-character ep-char-black" id="charBlack">
+                    <div class="ep-eyes">
+                        <div class="ep-eyeball" id="blackEye1">
+                            <div class="ep-pupil" id="blackPupil1"></div>
+                        </div>
+                        <div class="ep-eyeball" id="blackEye2">
+                            <div class="ep-pupil" id="blackPupil2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orange Character -->
+                <div class="ep-character ep-char-orange" id="charOrange">
+                    <div class="ep-eyes">
+                        <div class="ep-pupil-only" id="orangePupil1"></div>
+                        <div class="ep-pupil-only" id="orangePupil2"></div>
+                    </div>
+                </div>
+
+                <!-- Yellow Character -->
+                <div class="ep-character ep-char-yellow" id="charYellow">
+                    <div class="ep-eyes">
+                        <div class="ep-pupil-only" id="yellowPupil1"></div>
+                        <div class="ep-pupil-only" id="yellowPupil2"></div>
+                    </div>
+                    <div class="ep-mouth"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quotes Section -->
+        <div class="ep-quotes" id="quotesContainer">
+            <div class="ep-quotes-inner">
+                <div class="ep-quote active" data-index="0">
+                    <div class="ep-quote-text">"Education is the passport to the future, for tomorrow belongs to those who prepare for it today."</div>
+                    <div class="ep-quote-author">Malcolm X</div>
+                </div>
+                <div class="ep-quote" data-index="1">
+                    <div class="ep-quote-text">"The beautiful thing about learning is that nobody can take it away from you."</div>
+                    <div class="ep-quote-author">B.B. King</div>
+                </div>
+                <div class="ep-quote" data-index="2">
+                    <div class="ep-quote-text">"The expert in anything was once a beginner."</div>
+                    <div class="ep-quote-author">Helen Hayes</div>
+                </div>
+                <div class="ep-quote" data-index="3">
+                    <div class="ep-quote-text">"Your limitation—it's only your imagination."</div>
+                    <div class="ep-quote-author">Unknown</div>
+                </div>
+                <div class="ep-quote" data-index="4">
+                    <div class="ep-quote-text">"The only way to do great work is to love what you do."</div>
+                    <div class="ep-quote-author">Steve Jobs</div>
+                </div>
+                <div class="ep-quote" data-index="5">
+                    <div class="ep-quote-text">"Learning never exhausts the mind."</div>
+                    <div class="ep-quote-author">Leonardo da Vinci</div>
+                </div>
+                <div class="ep-quote" data-index="6">
+                    <div class="ep-quote-text">"Believe you can and you're halfway there."</div>
+                    <div class="ep-quote-author">Theodore Roosevelt</div>
+                </div>
+                <div class="ep-quotes-dots" id="quoteDots"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right Panel - Login Form -->
+    <div class="ep-right-panel">
+        <div class="ep-login-wrapper">
+            <!-- Header with Logo -->
+            <div class="ep-login-header">
+                <img src="{{{ config.wwwroot }}}/theme/alpha/pix/epearl-logo.png" alt="Epearl Academy" />
+                <h1>Welcome back!</h1>
+                {{#loginintrotext}}
+                    <p>{{{loginintrotext}}}</p>
+                {{/loginintrotext}}
+                {{^loginintrotext}}
+                    <p>Please enter your details to sign in</p>
+                {{/loginintrotext}}
+            </div>
+
+            <!-- Error Message -->
+            {{#error}}
+                <div class="ep-error">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="9" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M10 6v5M10 13.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <span>{{error}}</span>
+                </div>
+            {{/error}}
+
+            <!-- Identity Providers (Top) -->
+            {{#loginidprovtop}}
+                {{#hasidentityproviders}}
+                    <div class="ep-idp-list">
                         {{#identityproviders}}
-                            <a class="btn btn-secondary login-identityprovider-btn rui-potentialidp w-100 mt-1" href="{{url}}">
-                                {{#iconurl}}
-                                    <img src="{{iconurl}}" alt="" width="24" height="24"/>
-                                {{/iconurl}}
+                            <a class="ep-idp-btn" href="{{url}}">
+                                {{#iconurl}}<img src="{{iconurl}}" alt="" />{{/iconurl}}
                                 {{name}}
                             </a>
                         {{/identityproviders}}
                     </div>
-                    <hr class="hr-small" />
-                </div>
-            {{/hasidentityproviders}}
-        {{/loginidprovtop}}
+                    <div class="ep-divider">
+                        <span class="ep-divider-line"></span>
+                        <span class="ep-divider-text">or</span>
+                        <span class="ep-divider-line"></span>
+                    </div>
+                {{/hasidentityproviders}}
+            {{/loginidprovtop}}
 
-        <div class="rui-login-form">
-
-            <form action="{{loginurl}}" method="post" id="login">
-                <input id="anchor" type="hidden" name="anchor" value="">
-                <script>
-                    document.getElementById('anchor').value = location.hash;
-                </script>
+            <!-- Login Form -->
+            <form action="{{loginurl}}" method="post" id="login" class="ep-form">
+                <input type="hidden" id="anchor" name="anchor" value="">
                 <input type="hidden" name="logintoken" value="{{logintoken}}">
-                <div class="form-group mb-2 form-control--username-box">
-                    <label for="username" class="sr-only">
-                        {{^canloginbyemail}}
-                            {{#str}} username {{/str}}
-                        {{/canloginbyemail}}
-                        {{#canloginbyemail}}
-                            {{#str}} usernameemail {{/str}}
-                        {{/canloginbyemail}}
-                    </label>
-                    <input type="text" name="username" id="username" {{!
-                !}}class="form-control form-control--username" {{!
-                !}}value="{{username}}" {{!
-                !}}placeholder="{{^canloginbyemail}}{{#cleanstr}}username{{/cleanstr}}{{/canloginbyemail}}{{!
-                !}}{{#canloginbyemail}}{{#cleanstr}}usernameemail{{/cleanstr}}{{/canloginbyemail}}" {{!
-                !}}autocomplete="username">
-                </div>
-                <div class="form-group my-1 form-control--password-box">
-                    <label for="password" class="sr-only">{{#str}} password {{/str}}</label>
-                    <input type="password" name="password" id="password" value="" {{!
-                !}}class="form-control form-control--password" {{!
-                !}}placeholder="{{#cleanstr}}password{{/cleanstr}}" {{!
-                !}}autocomplete="current-password">
-                    <button class="rui-show-password-btn rui-show-password-btn--hidden border-0" id="togglePassword" tabindex="0" type="button" role="button" aria-checked="false" title="{{#str}}modshow, moodle{{/str}}/{{#str}}modhide, moodle{{/str}} {{#str}}password, moodle{{/str}}">
-                        <span class="sr-only">{{#str}}modshow, moodle{{/str}}/{{#str}}modhide, moodle{{/str}} {{#str}}password, moodle{{/str}}</span>
-                        <svg class="showpassword-icon--off" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.25 12C19.25 13 17.5 18.25 12 18.25C6.5 18.25 4.75 13 4.75 12C4.75 11 6.5 5.75 12 5.75C17.5 5.75 19.25 11 19.25 12Z"></path>
-                            <circle cx="12" cy="12" r="2.25" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></circle>
-                        </svg>
-                        <svg class="showpassword-icon--on" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.6247 10C19.0646 10.8986 19.25 11.6745 19.25 12C19.25 13 17.5 18.25 12 18.25C11.2686 18.25 10.6035 18.1572 10 17.9938M7 16.2686C5.36209 14.6693 4.75 12.5914 4.75 12C4.75 11 6.5 5.75 12 5.75C13.7947 5.75 15.1901 6.30902 16.2558 7.09698"></path>
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.25 4.75L4.75 19.25"></path>
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.409 13.591C9.53033 12.7123 9.53033 11.2877 10.409 10.409C11.2877 9.5303 12.7123 9.5303 13.591 10.409"></path>
-                        </svg>
-                    </button>
-                </div>
-                {{^hideforgotpassword}}
-                    <div class="w-100 text-center">
-                        <a class="rui-login-forgot-btn" href="{{forgotpasswordurl}}">{{#str}}forgotten{{/str}}</a>
-                    </div>
-                {{/hideforgotpassword}}
-                {{{logininfobox}}}
-                {{#recaptcha}}
-                    <div class="login-form-recaptcha form-group">
-                        {{{recaptcha}}}
-                    </div>
-                {{/recaptcha}}
-                <button type="submit" class="btn btn-lg btn-primary btn-block mt-3" id="loginbtn">{{#str}}login{{/str}}</button>
-            </form>
-        </div><!-- .rui-login-form -->
 
-        {{^loginidprovtop}}
-            {{#hasidentityproviders}}
-                <hr class="hr-small" />
-                <div class="rui-potentialidplist login-identityproviders mt-3 text-center">
-                    <p class="small text-center">{{#str}} potentialidps, auth {{/str}}</p>
-                    <div class="row no-gutters mt-1">
+                <!-- Username -->
+                <div class="ep-input-group">
+                    <label for="username">
+                        {{^canloginbyemail}}Username{{/canloginbyemail}}
+                        {{#canloginbyemail}}Email{{/canloginbyemail}}
+                    </label>
+                    <div class="ep-input-wrapper">
+                        <input
+                            type="text"
+                            name="username"
+                            id="username"
+                            class="ep-input"
+                            value="{{username}}"
+                            placeholder="{{^canloginbyemail}}Enter your username{{/canloginbyemail}}{{#canloginbyemail}}name@example.com{{/canloginbyemail}}"
+                            autocomplete="username"
+                        >
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="ep-input-group">
+                    <label for="password">Password</label>
+                    <div class="ep-input-wrapper">
+                        <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            class="ep-input ep-input-with-toggle"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                        >
+                        <button type="button" class="ep-password-toggle" id="togglePassword" aria-label="Toggle password visibility">
+                            <svg class="ep-eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <svg class="ep-eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none;">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Forgot Password -->
+                {{^hideforgotpassword}}
+                    <a href="{{forgotpasswordurl}}" class="ep-forgot-link">Forgot password?</a>
+                {{/hideforgotpassword}}
+
+                <!-- Recaptcha -->
+                {{#recaptcha}}
+                    <div class="ep-recaptcha">{{{recaptcha}}}</div>
+                {{/recaptcha}}
+
+                <!-- Submit -->
+                <button type="submit" class="ep-submit-btn" id="loginbtn">Log in</button>
+            </form>
+
+            <!-- Identity Providers (Bottom) -->
+            {{^loginidprovtop}}
+                {{#hasidentityproviders}}
+                    <div class="ep-divider">
+                        <span class="ep-divider-line"></span>
+                        <span class="ep-divider-text">or continue with</span>
+                        <span class="ep-divider-line"></span>
+                    </div>
+                    <div class="ep-idp-list">
                         {{#identityproviders}}
-                            <a class="btn btn-secondary login-identityprovider-btn rui-potentialidp w-100 mt-1" href="{{url}}">
-                                {{#iconurl}}
-                                    <img src="{{iconurl}}" alt="" width="24" height="24"/>
-                                {{/iconurl}}
+                            <a class="ep-idp-btn" href="{{url}}">
+                                {{#iconurl}}<img src="{{iconurl}}" alt="" />{{/iconurl}}
                                 {{name}}
                             </a>
                         {{/identityproviders}}
                     </div>
-                </div>
-            {{/hasidentityproviders}}
-        {{/loginidprovtop}}
+                {{/hasidentityproviders}}
+            {{/loginidprovtop}}
 
-        <div class="rui-login-additional-btns">
+            <!-- Guest Login -->
             {{#canloginasguest}}
-            <hr class="hr-small" />
-                <div class="rui-canloginasguest mt-2" title="{{#str}}someallowguest{{/str}}">
-                    <p class="small text-center">{{#str}}someallowguest{{/str}}</p>
+                <div class="ep-guest-section">
+                    <p class="ep-guest-text">{{#str}}someallowguest{{/str}}</p>
                     <form action="{{loginurl}}" method="post" id="guestlogin">
                         <input type="hidden" name="logintoken" value="{{logintoken}}">
                         <input type="hidden" name="username" value="guest" />
                         <input type="hidden" name="password" value="guest" />
-                        <button class="btn btn-sm btn-outline-secondary w-100" type="submit" id="loginguestbtn">{{#str}}loginguest{{/str}}</button>
+                        <button type="submit" class="ep-guest-btn" id="loginguestbtn">Continue as Guest</button>
                     </form>
                 </div>
             {{/canloginasguest}}
-        </div><!-- .rui-additional-btns -->
 
-        {{#cansignup}}
-            {{^customsignupoutside}}
-                <div class="rui-login-createaccount my-4 text-center">
-                    {{#canloginasguest}}<hr class="hr-small" />{{/canloginasguest}}
-                    <form action="{{signupurl}}" method="get" id="signup">
-                        {{#stringca}}
-                            <p class="small">{{{stringca}}}</p>
-                        {{/stringca}}
-                        <button type="submit" class="btn btn-info w-100">{{#str}}startsignup{{/str}}</button>
-                    </form>
+            <!-- Signup -->
+            {{#cansignup}}
+                <div class="ep-signup-section">
+                    <p class="ep-signup-text">
+                        {{#stringca}}{{{stringca}}}{{/stringca}}
+                        {{^stringca}}Don't have an account?{{/stringca}}
+                        <a href="{{signupurl}}" class="ep-signup-link">Sign up</a>
+                    </p>
                 </div>
-            {{/customsignupoutside}}
-        {{/cansignup}}
+            {{/cansignup}}
 
-        {{#loginhtmlblockbottom}}
-            <div class="rui-login-bottom-block">
-                {{{loginhtmlblockbottom}}}
+            <!-- Instructions -->
+            {{#instructions}}
+                <div class="ep-info-box" style="margin-top:20px;padding:16px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;">
+                    <p style="color:#1e40af;font-size:0.875rem;margin:0;">{{{instructions}}}</p>
+                </div>
+            {{/instructions}}
+
+            <!-- Mobile Quotes (shown below login on mobile) -->
+            <div class="ep-mobile-quotes">
+                <div class="ep-quotes-inner">
+                    <div class="ep-quote active" data-index="0">
+                        <div class="ep-quote-text">"Education is the passport to the future, for tomorrow belongs to those who prepare for it today."</div>
+                        <div class="ep-quote-author">Malcolm X</div>
+                    </div>
+                    <div class="ep-quote" data-index="1">
+                        <div class="ep-quote-text">"The beautiful thing about learning is that nobody can take it away from you."</div>
+                        <div class="ep-quote-author">B.B. King</div>
+                    </div>
+                    <div class="ep-quote" data-index="2">
+                        <div class="ep-quote-text">"The expert in anything was once a beginner."</div>
+                        <div class="ep-quote-author">Helen Hayes</div>
+                    </div>
+                    <div class="ep-quote" data-index="3">
+                        <div class="ep-quote-text">"Your limitation—it's only your imagination."</div>
+                        <div class="ep-quote-author">Unknown</div>
+                    </div>
+                    <div class="ep-quote" data-index="4">
+                        <div class="ep-quote-text">"The only way to do great work is to love what you do."</div>
+                        <div class="ep-quote-author">Steve Jobs</div>
+                    </div>
+                    <div class="ep-quote" data-index="5">
+                        <div class="ep-quote-text">"Learning never exhausts the mind."</div>
+                        <div class="ep-quote-author">Leonardo da Vinci</div>
+                    </div>
+                    <div class="ep-quote" data-index="6">
+                        <div class="ep-quote-text">"Believe you can and you're halfway there."</div>
+                        <div class="ep-quote-author">Theodore Roosevelt</div>
+                    </div>
+                    <div class="ep-quotes-dots" id="mobileQuoteDots"></div>
+                </div>
             </div>
-        {{/loginhtmlblockbottom}}
 
-        {{#instructions}}
-            <div class="rui-hasinstructions-desc alert alert-info">
-                {{{instructions}}}
-            </div><!-- .rui-hasinstructions-desc -->
-        {{/instructions}}
-
-        {{^loginlayoutimg}}
-            {{#loginhtmlcontent3}}
-                <div class="rui-login-html-3">
-                    {{{loginhtmlcontent3}}}
-                </div>
-            {{/loginhtmlcontent3}}
-
-            {{#loginfootercontent}}
-                <div class="rui-login-footer-content text-center mb-2">
-                    <hr class="hr-small" />
-                    {{{loginfootercontent}}}
-                </div>
-            {{/loginfootercontent}}
-        {{/loginlayoutimg}}
-    </div><!-- .rui-login-content -->
-
-</div><!-- .rui-login-box -->
-
-
-{{#maintenance}}
-    <div class="rui-maintenance alert alert-warning wrapper-md my-4 p-5">
-        <h1>{{#str}}sitemaintenance, core_admin{{/str}}</h1>
-        <div class="rui-maintenance-desc">
-            {{{maintenance}}}
         </div>
     </div>
-{{/maintenance}}
 
-{{#loginlayoutimg}}
-    <div class="rui-login-bg-container" style="background-image: url('{{loginbg}}');" alt="{{#str}}messagecontentimage, message{{/str}}">
-        {{#loginhtmlcontent2}}
-            <div class="rui-login-additional-content">
-                {{{loginhtmlcontent2}}}
-            </div>
-        {{/loginhtmlcontent2}}
-    </div>
-{{/loginlayoutimg}}
+    <!-- Cookie Notice -->
+    <button type="button" class="ep-cookie-btn" data-modal="alert" data-modal-title-str='["cookiesenabled", "core"]' data-modal-content-str='["cookiesenabled_help_html", "core"]'>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 8v4M12 16h.01"/>
+        </svg>
+        <span>{{#str}}cookiesnotice{{/str}}</span>
+    </button>
 
-{{#loginlayoutimg}}
-    </div>
-    </div>
-{{/loginlayoutimg}}
+    <!-- Maintenance -->
+    {{#maintenance}}
+        <div style="position:fixed;top:20px;left:50%;transform:translateX(-50%);max-width:500px;z-index:1000;padding:16px 24px;background:#fef3c7;border:1px solid #fcd34d;border-radius:12px;">
+            <p style="color:#92400e;font-size:0.875rem;margin:0;"><strong>{{#str}}sitemaintenance, core_admin{{/str}}</strong>: {{{maintenance}}}</p>
+        </div>
+    {{/maintenance}}
+</div>
 
-{{#loginlayoutimg}}
-    <div class="rui-login-wrapper">
-        {{#loginhtmlcontent3}}
-            <div class="rui-login-footer rui-login-footer-content">
-                {{{loginhtmlcontent3}}}
-            </div>
-        {{/loginhtmlcontent3}}
+<script>
+(function() {
+    // Set anchor
+    var anchorEl = document.getElementById('anchor');
+    if (anchorEl) anchorEl.value = location.hash;
 
-        {{#loginfootercontent}}
-            <div class="rui-login-footer text-center">
-                {{{loginfootercontent}}}
-            </div>
-        {{/loginfootercontent}}
+    // State
+    var mouseX = window.innerWidth / 2;
+    var mouseY = window.innerHeight / 2;
+    var isTyping = false;
+    var isPasswordVisible = false;
+    var passwordHasValue = false;
 
-    </div>
-{{/loginlayoutimg}}
+    // Elements
+    var charPurple = document.getElementById('charPurple');
+    var charBlack = document.getElementById('charBlack');
+    var charOrange = document.getElementById('charOrange');
+    var charYellow = document.getElementById('charYellow');
+    var usernameInput = document.getElementById('username');
+    var passwordInput = document.getElementById('password');
+    var toggleBtn = document.getElementById('togglePassword');
 
-<button type="button" class="btn btn-xs btn-dark btn--cookie" {{!
-        }} data-modal="alert" {{!
-        }} data-modal-title-str='["cookiesenabled", "core"]' {{!
-        }} data-modal-content-str='["cookiesenabled_help_html", "core"]' {{!
-        }}>
-    <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 13V15"></path>
-        <circle cx="12" cy="9" r="1" fill="currentColor"></circle>
-        <circle cx="12" cy="12" r="7.25" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></circle>
-    </svg>
+    // Pupils
+    var pupils = {
+        purple: [document.getElementById('purplePupil1'), document.getElementById('purplePupil2')],
+        black: [document.getElementById('blackPupil1'), document.getElementById('blackPupil2')],
+        orange: [document.getElementById('orangePupil1'), document.getElementById('orangePupil2')],
+        yellow: [document.getElementById('yellowPupil1'), document.getElementById('yellowPupil2')]
+    };
 
-    <span class="ml-1">{{#str}}cookiesnotice{{/str}}</span></button>
+    // Eyeballs for blinking
+    var eyeballs = {
+        purple: [document.getElementById('purpleEye1'), document.getElementById('purpleEye2')],
+        black: [document.getElementById('blackEye1'), document.getElementById('blackEye2')]
+    };
 
-</div><!-- .login layout -->
+    // Mouse tracking
+    document.addEventListener('mousemove', function(e) {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        if (!isTyping && !passwordHasValue) {
+            updatePupils();
+            updateCharacterLean();
+        }
+    });
+
+    // Calculate pupil position
+    function calculatePupilOffset(el, maxDist) {
+        if (!el) return { x: 0, y: 0 };
+        var rect = el.getBoundingClientRect();
+        var centerX = rect.left + rect.width / 2;
+        var centerY = rect.top + rect.height / 2;
+        var deltaX = mouseX - centerX;
+        var deltaY = mouseY - centerY;
+        var dist = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), maxDist * 20);
+        var angle = Math.atan2(deltaY, deltaX);
+        return {
+            x: Math.cos(angle) * Math.min(dist / 20, maxDist),
+            y: Math.sin(angle) * Math.min(dist / 20, maxDist)
+        };
+    }
+
+    // Update all pupils
+    function updatePupils() {
+        Object.keys(pupils).forEach(function(char) {
+            var maxDist = char === 'orange' || char === 'yellow' ? 5 : 4;
+            pupils[char].forEach(function(pupil) {
+                if (pupil) {
+                    var offset = calculatePupilOffset(pupil, maxDist);
+                    pupil.style.transform = 'translate(' + offset.x + 'px, ' + offset.y + 'px)';
+                }
+            });
+        });
+    }
+
+    // Update character lean
+    function updateCharacterLean() {
+        if (!charPurple) return;
+        var rect = charPurple.getBoundingClientRect();
+        var centerX = rect.left + rect.width / 2;
+        var deltaX = mouseX - centerX;
+        var skew = Math.max(-6, Math.min(6, -deltaX / 120));
+
+        if (charPurple && !charPurple.classList.contains('typing') && !charPurple.classList.contains('hiding')) {
+            charPurple.style.transform = 'skewX(' + skew + 'deg)';
+        }
+        if (charBlack && !charBlack.classList.contains('typing') && !charBlack.classList.contains('hiding')) {
+            charBlack.style.transform = 'skewX(' + skew + 'deg)';
+        }
+        if (charOrange && !charOrange.classList.contains('hiding')) {
+            charOrange.style.transform = 'skewX(' + skew + 'deg)';
+        }
+        if (charYellow && !charYellow.classList.contains('hiding')) {
+            charYellow.style.transform = 'skewX(' + skew + 'deg)';
+        }
+    }
+
+    // Blinking animation
+    function scheduleBlink(eyeballsArray) {
+        var interval = Math.random() * 4000 + 3000;
+        setTimeout(function() {
+            eyeballsArray.forEach(function(eye) {
+                if (eye) eye.classList.add('blinking');
+            });
+            setTimeout(function() {
+                eyeballsArray.forEach(function(eye) {
+                    if (eye) eye.classList.remove('blinking');
+                });
+                scheduleBlink(eyeballsArray);
+            }, 150);
+        }, interval);
+    }
+
+    scheduleBlink(eyeballs.purple);
+    setTimeout(function() { scheduleBlink(eyeballs.black); }, 1500);
+
+    // Set pupils to look at specific direction
+    function setPupilsLook(x, y) {
+        Object.keys(pupils).forEach(function(char) {
+            pupils[char].forEach(function(pupil) {
+                if (pupil) {
+                    pupil.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+                }
+            });
+        });
+    }
+
+    // Typing state handlers
+    function handleFocus() {
+        isTyping = true;
+        if (charPurple) charPurple.classList.add('typing');
+        if (charBlack) charBlack.classList.add('typing');
+        // Look at each other briefly
+        setTimeout(function() {
+            if (isTyping && !passwordHasValue) {
+                updatePupils();
+            }
+        }, 800);
+    }
+
+    function handleBlur() {
+        isTyping = false;
+        if (!passwordHasValue) {
+            if (charPurple) charPurple.classList.remove('typing');
+            if (charBlack) charBlack.classList.remove('typing');
+            updatePupils();
+            updateCharacterLean();
+        }
+    }
+
+    // Password visibility handling
+    function handlePasswordChange() {
+        passwordHasValue = passwordInput && passwordInput.value.length > 0;
+        if (passwordHasValue && !isPasswordVisible) {
+            // Characters look away (hiding)
+            if (charPurple) { charPurple.classList.add('hiding'); charPurple.classList.remove('typing'); }
+            if (charBlack) { charBlack.classList.add('hiding'); charBlack.classList.remove('typing'); }
+            if (charOrange) charOrange.classList.add('hiding');
+            if (charYellow) charYellow.classList.add('hiding');
+            setPupilsLook(-4, -4);
+        } else if (!passwordHasValue) {
+            // Reset
+            if (charPurple) charPurple.classList.remove('hiding');
+            if (charBlack) charBlack.classList.remove('hiding');
+            if (charOrange) charOrange.classList.remove('hiding');
+            if (charYellow) charYellow.classList.remove('hiding');
+            updatePupils();
+        }
+    }
+
+    // Password toggle
+    if (toggleBtn && passwordInput) {
+        toggleBtn.addEventListener('click', function() {
+            isPasswordVisible = !isPasswordVisible;
+            passwordInput.setAttribute('type', isPasswordVisible ? 'text' : 'password');
+            var eyeOpen = this.querySelector('.ep-eye-open');
+            var eyeClosed = this.querySelector('.ep-eye-closed');
+            if (eyeOpen && eyeClosed) {
+                eyeOpen.style.display = isPasswordVisible ? 'none' : 'block';
+                eyeClosed.style.display = isPasswordVisible ? 'block' : 'none';
+            }
+            // If password visible, characters can look normally
+            if (isPasswordVisible && passwordHasValue) {
+                if (charPurple) charPurple.classList.remove('hiding');
+                if (charBlack) charBlack.classList.remove('hiding');
+                if (charOrange) charOrange.classList.remove('hiding');
+                if (charYellow) charYellow.classList.remove('hiding');
+                updatePupils();
+            } else if (passwordHasValue) {
+                handlePasswordChange();
+            }
+        });
+    }
+
+    // Input event listeners
+    if (usernameInput) {
+        usernameInput.addEventListener('focus', handleFocus);
+        usernameInput.addEventListener('blur', handleBlur);
+    }
+
+    if (passwordInput) {
+        passwordInput.addEventListener('focus', handleFocus);
+        passwordInput.addEventListener('blur', handleBlur);
+        passwordInput.addEventListener('input', handlePasswordChange);
+    }
+
+    // Input glow effect
+    document.querySelectorAll('.ep-input-wrapper').forEach(function(wrapper) {
+        wrapper.addEventListener('mousemove', function(e) {
+            var rect = this.getBoundingClientRect();
+            var x = ((e.clientX - rect.left) / rect.width) * 100;
+            var y = ((e.clientY - rect.top) / rect.height) * 100;
+            this.style.setProperty('--mouse-x', x + '%');
+            this.style.setProperty('--mouse-y', y + '%');
+        });
+    });
+
+    // Autofocus
+    if (usernameInput && usernameInput.value.length === 0) {
+        usernameInput.focus();
+    } else if (passwordInput) {
+        passwordInput.focus();
+    }
+
+    // Initial state
+    updatePupils();
+
+    // === Quotes Rotation (handles both desktop and mobile) ===
+    function initQuotes(containerSelector, dotsId) {
+        var container = document.querySelector(containerSelector);
+        if (!container) return;
+
+        var quotes = container.querySelectorAll('.ep-quote');
+        var dotsContainer = document.getElementById(dotsId);
+        var currentIndex = 0;
+        var interval;
+
+        if (quotes.length === 0 || !dotsContainer) return;
+
+        // Create dots
+        quotes.forEach(function(_, i) {
+            var dot = document.createElement('span');
+            dot.className = 'ep-quote-dot' + (i === 0 ? ' active' : '');
+            dot.addEventListener('click', function() { goTo(i); });
+            dotsContainer.appendChild(dot);
+        });
+
+        var dots = dotsContainer.querySelectorAll('.ep-quote-dot');
+
+        function goTo(index) {
+            quotes[currentIndex].classList.remove('active');
+            if (dots[currentIndex]) dots[currentIndex].classList.remove('active');
+            currentIndex = index;
+            quotes[currentIndex].classList.add('active');
+            if (dots[currentIndex]) dots[currentIndex].classList.add('active');
+            resetInterval();
+        }
+
+        function next() {
+            goTo((currentIndex + 1) % quotes.length);
+        }
+
+        function resetInterval() {
+            clearInterval(interval);
+            interval = setInterval(next, 6000);
+        }
+
+        interval = setInterval(next, 6000);
+
+        container.addEventListener('mouseenter', function() { clearInterval(interval); });
+        container.addEventListener('mouseleave', resetInterval);
+    }
+
+    // Init both quote containers
+    initQuotes('.ep-quotes', 'quoteDots');
+    initQuotes('.ep-mobile-quotes', 'mobileQuoteDots');
+})();
+</script>
 
 {{#js}}
-    {{^error}}
-        {{#autofocusform}}
-            var userNameField = document.getElementById('username');
-            if (userNameField.value.length == 0) {
-                userNameField.focus();
-            } else {
-                document.getElementById('password').focus();
-            }
-        {{/autofocusform}}
-    {{/error}}
-    {{#error}}
-        document.getElementById('loginerrormessage').focus();
-    {{/error}}
     require(['core_form/submit'], function(Submit) {
         Submit.init("loginbtn");
         {{#canloginasguest}}
@@ -449,18 +1555,5 @@
         {{/canloginasguest}}
     });
 {{/js}}
-<script>
-    const togglePassword = document.querySelector("#togglePassword");
-    const password = document.querySelector("#password");
-
-    togglePassword.addEventListener("click", function() {
-        // toggle the type attribute
-        const type = password.getAttribute("type") === "password" ? "text" : "password";
-        password.setAttribute("type", type);
-
-        // toggle the icon
-        this.classList.toggle("rui-show-password-btn--hidden");
-    });
-</script>
 
 {{{logincustomfooterhtml}}}

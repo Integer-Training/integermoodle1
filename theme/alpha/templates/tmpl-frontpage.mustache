@@ -17,38 +17,1014 @@
 {{!
     @template theme_alpha/tmpl-frontpage
 
-    Context variables required for this template:
-    * sitename - The name of the site
-    * output - The core renderer for the page
-    * bodyattributes - attributes for the body tag as a string of html attributes
-    * sidepreblocks - HTML for the blocks
-    * hasblocks - true if there are blocks on this page
-    * navdraweropen - true if the nav drawer should be open on page load
-    * regionmainsettingsmenu - HTML for the region main settings menu
-    * hasregionmainsettingsmenu - There is a region main settings menu on this page.
-
-    Example context (json):
-    {
-        "sitename": "Moodle",
-        "output": {
-            "doctype": "<!DOCTYPE html>",
-            "page_title": "Test page",
-            "favicon": "favicon.ico",
-            "main_content": "<h1>Headings make html validators happier</h1>"
-         },
-        "bodyattributes":"",
-        "sidepreblocks": "<h2>Blocks html goes here</h2>",
-        "hasblocks":true,
-        "navdraweropen":true,
-        "regionmainsettingsmenu": "",
-        "hasregionmainsettingsmenu": false
-    }
+    Modern Epearl Academy Front Page - Custom design for non-logged-in visitors
 }}
 {{> theme_alpha/head }}
 
 <body {{{ bodyattributes }}}>
     {{> core/local/toast/wrapper}}
 
+    {{#isnotloggedin}}
+    {{! ========== CUSTOM FRONT PAGE FOR NON-LOGGED-IN USERS ========== }}
+    <style>
+        /* Google Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap');
+
+        /* Hide default Moodle elements */
+        #page-wrapper, .rui-topbar-wrapper { display: none !important; }
+
+        /* CSS Variables - Matching Login Screen */
+        :root {
+            --ep-bg-primary: #f0f4f8;
+            --ep-bg-secondary: #e2e8f0;
+            --ep-bg-card: rgba(255, 255, 255, 0.95);
+            --ep-text-primary: #1e293b;
+            --ep-text-secondary: #64748b;
+            --ep-text-muted: #94a3b8;
+            --ep-accent-cyan: #22d3ee;
+            --ep-accent-blue: #3b82f6;
+            --ep-accent-indigo: #6366f1;
+            --ep-accent-purple: #8b5cf6;
+            --ep-accent-amber: #f7c873;
+            --ep-border-color: rgba(0, 0, 0, 0.08);
+            --gradient-primary: linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%);
+        }
+
+        .ep-frontpage * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .ep-frontpage {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--ep-bg-primary);
+            color: var(--ep-text-primary);
+            min-height: 100vh;
+        }
+
+        /* Header/Navbar */
+        .ep-navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--ep-border-color);
+            padding: 0 24px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .ep-hero-logo {
+            margin-bottom: 32px;
+        }
+
+        .ep-hero-logo img {
+            height: 120px;
+            width: auto;
+        }
+
+        .ep-navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .ep-navbar-brand img {
+            height: 45px;
+            width: auto;
+        }
+
+        .ep-navbar-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+            justify-self: end;
+        }
+
+        .ep-navbar-nav a {
+            padding: 10px 18px;
+            color: var(--ep-text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .ep-navbar-nav a:hover {
+            color: var(--ep-text-primary);
+            background: var(--ep-bg-secondary);
+        }
+
+        .ep-navbar-login {
+            padding: 10px 24px !important;
+            background: var(--gradient-primary) !important;
+            color: white !important;
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease !important;
+        }
+
+        .ep-navbar-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4) !important;
+            background: var(--gradient-primary) !important;
+            color: white !important;
+        }
+
+        .ep-mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            color: var(--ep-text-primary);
+        }
+
+        /* Hero Section */
+        .ep-hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 24px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ep-hero-bg {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: var(--gradient-primary);
+            clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+            z-index: 0;
+        }
+
+        .ep-hero-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .ep-hero-blur-1 {
+            position: absolute;
+            top: 20%;
+            right: 15%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            filter: blur(60px);
+            z-index: 1;
+        }
+
+        .ep-hero-blur-2 {
+            position: absolute;
+            bottom: 20%;
+            right: 30%;
+            width: 400px;
+            height: 400px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 1;
+        }
+
+        .ep-hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            width: 100%;
+        }
+
+        .ep-hero-content {
+            max-width: 540px;
+        }
+
+        .ep-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--ep-accent-indigo);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 24px;
+        }
+
+        .ep-hero-badge svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .ep-hero-title {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--ep-text-primary);
+            line-height: 1.2;
+            margin-bottom: 24px;
+        }
+
+        .ep-hero-title span {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .ep-hero-description {
+            font-size: 1.125rem;
+            color: var(--ep-text-secondary);
+            line-height: 1.7;
+            margin-bottom: 40px;
+        }
+
+        .ep-hero-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .ep-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            background: var(--gradient-primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .ep-btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+            color: white;
+        }
+
+        .ep-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            background: white;
+            color: var(--ep-text-primary);
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: 1px solid var(--ep-border-color);
+            transition: all 0.3s ease;
+        }
+
+        .ep-btn-secondary:hover {
+            background: var(--ep-bg-secondary);
+            border-color: rgba(0, 0, 0, 0.12);
+            color: var(--ep-text-primary);
+        }
+
+        .ep-hero-email {
+            margin-top: 24px;
+            color: var(--ep-text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .ep-hero-email a {
+            color: var(--ep-accent-indigo);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .ep-hero-email a:hover {
+            color: var(--ep-accent-purple);
+        }
+
+        /* Hero Visual - Characters */
+        .ep-hero-visual {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            height: 450px;
+        }
+
+        .ep-characters {
+            position: relative;
+            width: 400px;
+            height: 350px;
+        }
+
+        .ep-character {
+            position: absolute;
+            bottom: 0;
+            transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: bottom center;
+        }
+
+        .ep-char-purple {
+            left: 40px;
+            width: 140px;
+            height: 300px;
+            background: #8b5cf6;
+            border-radius: 10px 10px 0 0;
+            z-index: 1;
+        }
+
+        .ep-char-slate {
+            left: 170px;
+            width: 100px;
+            height: 240px;
+            background: #475569;
+            border-radius: 8px 8px 0 0;
+            z-index: 2;
+        }
+
+        .ep-char-orange {
+            left: 0;
+            width: 170px;
+            height: 150px;
+            background: #fb923c;
+            border-radius: 85px 85px 0 0;
+            z-index: 3;
+        }
+
+        .ep-char-yellow {
+            left: 240px;
+            width: 110px;
+            height: 180px;
+            background: #fde047;
+            border-radius: 55px 55px 0 0;
+            z-index: 4;
+        }
+
+        .ep-eyes {
+            position: absolute;
+            display: flex;
+            gap: 20px;
+        }
+
+        .ep-char-purple .ep-eyes { top: 35px; left: 35px; gap: 25px; }
+        .ep-char-slate .ep-eyes { top: 28px; left: 22px; gap: 20px; }
+        .ep-char-orange .ep-eyes { top: 70px; left: 60px; gap: 28px; }
+        .ep-char-yellow .ep-eyes { top: 35px; left: 38px; gap: 20px; }
+
+        .ep-eyeball {
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: height 0.15s ease;
+        }
+
+        .ep-eyeball.blinking { height: 2px; }
+
+        .ep-pupil {
+            width: 6px;
+            height: 6px;
+            background: #1e293b;
+            border-radius: 50%;
+            transition: transform 0.1s ease-out;
+        }
+
+        .ep-pupil-only {
+            width: 10px;
+            height: 10px;
+            background: #1e293b;
+            border-radius: 50%;
+            transition: transform 0.1s ease-out;
+        }
+
+        /* Quotes Section */
+        .ep-quotes-section {
+            padding: 80px 24px;
+            background: var(--gradient-primary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ep-quotes-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        .ep-quotes-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .ep-quotes-wrapper {
+            position: relative;
+            min-height: 150px;
+        }
+
+        .ep-quote-item {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            left: 0;
+            top: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .ep-quote-item.active {
+            opacity: 1;
+            position: relative;
+        }
+
+        .ep-quote-text {
+            font-family: 'Libre Baskerville', Georgia, serif;
+            font-size: 1.5rem;
+            font-style: italic;
+            color: white;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .ep-quote-author {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        .ep-quotes-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 32px;
+        }
+
+        .ep-quote-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ep-quote-dot.active {
+            background: var(--ep-accent-amber);
+            transform: scale(1.2);
+        }
+
+        .ep-quote-dot:hover { background: rgba(255, 255, 255, 0.6); }
+
+        /* Footer */
+        .ep-footer {
+            background: #1a2238;
+            color: white;
+            padding: 60px 24px 40px;
+        }
+
+        .ep-footer-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 60px;
+        }
+
+        .ep-footer-brand img {
+            height: 60px;
+            width: auto;
+            margin-bottom: 16px;
+        }
+
+        .ep-footer-brand p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .ep-footer-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .ep-footer-hours {
+            list-style: none;
+        }
+
+        .ep-footer-hours li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .ep-footer-hours li::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+        }
+
+        .ep-footer-contact {
+            list-style: none;
+        }
+
+        .ep-footer-contact li { margin-bottom: 20px; }
+
+        .ep-footer-contact-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 6px;
+        }
+
+        .ep-footer-contact-label svg {
+            width: 18px;
+            height: 18px;
+            color: var(--ep-accent-cyan);
+        }
+
+        .ep-footer-contact-value {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .ep-footer-contact-value a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .ep-footer-contact-value a:hover { color: var(--ep-accent-cyan); }
+
+        .ep-footer-bottom {
+            max-width: 1200px;
+            margin: 40px auto 0;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.85rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .ep-hero-container {
+                grid-template-columns: 1fr;
+                gap: 60px;
+                text-align: center;
+            }
+
+            .ep-hero-content { max-width: 100%; }
+
+            .ep-hero-logo {
+                display: flex;
+                justify-content: center;
+            }
+
+            .ep-hero-badge {
+                display: inline-flex;
+            }
+
+            .ep-hero-bg {
+                width: 100%;
+                height: 50%;
+                top: auto;
+                bottom: 0;
+                clip-path: polygon(0 20%, 100% 0, 100% 100%, 0% 100%);
+            }
+
+            .ep-hero-visual {
+                order: 1;
+                height: 350px;
+            }
+
+            .ep-hero-content {
+                order: 0;
+            }
+
+            .ep-characters {
+                width: 320px;
+                height: 280px;
+            }
+
+            .ep-char-purple { left: 30px; width: 110px; height: 240px; }
+            .ep-char-slate { left: 135px; width: 80px; height: 190px; }
+            .ep-char-orange { left: 0; width: 130px; height: 120px; }
+            .ep-char-yellow { left: 190px; width: 90px; height: 145px; }
+
+            .ep-hero-title { font-size: 2.25rem; }
+            .ep-hero-actions { justify-content: center; }
+
+            .ep-footer-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                text-align: center;
+            }
+
+            .ep-footer-hours li { justify-content: center; }
+            .ep-footer-contact-label { justify-content: center; }
+        }
+
+        @media (max-width: 768px) {
+            .ep-navbar { display: none; }
+
+            .ep-hero {
+                padding-top: 40px;
+            }
+
+            .ep-hero {
+                padding: 100px 20px 60px;
+            }
+
+            .ep-hero-bg {
+                display: none;
+            }
+
+            .ep-hero-content {
+                background: white;
+                padding: 32px 24px;
+                border-radius: 20px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+                order: 0;
+            }
+
+            .ep-hero-visual {
+                order: 1;
+            }
+
+            .ep-hero-logo img {
+                height: 100px;
+            }
+
+            .ep-hero-title {
+                font-size: 1.875rem;
+                color: var(--ep-text-primary);
+            }
+
+            .ep-hero-title span {
+                -webkit-text-fill-color: initial;
+                background: none;
+                color: var(--ep-accent-indigo);
+            }
+
+            .ep-hero-description {
+                font-size: 1rem;
+                color: var(--ep-text-secondary);
+            }
+
+            .ep-hero-actions { flex-direction: column; }
+
+            .ep-btn-primary,
+            .ep-btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .ep-hero-email {
+                text-align: center;
+            }
+
+            .ep-quote-text { font-size: 1.125rem; }
+        }
+
+        @media (max-width: 480px) {
+            .ep-hero-visual { height: 280px; }
+
+            .ep-characters {
+                width: 260px;
+                height: 230px;
+            }
+
+            .ep-char-purple { left: 25px; width: 90px; height: 200px; }
+            .ep-char-slate { left: 110px; width: 65px; height: 160px; }
+            .ep-char-orange { left: 0; width: 110px; height: 100px; }
+            .ep-char-yellow { left: 155px; width: 75px; height: 120px; }
+        }
+    </style>
+
+    <div class="ep-frontpage">
+        <!-- Navigation -->
+        <nav class="ep-navbar">
+            <div class="ep-navbar-spacer"></div>
+
+            <ul class="ep-navbar-nav">
+                <li><a href="{{{ config.wwwroot }}}/login/" class="ep-navbar-login">Log In</a></li>
+            </ul>
+
+            <button class="ep-mobile-menu-btn" aria-label="Menu" onclick="window.location.href='{{{ config.wwwroot }}}/login/'">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+            </button>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="ep-hero">
+            <div class="ep-hero-bg">
+                <div class="ep-hero-blur-1"></div>
+                <div class="ep-hero-blur-2"></div>
+            </div>
+
+            <div class="ep-hero-container">
+                <div class="ep-hero-content">
+                    <div class="ep-hero-logo">
+                        <img src="{{{ config.wwwroot }}}/theme/alpha/pix/epearl-logo.png" alt="Epearl Academy">
+                    </div>
+
+                    <div class="ep-hero-badge">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 3l1.5 4.5H18l-3.5 2.5 1.5 4.5-4-3-4 3 1.5-4.5L6 7.5h4.5z"/>
+                        </svg>
+                        Welcome to Epearl Academy
+                    </div>
+
+                    <h1 class="ep-hero-title">
+                        Epearl Learning <span>Management System</span>
+                    </h1>
+
+                    <p class="ep-hero-description">
+                        Education is not just about going to school and getting a degree. It's about widening your knowledge and absorbing the truth about life. eLearning opens the door to that world — anytime, anywhere, and for everyone willing to learn.
+                    </p>
+
+                    <div class="ep-hero-actions">
+                        <a href="{{{ config.wwwroot }}}/login/" class="ep-btn-primary">
+                            Login now!
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.75 6.75L19.25 12L13.75 17.25"/>
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 12H4.75"/>
+                            </svg>
+                        </a>
+                    </div>
+
+                    <p class="ep-hero-email">
+                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 8px;">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                        </svg>
+                        <a href="mailto:info@integertraining.com">info@integertraining.com</a>
+                    </p>
+                </div>
+
+                <div class="ep-hero-visual">
+                    <div class="ep-characters" id="heroCharacters">
+                        <div class="ep-character ep-char-purple">
+                            <div class="ep-eyes">
+                                <div class="ep-eyeball" id="fpPurpleEye1"><div class="ep-pupil"></div></div>
+                                <div class="ep-eyeball" id="fpPurpleEye2"><div class="ep-pupil"></div></div>
+                            </div>
+                        </div>
+                        <div class="ep-character ep-char-slate">
+                            <div class="ep-eyes">
+                                <div class="ep-eyeball" id="fpSlateEye1"><div class="ep-pupil"></div></div>
+                                <div class="ep-eyeball" id="fpSlateEye2"><div class="ep-pupil"></div></div>
+                            </div>
+                        </div>
+                        <div class="ep-character ep-char-orange">
+                            <div class="ep-eyes">
+                                <div class="ep-pupil-only"></div>
+                                <div class="ep-pupil-only"></div>
+                            </div>
+                        </div>
+                        <div class="ep-character ep-char-yellow">
+                            <div class="ep-eyes">
+                                <div class="ep-pupil-only"></div>
+                                <div class="ep-pupil-only"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quotes Section -->
+        <section class="ep-quotes-section">
+            <div class="ep-quotes-container">
+                <div class="ep-quotes-wrapper" id="fpQuotesWrapper">
+                    <div class="ep-quote-item active" data-index="0">
+                        <p class="ep-quote-text">"Education is the passport to the future, for tomorrow belongs to those who prepare for it today."</p>
+                        <span class="ep-quote-author">— Malcolm X</span>
+                    </div>
+                    <div class="ep-quote-item" data-index="1">
+                        <p class="ep-quote-text">"The beautiful thing about learning is that nobody can take it away from you."</p>
+                        <span class="ep-quote-author">— B.B. King</span>
+                    </div>
+                    <div class="ep-quote-item" data-index="2">
+                        <p class="ep-quote-text">"The expert in anything was once a beginner."</p>
+                        <span class="ep-quote-author">— Helen Hayes</span>
+                    </div>
+                    <div class="ep-quote-item" data-index="3">
+                        <p class="ep-quote-text">"Your limitation—it's only your imagination."</p>
+                        <span class="ep-quote-author">— Unknown</span>
+                    </div>
+                    <div class="ep-quote-item" data-index="4">
+                        <p class="ep-quote-text">"The only way to do great work is to love what you do."</p>
+                        <span class="ep-quote-author">— Steve Jobs</span>
+                    </div>
+                    <div class="ep-quote-item" data-index="5">
+                        <p class="ep-quote-text">"Learning never exhausts the mind."</p>
+                        <span class="ep-quote-author">— Leonardo da Vinci</span>
+                    </div>
+                    <div class="ep-quote-item" data-index="6">
+                        <p class="ep-quote-text">"Believe you can and you're halfway there."</p>
+                        <span class="ep-quote-author">— Theodore Roosevelt</span>
+                    </div>
+                </div>
+                <div class="ep-quotes-dots" id="fpQuotesDots"></div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="ep-footer">
+            <div class="ep-footer-container">
+                <div class="ep-footer-brand">
+                    <img src="{{{ config.wwwroot }}}/theme/alpha/pix/epearl-logo.png" alt="Epearl Academy">
+                    <p>Empowering learners to achieve their full potential through quality education and personalized support.</p>
+                </div>
+
+                <div class="ep-footer-hours-col">
+                    <h4 class="ep-footer-title">Get in Touch</h4>
+                    <ul class="ep-footer-hours">
+                        <li>Monday: 10:00 - 6:00</li>
+                        <li>Tuesday: 10:00 - 6:00</li>
+                        <li>Wednesday: 10:00 - 6:00</li>
+                        <li>Thursday: 10:00 - 6:00</li>
+                        <li>Friday: 10:00 - 6:00</li>
+                    </ul>
+                </div>
+
+                <div class="ep-footer-contact-col">
+                    <h4 class="ep-footer-title">Contact Us</h4>
+                    <ul class="ep-footer-contact">
+                        <li>
+                            <div class="ep-footer-contact-label">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                Email Us
+                            </div>
+                            <div class="ep-footer-contact-value">
+                                <a href="mailto:info@integertraining.com">info@integertraining.com</a>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="ep-footer-contact-label">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                </svg>
+                                Call Us On
+                            </div>
+                            <div class="ep-footer-contact-value">0121 690 9563</div>
+                        </li>
+                        <li>
+                            <div class="ep-footer-contact-label">
+                                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                Our Location
+                            </div>
+                            <div class="ep-footer-contact-value">Bude, London, Birmingham, Wolverhampton</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="ep-footer-bottom">
+                <p>&copy; 2026 Epearl Academy. All rights reserved. Powered by Integer Training.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Character eye tracking
+        (function() {
+            var characters = document.getElementById('heroCharacters');
+            if (!characters) return;
+
+            var pupils = characters.querySelectorAll('.ep-pupil, .ep-pupil-only');
+            var eyeballs = characters.querySelectorAll('.ep-eyeball');
+
+            document.addEventListener('mousemove', function(e) {
+                pupils.forEach(function(pupil) {
+                    var rect = pupil.getBoundingClientRect();
+                    var centerX = rect.left + rect.width / 2;
+                    var centerY = rect.top + rect.height / 2;
+                    var deltaX = e.clientX - centerX;
+                    var deltaY = e.clientY - centerY;
+                    var maxDist = pupil.classList.contains('ep-pupil-only') ? 5 : 4;
+                    var dist = Math.min(Math.sqrt(deltaX * deltaX + deltaY * deltaY), maxDist * 20);
+                    var angle = Math.atan2(deltaY, deltaX);
+                    var x = Math.cos(angle) * Math.min(dist / 20, maxDist);
+                    var y = Math.sin(angle) * Math.min(dist / 20, maxDist);
+                    pupil.style.transform = 'translate(' + x + 'px, ' + y + 'px)';
+                });
+            });
+
+            // Blinking
+            function scheduleBlink() {
+                setTimeout(function() {
+                    eyeballs.forEach(function(eye) { eye.classList.add('blinking'); });
+                    setTimeout(function() {
+                        eyeballs.forEach(function(eye) { eye.classList.remove('blinking'); });
+                        scheduleBlink();
+                    }, 150);
+                }, Math.random() * 4000 + 3000);
+            }
+            scheduleBlink();
+        })();
+
+        // Quotes rotation
+        (function() {
+            var wrapper = document.getElementById('fpQuotesWrapper');
+            var dotsContainer = document.getElementById('fpQuotesDots');
+            if (!wrapper || !dotsContainer) return;
+
+            var quotes = wrapper.querySelectorAll('.ep-quote-item');
+            var currentIndex = 0;
+            var interval;
+
+            quotes.forEach(function(_, i) {
+                var dot = document.createElement('span');
+                dot.className = 'ep-quote-dot' + (i === 0 ? ' active' : '');
+                dot.addEventListener('click', function() { goTo(i); });
+                dotsContainer.appendChild(dot);
+            });
+
+            var dots = dotsContainer.querySelectorAll('.ep-quote-dot');
+
+            function goTo(index) {
+                quotes[currentIndex].classList.remove('active');
+                dots[currentIndex].classList.remove('active');
+                currentIndex = index;
+                quotes[currentIndex].classList.add('active');
+                dots[currentIndex].classList.add('active');
+                resetInterval();
+            }
+
+            function next() { goTo((currentIndex + 1) % quotes.length); }
+
+            function resetInterval() {
+                clearInterval(interval);
+                interval = setInterval(next, 6000);
+            }
+
+            interval = setInterval(next, 6000);
+
+            wrapper.parentElement.addEventListener('mouseenter', function() { clearInterval(interval); });
+            wrapper.parentElement.addEventListener('mouseleave', resetInterval);
+        })();
+    </script>
+
+    {{! Moodle requires main_content - hidden for custom page }}
+    <div style="display:none;">{{{ output.main_content }}}</div>
+
+    {{{ output.standard_end_of_body_html }}}
+    {{/isnotloggedin}}
+
+    {{^isnotloggedin}}
+    {{! ========== NORMAL FRONT PAGE FOR LOGGED-IN USERS ========== }}
     <div id="page-wrapper" class="wrapper-fw d-print-block {{#output.courseheadermenu}}rui--course-with-nav{{/output.courseheadermenu}} {{^output.courseheadermenu}}rui--course-witout-nav{{/output.courseheadermenu}}">
 
         {{{ output.standard_top_of_body_html }}}
@@ -57,7 +1033,7 @@
             {{> theme_alpha/nav-drawer }}
         {{/hiddensidebar}}
         {{^hidecourseindexnav}}{{> theme_alpha/courseindex-tmpl}}{{/hidecourseindexnav}}
-                
+
         <div id="page" data-region="mainpage" data-usertour="scroller" class="container-fluid drawers {{#blockdraweropen}}show-hidden-drawer{{/blockdraweropen}} drag-container">
 
             {{> theme_alpha/navbar }}
@@ -94,6 +1070,8 @@
 
                                     {{{ruiscb}}}
 
+                                    {{{ output.main_content }}}
+
                                     {{{ output.activity_navigation }}}
                                     {{{ output.course_content_footer }}}
                                 </div>
@@ -101,11 +1079,11 @@
 
                         </section>
                     </div>
-                    
+
                 </div>
 
                 {{> theme_alpha/footer }}
-                
+
             </div>
 
         </div>
@@ -113,6 +1091,7 @@
         {{{ output.standard_after_main_region_html }}}
 
     </div>
+    {{/isnotloggedin}}
 
 </body>
 
