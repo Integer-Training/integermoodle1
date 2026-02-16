@@ -75,6 +75,11 @@ if (!empty($allcourseids)) {
                             a.id AS assignid,
                             a.name AS assignname,
                             CASE
+                                WHEN a.name LIKE '%Case Stud%' AND sub.id IS NOT NULL
+                                     AND (sub.status = 'submitted' OR sub.status = 'draft')
+                                THEN 'Submitted'
+                                WHEN a.name LIKE '%Case Stud%'
+                                THEN 'Not Submitted'
                                 WHEN gg.finalgrade IS NOT NULL
                                  AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(sc.scale, ',',
                                      CAST(gg.finalgrade AS UNSIGNED)), ',', -1)) = 'Pass'
@@ -101,7 +106,6 @@ if (!empty($allcourseids)) {
                      WHERE a.course {$cid_sql}
                        AND a.name NOT LIKE '%IAG%'
                        AND a.name NOT LIKE '%ID Proof%'
-                       AND a.name NOT LIKE '%Case Stud%'
                      ORDER BY a.course, a.name";
 
     $results = $DB->get_records_sql($assign_query, $cid_params);
@@ -122,25 +126,32 @@ if (!empty($allcourseids)) {
         }
 
         $cd = &$course_progression[$cid];
-        $cd['total']++;
-        if ($is_passed) {
-            $cd['passed']++;
-        }
-        if ($is_submitted) {
-            $cd['submitted']++;
+        $is_case_study = (stripos($row->assignname, 'Case Stud') !== false);
+
+        if (!$is_case_study) {
+            $cd['total']++;
+            if ($is_passed) {
+                $cd['passed']++;
+            }
+            if ($is_submitted) {
+                $cd['submitted']++;
+            }
         }
 
+        // Case studies always appear in expandable assignment rows.
         $cd['assignments'][] = [
             'name'   => $row->assignname,
             'status' => $row->grade_status,
         ];
 
-        $total_all++;
-        if ($is_passed) {
-            $total_passed++;
-        }
-        if ($is_submitted) {
-            $total_submitted++;
+        if (!$is_case_study) {
+            $total_all++;
+            if ($is_passed) {
+                $total_passed++;
+            }
+            if ($is_submitted) {
+                $total_submitted++;
+            }
         }
     }
 }
