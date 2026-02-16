@@ -68,6 +68,7 @@ if (!empty($allcourseids)) {
     $cid_params['userid']  = $userid;
     $cid_params['userid2'] = $userid;
     $cid_params['userid3'] = $userid;
+    $cid_params['userid4'] = $userid;
 
     $assign_query = "SELECT CONCAT(a.id, '-', :userid2) AS rowkey,
                             a.course AS courseid,
@@ -86,6 +87,12 @@ if (!empty($allcourseids)) {
                                 THEN 'Pass'
                                 WHEN gg.finalgrade IS NOT NULL AND gg.finalgrade > 0
                                 THEN 'Refer'
+                                WHEN ag.grade IS NOT NULL AND ag.grade >= 0
+                                 AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(sc.scale, ',',
+                                     CAST(ag.grade AS UNSIGNED)), ',', -1)) = 'Pass'
+                                THEN 'Pass'
+                                WHEN ag.grade IS NOT NULL AND ag.grade > 0
+                                THEN 'Refer'
                                 WHEN sub.id IS NOT NULL AND sub.status = 'submitted'
                                 THEN 'Pending Grading'
                                 WHEN sub.id IS NOT NULL AND sub.status = 'draft'
@@ -99,6 +106,8 @@ if (!empty($allcourseids)) {
                          AND cm.module = mdl_m.id AND cm.visible = 1
                      LEFT JOIN {assign_submission} sub ON sub.assignment = a.id
                          AND sub.userid = :userid AND sub.latest = 1
+                     LEFT JOIN {assign_grades} ag ON ag.assignment = a.id
+                         AND ag.userid = :userid4 AND ag.attemptnumber = COALESCE(sub.attemptnumber, 0)
                      LEFT JOIN {grade_items} gi ON gi.iteminstance = a.id AND gi.itemmodule = 'assign'
                          AND gi.courseid = a.course
                      LEFT JOIN {grade_grades} gg ON gg.itemid = gi.id AND gg.userid = :userid3
