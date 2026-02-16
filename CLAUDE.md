@@ -1028,7 +1028,9 @@ Since Alpha theme ignores `showinflatnavigation`, sidebar links are added direct
 
 ```sql
 SELECT CONCAT(u.id, '-', a.id) AS rowkey, u.id AS userid, ...
-       CASE WHEN gg.finalgrade IS NOT NULL AND ... = 'Pass' THEN 'Pass'
+       CASE WHEN a.name LIKE '%Case Stud%' AND sub submitted/draft THEN 'Submitted'
+            WHEN a.name LIKE '%Case Stud%' THEN 'Not Submitted'
+            WHEN gg.finalgrade IS NOT NULL AND ... = 'Pass' THEN 'Pass'
             WHEN gg.finalgrade IS NOT NULL AND gg.finalgrade > 0 THEN 'Refer'
             WHEN sub.status = 'submitted' THEN 'Pending Grading'
             WHEN sub.status = 'draft' THEN 'Submitted'
@@ -1038,8 +1040,10 @@ JOIN {user_enrolments} ue ... JOIN {enrol} en ... JOIN {course} c ...
 JOIN {assign} a ... JOIN {course_modules} cm (visible=1)
 LEFT JOIN {assign_submission} sub (latest=1)
 LEFT JOIN {grade_items} gi ... LEFT JOIN {grade_grades} gg ... LEFT JOIN {scale} sc
-WHERE u.id IN (...) AND assignment exclusions (IAG, ID Proof, Case Studies)
+WHERE u.id IN (...) AND assignment exclusions (IAG, ID Proof)
 ```
+
+**Note:** Case studies are included in results (not excluded by WHERE) but handled specially — the CASE WHEN maps them to Submitted/Not Submitted based on submission existence, and PHP aggregation excludes them from percentage calculations.
 
 **Query 3 — Tutor lookup (manager only):** Maps each learner to their tutor via group membership.
 
@@ -1050,6 +1054,7 @@ WHERE u.id IN (...) AND assignment exclusions (IAG, ID Proof, Case Studies)
 Results are aggregated per-learner, per-course in PHP:
 
 - **Current %** = Passed assignments / Total assignments (per-course and overall)
+- **Case study exclusion:** Case studies (`$is_case_study = stripos($row->assignname, 'Case Stud') !== false`) are excluded from all counters (`total`, `passed`, `submitted`, `total_all`, `total_passed`, `total_submitted`) but always included in the `assignments[]` detail array so they appear in expandable rows with Submitted/Not Submitted badges
 - **Activity status:** Active (accessed < 30 days), Inactive (30+ days), Created (never logged in)
 - Per-course assignments are sorted numerically (Unit 2 before Unit 10) using `preg_match` + `strnatcasecmp`
 
@@ -1113,13 +1118,15 @@ All CSS classes use `prog-` prefix to avoid conflicts: `prog-shell`, `prog-heade
 
 #### Grade Status Mapping
 
-| Status          | Meaning                    | Counted as Passed | Counted as Submitted |
-| --------------- | -------------------------- | ----------------- | -------------------- |
-| Pass            | Scale value matches 'Pass' | Yes               | Yes                  |
-| Refer           | Grade > 0 but not Pass     | No                | Yes                  |
-| Pending Grading | Submitted, awaiting grade  | No                | Yes                  |
-| Submitted       | Draft status               | No                | No                   |
-| Not Submitted   | No submission              | No                | No                   |
+| Status          | Meaning                    | Counted as Passed | Counted as Submitted | Applies To |
+| --------------- | -------------------------- | ----------------- | -------------------- | ---------- |
+| Pass            | Scale value matches 'Pass' | Yes               | Yes                  | Regular assignments |
+| Refer           | Grade > 0 but not Pass     | No                | Yes                  | Regular assignments |
+| Pending Grading | Submitted, awaiting grade  | No                | Yes                  | Regular assignments |
+| Submitted       | Draft status OR case study with submission | No | No                   | Both |
+| Not Submitted   | No submission              | No                | No                   | Both |
+
+**Case studies** only ever receive Submitted or Not Submitted (determined by SQL CASE WHEN before grade checks). They are excluded from Passed/Submitted/Total counters in PHP so they don't affect Current % or KPIs.
 
 ---
 
@@ -1170,7 +1177,7 @@ The plugin registers a `\core\event\user_loggedin` observer (`classes/observer.p
 | 6     | `{local_draftfeedback}` + joins                        | Learner's draft feedbacks with assignment/course info (guarded with `table_exists`)           |
 | 7     | `{groups_members}` + `{role_assignments}`              | Assigned tutor lookup via group membership (teacher in same group as learner)                 |
 
-All queries use `{table}` Moodle syntax, parameterized params, exclude IAG/ID Proof/Case Studies.
+All queries use `{table}` Moodle syntax, parameterized params, exclude IAG/ID Proof. Case studies are included in Query 2 results but handled via SQL CASE WHEN (Submitted/Not Submitted) and excluded from PHP percentage calculations. Query 3 (upcoming due dates) still excludes case studies.
 
 #### Hours Spent Calculation (Query 5)
 
@@ -1512,7 +1519,7 @@ AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
 
 ### Assignment Exclusions
 
-These assignment types must be excluded from all marking/overdue/imminent queries:
+These assignment types must be excluded from all **marking/overdue/imminent** queries:
 
 ```sql
 AND a.name NOT LIKE '%IAG%'
@@ -1522,7 +1529,13 @@ AND a.name NOT LIKE '%Case Stud%'
 
 - **IAG** — Initial Assessment/Guidance, not graded by tutors
 - **ID Proof** — Identity verification upload, not academic work
-- **Case Studies** — Feedback-only, no grading needed
+- **Case Studies** — Feedback-only, no Pass/Refer grading
+
+**Case study exception (progression/dashboard pages only):** In `learnerprogression/index.php`, `learnerdashboard/index.php`, and `learner/progressions.php`, case studies are **NOT excluded** from the WHERE clause. Instead they are handled via:
+1. SQL CASE WHEN branches at the top that map case studies to **Submitted** (if any submission exists) or **Not Submitted**
+2. PHP `$is_case_study` flag that excludes them from percentage/KPI counters while keeping them in the `assignments[]` detail array
+
+This allows case studies to appear in expandable detail rows with status badges without affecting Current % calculations. The exclusion is still applied in marking queues (tutordash, markallocation, admindash) and upcoming due dates.
 
 ### First Submissions vs Resubmissions
 
@@ -1699,6 +1712,10 @@ Then purge caches.
 ---
 
 ## Session Learnings
+
+### 2026-02-16
+
+- **Case study visibility in progression pages:** Case study assignments (e.g., L3 Residential Childcare) were completely hidden from all pages via `AND a.name NOT LIKE '%Case Stud%'`. Fixed in 3 files (`learnerprogression/index.php`, `learnerdashboard/index.php`, `learner/progressions.php`) by: (1) adding SQL CASE WHEN branches that map case studies to Submitted/Not Submitted based on submission existence, (2) removing the WHERE exclusion, (3) wrapping PHP counter increments in `if (!$is_case_study)` to keep them out of percentage calculations. Case studies remain excluded from marking queues (tutordash, markallocation, admindash) and upcoming due dates.
 
 ### 2026-02-05
 
