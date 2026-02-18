@@ -1039,11 +1039,14 @@ FROM {user} u
 JOIN {user_enrolments} ue ... JOIN {enrol} en ... JOIN {course} c ...
 JOIN {assign} a ... JOIN {course_modules} cm (visible=1)
 LEFT JOIN {assign_submission} sub (latest=1)
+LEFT JOIN {assign_grades} ag (assignment, userid, attemptnumber matching sub)
 LEFT JOIN {grade_items} gi ... LEFT JOIN {grade_grades} gg ... LEFT JOIN {scale} sc
 WHERE u.id IN (...) AND assignment exclusions (IAG, ID Proof)
 ```
 
 **Note:** Case studies are included in results (not excluded by WHERE) but handled specially — the CASE WHEN maps them to Submitted/Not Submitted based on submission existence, and PHP aggregation excludes them from percentage calculations.
+
+**Grade fallback:** The CASE WHEN checks `grade_grades.finalgrade` first (standard Moodle grade sync), then falls back to `assign_grades.grade` directly if finalgrade is NULL. This ensures Pass/Refer shows immediately after grading even if Moodle's grade push hasn't synced to grade_grades yet.
 
 **Query 3 — Tutor lookup (manager only):** Maps each learner to their tutor via group membership.
 
@@ -1120,8 +1123,8 @@ All CSS classes use `prog-` prefix to avoid conflicts: `prog-shell`, `prog-heade
 
 | Status          | Meaning                    | Counted as Passed | Counted as Submitted | Applies To |
 | --------------- | -------------------------- | ----------------- | -------------------- | ---------- |
-| Pass            | Scale value matches 'Pass' | Yes               | Yes                  | Regular assignments |
-| Refer           | Grade > 0 but not Pass     | No                | Yes                  | Regular assignments |
+| Pass            | Scale value matches 'Pass' (via grade_grades or assign_grades fallback) | Yes               | Yes                  | Regular assignments |
+| Refer           | Grade > 0 but not Pass (via grade_grades or assign_grades fallback)    | No                | Yes                  | Regular assignments |
 | Pending Grading | Submitted, awaiting grade  | No                | Yes                  | Regular assignments |
 | Submitted       | Draft status OR case study with submission | No | No                   | Both |
 | Not Submitted   | No submission              | No                | No                   | Both |
@@ -1712,6 +1715,10 @@ Then purge caches.
 ---
 
 ## Session Learnings
+
+### 2026-02-18
+
+- **assign_grades fallback for Pass/Refer:** Progression and dashboard pages only checked `grade_grades.finalgrade` for the grade. If Moodle's grade sync hadn't pushed the grade, learners saw "Pending Grading" or "Submitted" instead of Pass/Refer. Added `LEFT JOIN {assign_grades} ag` and fallback CASE WHEN branches that check `ag.grade` directly when `gg.finalgrade` is NULL. Same 3 files: `learnerprogression/index.php`, `learnerdashboard/index.php`, `learner/progressions.php`.
 
 ### 2026-02-16
 
