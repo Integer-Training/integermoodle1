@@ -137,19 +137,41 @@ if (!empty($learner_ids)) {
     );
 
     // ===== SINGLE QUERY: Per-assignment detail per learner per course =====
+    // Check if case study reviews table exists (backward compat before upgrade).
+    $csr_table_exists = $DB->get_manager()->table_exists('local_casestudy_reviews');
+    $csr_select = $csr_table_exists ? ", cm.id AS cmid, csr.status AS review_status, csr.feedback AS review_feedback" : ", cm.id AS cmid";
+    $csr_join = $csr_table_exists ? "LEFT JOIN {local_casestudy_reviews} csr ON csr.assignid = a.id AND csr.userid = u.id" : "";
+
+    // Case study CASE WHEN branches — with review status if table exists.
+    if ($csr_table_exists) {
+        $cs_case = "
+                         WHEN a.name LIKE '%Case Stud%' AND csr.status = 'approved' THEN 'Approved'
+                         WHEN a.name LIKE '%Case Stud%' AND csr.status = 'rejected' THEN 'Rejected'
+                         WHEN a.name LIKE '%Case Stud%' AND csr.status = 'resubmitted'
+                              AND sub.id IS NOT NULL AND (sub.status = 'submitted' OR sub.status = 'draft')
+                              THEN 'Resubmitted'
+                         WHEN a.name LIKE '%Case Stud%' AND sub.id IS NOT NULL
+                              AND (sub.status = 'submitted' OR sub.status = 'draft') AND csr.id IS NULL
+                              THEN 'Submitted'
+                         WHEN a.name LIKE '%Case Stud%' THEN 'Not Submitted'";
+    } else {
+        $cs_case = "
+                         WHEN a.name LIKE '%Case Stud%' AND sub.id IS NOT NULL
+                              AND (sub.status = 'submitted' OR sub.status = 'draft')
+                         THEN 'Submitted'
+                         WHEN a.name LIKE '%Case Stud%'
+                         THEN 'Not Submitted'";
+    }
+
     $query = "SELECT CONCAT(u.id, '-', a.id) AS rowkey,
                      u.id AS userid,
                      CONCAT(u.firstname, ' ', u.lastname) AS fullname,
                      a.course AS courseid,
                      c.fullname AS coursename,
                      a.id AS assignid,
-                     a.name AS assignname,
-                     CASE
-                         WHEN a.name LIKE '%Case Stud%' AND sub.id IS NOT NULL
-                              AND (sub.status = 'submitted' OR sub.status = 'draft')
-                         THEN 'Submitted'
-                         WHEN a.name LIKE '%Case Stud%'
-                         THEN 'Not Submitted'
+                     a.name AS assignname
+                     {$csr_select},
+                     CASE {$cs_case}
                          WHEN gg.finalgrade IS NOT NULL
                           AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(sc.scale, ',',
                               CAST(gg.finalgrade AS UNSIGNED)), ',', -1)) = 'Pass'
@@ -184,6 +206,7 @@ if (!empty($learner_ids)) {
                   AND gi.courseid = a.course
               LEFT JOIN {grade_grades} gg ON gg.itemid = gi.id AND gg.userid = u.id
               LEFT JOIN {scale} sc ON sc.id = gi.scaleid
+              {$csr_join}
               WHERE u.id {$id_sql}
                 AND a.name NOT LIKE '%IAG%'
                 AND a.name NOT LIKE '%ID Proof%'
@@ -235,10 +258,18 @@ if (!empty($learner_ids)) {
         }
 
         // Individual assignment detail (case studies always appear in expandable rows).
-        $cd['assignments'][] = [
+        $assign_entry = [
             'name' => $row->assignname,
             'status' => $row->grade_status,
+            'assignid' => (int) $row->assignid,
+            'userid' => $uid,
+            'cmid' => isset($row->cmid) ? (int) $row->cmid : 0,
+            'is_case_study' => $is_case_study,
         ];
+        if ($is_case_study && $csr_table_exists && !empty($row->review_feedback)) {
+            $assign_entry['feedback'] = $row->review_feedback;
+        }
+        $cd['assignments'][] = $assign_entry;
 
         if (!$is_case_study) {
             $learner_data[$uid]['total_all']++;
@@ -342,6 +373,8 @@ if (!empty($learner_ids)) {
     $templatecontext['inactive_count'] = $inactive_count;
     $templatecontext['created_count'] = $created_count;
 }
+
+$templatecontext['sesskey'] = sesskey();
 
 echo $OUTPUT->render_from_template('local_learner/progressions', $templatecontext);
 

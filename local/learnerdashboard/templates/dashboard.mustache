@@ -330,6 +330,10 @@ document.addEventListener('DOMContentLoaded', function() {
     /* ===== EXPANDABLE COURSES ===== */
     function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 
+    var csReviewUrl = (typeof M !== 'undefined' && M.cfg) ? M.cfg.wwwroot + '/local/learner/casestudy_review.php' : '';
+    var csSesskey = '{{sesskey}}';
+    var csUserid = {{#userid}}{{{userid}}}{{/userid}}{{^userid}}0{{/userid}};
+
     document.querySelectorAll('.ld-course-row').forEach(function(row) {
         row.addEventListener('click', function() {
             var course = this.closest('.ld-course');
@@ -347,7 +351,24 @@ document.addEventListener('DOMContentLoaded', function() {
                         else if (a.status==='Refer') cls='ld-st--refer';
                         else if (a.status==='Pending Grading') cls='ld-st--pending';
                         else if (a.status==='Submitted') cls='ld-st--submitted';
-                        h += '<tr><td>'+esc(a.name)+'</td><td><span class="ld-st '+cls+'">'+esc(a.status)+'</span></td></tr>';
+                        else if (a.status==='Approved') cls='ld-st--approved';
+                        else if (a.status==='Rejected') cls='ld-st--rejected';
+                        else if (a.status==='Resubmitted') cls='ld-st--resubmitted';
+
+                        h += '<tr><td>'+esc(a.name)+'</td><td>';
+                        h += '<span class="ld-st '+cls+'">'+esc(a.status)+'</span>';
+
+                        // Show feedback tooltip for rejected/resubmitted case studies.
+                        if (a.feedback && (a.status === 'Rejected' || a.status === 'Resubmitted')) {
+                            h += ' <span class="ld-cs-feedback-icon" title="' + esc(a.feedback) + '"><i class="bi bi-chat-square-text"></i></span>';
+                        }
+
+                        // Resubmit button for rejected case studies.
+                        if (a.is_case_study && a.status === 'Rejected' && a.cmid) {
+                            h += ' <button class="ld-resubmit-btn" data-assignid="' + a.assignid + '" data-userid="' + csUserid + '" data-cmid="' + a.cmid + '"><i class="bi bi-arrow-repeat"></i> Resubmit</button>';
+                        }
+
+                        h += '</td></tr>';
                     }
                     if (!items.length) h += '<tr><td colspan="2" class="ld-tbl-empty">No assignments</td></tr>';
                     h += '</tbody></table>';
@@ -361,6 +382,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // Resubmit button handler (isolated in try/catch to not break toggle).
+    try {
+    $(document).on('click', '.ld-resubmit-btn', function(e) {
+        e.stopPropagation();
+        var $btn = $(this);
+        var assignid = $btn.data('assignid');
+        var userid = $btn.data('userid');
+        var cmid = $btn.data('cmid');
+        $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> ...');
+        $.post(csReviewUrl, {
+            action: 'resubmit', assignid: assignid, userid: userid, sesskey: csSesskey
+        }).done(function(resp) {
+            if (resp.success) {
+                // Redirect to the assignment edit page.
+                window.location.href = M.cfg.wwwroot + '/mod/assign/view.php?id=' + cmid + '&action=editsubmission';
+            }
+        }).fail(function() {
+            alert('Failed to resubmit case study.');
+            $btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat"></i> Resubmit');
+        });
+    });
+    } catch(e) { /* jQuery not available — resubmit handler not registered */ }
 
     /* ===== MESSAGE AVATARS ===== */
     document.querySelectorAll('.ld-msg-avatar').forEach(function(el) {
@@ -666,6 +710,40 @@ document.addEventListener('DOMContentLoaded', function() {
 .ld-st--pending { background: #dbeafe; color: #1e40af; }
 .ld-st--submitted { background: #e0e7ff; color: #4338ca; }
 .ld-st--none { background: #f1f5f9; color: #94a3b8; }
+.ld-st--approved { background: #dcfce7; color: #166534; }
+.ld-st--rejected { background: #fee2e2; color: #991b1b; }
+.ld-st--resubmitted { background: #fef3c7; color: #92400e; }
+
+/* ===== CASE STUDY REVIEW ===== */
+.ld-resubmit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    background: #dbeafe;
+    color: #1e40af;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: background 0.2s, transform 0.1s;
+    margin-left: 8px;
+}
+.ld-resubmit-btn:hover {
+    background: #bfdbfe;
+    transform: translateY(-1px);
+}
+.ld-cs-feedback-icon {
+    display: inline-flex;
+    align-items: center;
+    color: #f59e0b;
+    cursor: help;
+    font-size: 13px;
+    margin-left: 4px;
+    vertical-align: middle;
+}
 
 /* ===== TUTOR CARD ===== */
 .ld-tutor {

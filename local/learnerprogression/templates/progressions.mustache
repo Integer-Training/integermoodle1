@@ -180,6 +180,25 @@
     </div>
   </div>
 
+  <!-- Case Study Reject Modal -->
+  <div id="progRejectModal" class="prog-modal-overlay" style="display:none">
+    <div class="prog-modal">
+      <div class="prog-modal-header" style="background: linear-gradient(135deg, #dc2626, #b91c1c);">
+        <h4><i class="bi bi-x-circle"></i> Reject Case Study</h4>
+      </div>
+      <div class="prog-modal-body" style="padding:24px">
+        <p style="font-size:14px;color:#374151;margin:0 0 12px">Provide feedback for the learner (optional):</p>
+        <textarea id="progRejectFeedback" rows="4" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:10px;font-size:13px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;resize:vertical" placeholder="Reason for rejection..."></textarea>
+        <input type="hidden" id="progRejectAssignId" value="">
+        <input type="hidden" id="progRejectUserId" value="">
+      </div>
+      <div class="prog-modal-footer" style="display:flex;gap:8px;justify-content:flex-end">
+        <button id="progRejectCancel" class="prog-modal-close-btn" style="background:#6b7280">Cancel</button>
+        <button id="progRejectConfirm" class="prog-modal-close-btn" style="background:#dc2626">Reject</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Learning Times Modal -->
   <div id="progTimesModal" class="prog-modal-overlay" style="display:none">
     <div class="prog-modal">
@@ -342,7 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Assignment rows under this course.
             html += '<table class="prog-unit-table">';
-            html += '<thead><tr><th style="text-align:center">Assignment / Unit</th><th style="text-align:center">Status</th></tr></thead>';
+            html += '<thead><tr><th style="text-align:center">Assignment / Unit</th><th style="text-align:center">Status</th><th style="text-align:center">Actions</th></tr></thead>';
             html += '<tbody>';
             if (c.assignments && c.assignments.length > 0) {
                 for (var j = 0; j < c.assignments.length; j++) {
@@ -352,14 +371,32 @@ document.addEventListener('DOMContentLoaded', function() {
                     else if (a.status === 'Refer') statusClass = 'prog-unit-status--refer';
                     else if (a.status === 'Pending Grading') statusClass = 'prog-unit-status--pending';
                     else if (a.status === 'Submitted') statusClass = 'prog-unit-status--submitted';
+                    else if (a.status === 'Approved') statusClass = 'prog-unit-status--approved';
+                    else if (a.status === 'Rejected') statusClass = 'prog-unit-status--rejected';
+                    else if (a.status === 'Resubmitted') statusClass = 'prog-unit-status--resubmitted';
 
                     html += '<tr>';
                     html += '<td class="prog-unit-name" style="text-align:center">' + escHtml(a.name) + '</td>';
-                    html += '<td style="text-align:center"><span class="prog-unit-status ' + statusClass + '">' + escHtml(a.status) + '</span></td>';
+                    html += '<td style="text-align:center"><span class="prog-unit-status ' + statusClass + '">' + escHtml(a.status) + '</span>';
+                    // Show feedback tooltip for rejected case studies.
+                    if (a.feedback && (a.status === 'Rejected' || a.status === 'Resubmitted')) {
+                        html += ' <span class="prog-cs-feedback-icon" title="' + escHtml(a.feedback) + '"><i class="bi bi-chat-square-text"></i></span>';
+                    }
+                    html += '</td>';
+
+                    // Actions column: Approve/Reject for case studies with Submitted or Resubmitted status.
+                    html += '<td style="text-align:center">';
+                    if (a.is_case_study && (a.status === 'Submitted' || a.status === 'Resubmitted')) {
+                        html += '<button class="prog-cs-btn prog-cs-btn--approve" data-action="approve" data-assignid="' + a.assignid + '" data-userid="' + a.userid + '"><i class="bi bi-check-lg"></i> Approve</button> ';
+                        html += '<button class="prog-cs-btn prog-cs-btn--reject" data-action="reject" data-assignid="' + a.assignid + '" data-userid="' + a.userid + '"><i class="bi bi-x-lg"></i> Reject</button>';
+                    } else {
+                        html += '<span style="color:#9ca3af;font-size:11px">—</span>';
+                    }
+                    html += '</td>';
                     html += '</tr>';
                 }
             } else {
-                html += '<tr><td colspan="2" class="prog-unit-empty">No assignments</td></tr>';
+                html += '<tr><td colspan="3" class="prog-unit-empty">No assignments</td></tr>';
             }
             html += '</tbody></table>';
             html += '</div>';
@@ -418,9 +455,83 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     $(document).on('click', '.prog-modal-overlay', function(e) {
         if ($(e.target).hasClass('prog-modal-overlay')) {
-            $('#progTimesModal').fadeOut(200);
+            $(e.target).fadeOut(200);
         }
     });
+
+    // ===== CASE STUDY APPROVE/REJECT HANDLERS =====
+    try {
+    var csReviewUrl = (typeof M !== 'undefined' && M.cfg) ? M.cfg.wwwroot + '/local/learner/casestudy_review.php' : '';
+    var csSesskey = '{{sesskey}}';
+
+    // Approve button click.
+    $(document).on('click', '.prog-cs-btn--approve', function(e) {
+        e.stopPropagation();
+        var $btn = $(this);
+        var assignid = $btn.data('assignid');
+        var userid = $btn.data('userid');
+        $btn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> ...');
+        $.post(csReviewUrl, {
+            action: 'approve', assignid: assignid, userid: userid, sesskey: csSesskey
+        }).done(function(resp) {
+            if (resp.success) {
+                var $row = $btn.closest('tr');
+                $row.find('.prog-unit-status').removeClass('prog-unit-status--submitted prog-unit-status--resubmitted')
+                    .addClass('prog-unit-status--approved').text('Approved');
+                $row.find('.prog-cs-feedback-icon').remove();
+                $btn.closest('td').html('<span style="color:#9ca3af;font-size:11px">—</span>');
+            }
+        }).fail(function() {
+            alert('Failed to approve case study.');
+            $btn.prop('disabled', false).html('<i class="bi bi-check-lg"></i> Approve');
+        });
+    });
+
+    // Reject button click — open modal.
+    $(document).on('click', '.prog-cs-btn--reject', function(e) {
+        e.stopPropagation();
+        $('#progRejectAssignId').val($(this).data('assignid'));
+        $('#progRejectUserId').val($(this).data('userid'));
+        $('#progRejectFeedback').val('');
+        $('#progRejectModal').fadeIn(200);
+    });
+
+    // Reject modal cancel.
+    $(document).on('click', '#progRejectCancel', function() {
+        $('#progRejectModal').fadeOut(200);
+    });
+
+    // Reject modal confirm.
+    $(document).on('click', '#progRejectConfirm', function() {
+        var assignid = $('#progRejectAssignId').val();
+        var userid = $('#progRejectUserId').val();
+        var feedback = $('#progRejectFeedback').val();
+        var $btn = $(this);
+        $btn.prop('disabled', true).text('Rejecting...');
+        $.post(csReviewUrl, {
+            action: 'reject', assignid: assignid, userid: userid,
+            feedback: feedback, sesskey: csSesskey
+        }).done(function(resp) {
+            if (resp.success) {
+                // Update the status in the currently open child row.
+                var $actBtn = $('.prog-cs-btn--reject[data-assignid="' + assignid + '"][data-userid="' + userid + '"]');
+                var $row = $actBtn.closest('tr');
+                $row.find('.prog-unit-status').removeClass('prog-unit-status--submitted prog-unit-status--resubmitted')
+                    .addClass('prog-unit-status--rejected').text('Rejected');
+                // Add feedback icon if feedback provided.
+                if (feedback) {
+                    $row.find('.prog-unit-status').after(' <span class="prog-cs-feedback-icon" title="' + escHtml(feedback) + '"><i class="bi bi-chat-square-text"></i></span>');
+                }
+                $actBtn.closest('td').html('<span style="color:#9ca3af;font-size:11px">—</span>');
+                $('#progRejectModal').fadeOut(200);
+            }
+        }).fail(function() {
+            alert('Failed to reject case study.');
+        }).always(function() {
+            $btn.prop('disabled', false).text('Reject');
+        });
+    });
+    } catch(e) { /* jQuery not available — case study handlers not registered */ }
 
 });
 </script>
@@ -1166,5 +1277,60 @@ tr.shown .prog-toggle-btn {
 }
 .prog-modal-close-btn:hover {
     background: #2d4a8a;
+}
+
+/* ==========================================================================
+   CASE STUDY REVIEW — Status badges & action buttons
+   ========================================================================== */
+.prog-unit-status--approved {
+    background: #dcfce7;
+    color: #166534;
+}
+.prog-unit-status--rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.prog-unit-status--resubmitted {
+    background: #fef3c7;
+    color: #92400e;
+}
+.prog-cs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    border: none;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    transition: background 0.2s, transform 0.1s;
+}
+.prog-cs-btn:hover {
+    transform: translateY(-1px);
+}
+.prog-cs-btn--approve {
+    background: #dcfce7;
+    color: #166534;
+}
+.prog-cs-btn--approve:hover {
+    background: #bbf7d0;
+}
+.prog-cs-btn--reject {
+    background: #fee2e2;
+    color: #991b1b;
+}
+.prog-cs-btn--reject:hover {
+    background: #fecaca;
+}
+.prog-cs-feedback-icon {
+    display: inline-flex;
+    align-items: center;
+    color: #f59e0b;
+    cursor: help;
+    font-size: 13px;
+    margin-left: 4px;
+    vertical-align: middle;
 }
 </style>

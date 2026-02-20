@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_learner';
-$plugin->version   = 2026020213;
+$plugin->version   = 2026022001;
 $plugin->requires  = 2024051700; // Moodle 5.0 minimum.
-$plugin->release   = '1.2.9';
+$plugin->release   = '1.3.0';
 $plugin->maturity  = MATURITY_STABLE;
