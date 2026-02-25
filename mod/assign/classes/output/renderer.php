@@ -1393,12 +1393,13 @@ class renderer extends \plugin_renderer_base {
             $image = $this->output->pix_icon(file_file_icon($file),
                                              $filename,
                                              'moodle',
-                                             array('class'=>'iconnot','height'=>'50px','width'=>'50px'));
-            $html_link = '<a href="'.$tree->get_file_url($file).'" target="_blank" title="Download"><i class="fa text-danger fa-file-pdf-o fa-2x"></i> Download Workbook</a>';
-            //
-            $image_rep = '<img class="iconnot" height="50px" width="50px" alt="'.$filename.'" title="Download Question Paper" src="'.$tree->get_file_url($file).'">';
+                                             array('class'=>'icon'));
             $result .= '<li yuiConfig=\'' . json_encode($yuiconfig) . '\'>' .
-                '<div>'.$html_link.'</div>' .
+                '<div>' .
+                    '<a href="' . $tree->get_file_url($file) . '" target="_blank">' .
+                        $image . ' ' . s($filename) .
+                    '</a>' . $plagiarismlinks .
+                '</div>' .
             '</li>';
         }
 
