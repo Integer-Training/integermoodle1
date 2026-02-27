@@ -18,7 +18,7 @@
  * Message provider definitions for Draft Feedback.
  *
  * @package    local_draftfeedback
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

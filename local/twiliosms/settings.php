@@ -18,7 +18,7 @@
  * Admin settings for local_twiliosms.
  *
  * @package   local_twiliosms
- * @copyright 2025 Epearl Academy
+ * @copyright 2025 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -67,7 +67,7 @@ if ($hassiteconfig) {
         'local_twiliosms/messagetemplate',
         get_string('messagetemplate', 'local_twiliosms'),
         get_string('messagetemplate_desc', 'local_twiliosms'),
-        'Epearl Academy - User: {username} Pass: Epearl@123 Login: epearlacademy.com'
+        'Integer Training - User: {username} Pass: Integer@123 Login: epearlacademy.com'
     ));
 
     // Link to SMS logs.

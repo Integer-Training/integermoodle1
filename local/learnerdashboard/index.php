@@ -21,7 +21,7 @@
  * KPI cards and monthly hours chart.
  *
  * @package   local_learnerdashboard
- * @copyright 2026 Epearl Academy
+ * @copyright 2026 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -62,6 +62,7 @@ $total_passed    = 0;
 $total_submitted = 0;
 $total_all       = 0;
 $course_progression = [];
+$referred_assignments = [];
 
 if (!empty($allcourseids)) {
     list($cid_sql, $cid_params) = $DB->get_in_or_equal($allcourseids, SQL_PARAMS_NAMED, 'cid');
@@ -185,6 +186,16 @@ if (!empty($allcourseids)) {
         if ($is_case_study && isset($csr_table_exists) && $csr_table_exists && !empty($row->review_feedback)) {
             $assign_entry['feedback'] = $row->review_feedback;
         }
+
+        // Collect referred assignments for "Needs Revision" alert section.
+        if ($row->grade_status === 'Refer') {
+            $referred_assignments[] = [
+                'assignid'    => (int) $row->assignid,
+                'assignname'  => $row->assignname,
+                'coursename'  => $row->coursename,
+                'assign_link' => (new moodle_url('/mod/assign/view.php', ['id' => (int) $row->cmid]))->out(false),
+            ];
+        }
         $cd['assignments'][] = $assign_entry;
 
         if (!$is_case_study) {
@@ -201,6 +212,44 @@ if (!empty($allcourseids)) {
 
 $overall_progress = ($total_all > 0) ? round(($total_passed / $total_all) * 100) : 0;
 $due_assignments  = $total_all - $total_submitted;
+
+// Enrich referred assignments with tutor feedback and grade date.
+if (!empty($referred_assignments)) {
+    $ref_assignids = array_column($referred_assignments, 'assignid');
+    list($ref_sql, $ref_params) = $DB->get_in_or_equal($ref_assignids, SQL_PARAMS_NAMED, 'refaid');
+    $ref_params['refuid'] = $userid;
+    $feedback_rows = $DB->get_records_sql(
+        "SELECT ag.assignment,
+                ag.timemodified AS graded_on,
+                COALESCE(afc.commenttext, '') AS feedback_comment,
+                CONCAT(u.firstname, ' ', u.lastname) AS grader_name
+         FROM {assign_grades} ag
+         LEFT JOIN {assignfeedback_comments} afc ON afc.grade = ag.id
+         LEFT JOIN {user} u ON u.id = ag.grader
+         WHERE ag.assignment {$ref_sql}
+           AND ag.userid = :refuid
+         ORDER BY ag.attemptnumber DESC",
+        $ref_params
+    );
+    // Index by assignment id.
+    $fb_by_assign = [];
+    foreach ($feedback_rows as $fb) {
+        if (!isset($fb_by_assign[$fb->assignment])) {
+            $fb_by_assign[$fb->assignment] = $fb;
+        }
+    }
+    foreach ($referred_assignments as &$ref) {
+        $aid = $ref['assignid'];
+        if (isset($fb_by_assign[$aid])) {
+            $fb = $fb_by_assign[$aid];
+            $ref['graded_on']    = userdate($fb->graded_on, get_string('strftimedatefullshort', 'langconfig'));
+            $ref['grader_name']  = $fb->grader_name;
+            $ref['feedback']     = shorten_text(strip_tags($fb->feedback_comment), 120);
+            $ref['has_feedback'] = !empty($fb->feedback_comment);
+        }
+    }
+    unset($ref);
+}
 
 // ===== QUERY 3: UPCOMING DUE DATES (7 days) =====
 $upcoming_due = [];
@@ -435,7 +484,64 @@ if ($draftfeedback_table_exists) {
 }
 $has_feedbacks = !empty($draft_feedbacks);
 
-// ===== QUERY 7: ASSIGNED TUTOR =====
+// ===== QUERY 7: RECENT NEWS =====
+$recent_news = [];
+$unread_news_count = 0;
+$has_news = false;
+
+$news_table_exists = $DB->get_manager()->table_exists('local_news');
+
+if ($news_table_exists) {
+    // Get 5 most recent published news items with read status.
+    $now = time();
+    $news_sql = "SELECT n.id, n.title, n.category, n.important, n.requires_acknowledgement,
+                        n.publishdate, n.timecreated,
+                        nr.id AS read_id, nr.acknowledged
+                 FROM {local_news} n
+                 LEFT JOIN {local_news_read} nr ON nr.newsid = n.id AND nr.userid = :userid
+                 WHERE n.published = 1
+                   AND n.publishdate <= :now1
+                   AND (n.expirydate IS NULL OR n.expirydate > :now2)
+                 ORDER BY n.publishdate DESC
+                 LIMIT 5";
+
+    $news_records = $DB->get_records_sql($news_sql, [
+        'userid' => $userid,
+        'now1' => $now,
+        'now2' => $now,
+    ]);
+
+    // Get category labels.
+    $category_labels = [
+        'update' => get_string('category_update', 'local_news'),
+        'announcement' => get_string('category_announcement', 'local_news'),
+        'maintenance' => get_string('category_maintenance', 'local_news'),
+        'policy_change' => get_string('category_policy_change', 'local_news'),
+    ];
+
+    foreach ($news_records as $nr) {
+        $is_unread = empty($nr->read_id);
+        if ($is_unread) {
+            $unread_news_count++;
+        }
+
+        $recent_news[] = [
+            'id' => $nr->id,
+            'title' => $nr->title,
+            'category' => $category_labels[$nr->category] ?? $nr->category,
+            'category_class' => 'nw-cat-' . str_replace('_', '-', $nr->category),
+            'is_important' => (bool) $nr->important,
+            'is_unread' => $is_unread,
+            'requires_ack' => (bool) $nr->requires_acknowledgement,
+            'is_acknowledged' => !empty($nr->acknowledged),
+            'formatted_date' => userdate($nr->publishdate, '%d %b %Y'),
+            'view_url' => (new moodle_url('/local/news/view.php', ['id' => $nr->id]))->out(false),
+        ];
+    }
+    $has_news = !empty($recent_news);
+}
+
+// ===== QUERY 8: ASSIGNED TUTOR =====
 $tutor_info = null;
 $has_tutor = false;
 
@@ -542,6 +648,17 @@ $templatecontext = [
     // Case study review.
     'sesskey'               => sesskey(),
     'userid'                => $userid,
+
+    // Referred assignments (needs revision).
+    'referred_assignments'  => $referred_assignments,
+    'has_referred'          => !empty($referred_assignments),
+    'referred_count'        => count($referred_assignments),
+
+    // News.
+    'recent_news'           => $recent_news,
+    'has_news'              => $has_news,
+    'unread_news_count'     => $unread_news_count,
+    'news_link'             => (new moodle_url('/local/news/index.php'))->out(false),
 ];
 
 echo $OUTPUT->render_from_template('local_learnerdashboard/dashboard', $templatecontext);

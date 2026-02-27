@@ -69,7 +69,7 @@ $htmlmessage = '<p>Hi <strong>'.$to->firstname.'</strong>,</p>
               <ul class="list-unstyled ms-3">
                 <li>Learning website: <a href="https://epearlacademy.com" target="_blank" rel="noopener">https://epearlacademy.com</a></li>
                 <li>Username: <span class="credential">'.$to->username.'</span></li>
-                <li>Password: <span class="credential">'.ucwords('Epearl@123').'</span></li>
+                <li>Password: <span class="credential">'.ucwords('Integer@123').'</span></li>
               </ul>
             </div>
 

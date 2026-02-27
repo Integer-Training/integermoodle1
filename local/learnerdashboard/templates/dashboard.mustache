@@ -5,7 +5,7 @@
     messages, due dates, KPI cards and hours chart.
 
     @package   local_learnerdashboard
-    @copyright 2026 Epearl Academy
+    @copyright 2026 Integer Training
     @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
 
@@ -163,6 +163,47 @@
 
   </div>
 
+  <!-- ===== NEWS & UPDATES ===== -->
+  <div class="ld-card ld-card--news">
+    <div class="ld-card-hdr" style="background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 100%);">
+      <h3><i class="bi bi-megaphone"></i> News &amp; Updates</h3>
+      {{#has_news}}<a href="{{{news_link}}}" class="ld-card-link">View All <i class="bi bi-arrow-right"></i></a>{{/has_news}}
+    </div>
+    {{#has_news}}
+    <div class="ld-card-body ld-card-body--flush">
+      {{#recent_news}}
+      <a href="{{{view_url}}}" class="ld-news-item{{#is_unread}} ld-news-item--unread{{/is_unread}}">
+        <div class="ld-news-left">
+          <div class="ld-news-title">
+            {{#is_important}}<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>{{/is_important}}
+            {{{title}}}
+          </div>
+          <div class="ld-news-meta">
+            <span class="ld-news-cat {{{category_class}}}">{{{category}}}</span>
+            <span>&middot;</span>
+            <span>{{{formatted_date}}}</span>
+          </div>
+        </div>
+        <div class="ld-news-right">
+          {{#is_unread}}<span class="ld-news-badge ld-news-badge--unread">New</span>{{/is_unread}}
+          {{^is_unread}}
+            {{#requires_ack}}
+              {{#is_acknowledged}}<span class="ld-news-badge ld-news-badge--ack"><i class="bi bi-check-circle"></i></span>{{/is_acknowledged}}
+              {{^is_acknowledged}}<span class="ld-news-badge ld-news-badge--pending">Action</span>{{/is_acknowledged}}
+            {{/requires_ack}}
+          {{/is_unread}}
+        </div>
+      </a>
+      {{/recent_news}}
+    </div>
+    {{/has_news}}
+    {{^has_news}}
+    <div class="ld-card-body">
+      <div class="ld-empty"><i class="bi bi-megaphone"></i><p>No news or updates at the moment</p></div>
+    </div>
+    {{/has_news}}
+  </div>
+
   <!-- ===== TWO-COLUMN: DUE DATES + MESSAGES ===== -->
   <div class="ld-grid-2">
 
@@ -227,6 +268,40 @@
     </div>
 
   </div>
+
+  <!-- ===== NEEDS REVISION ALERT ===== -->
+  {{#has_referred}}
+  <div class="ld-card ld-card--revision">
+    <div class="ld-card-hdr" style="background: linear-gradient(135deg, #e65100 0%, #f57c00 100%);">
+      <h3><i class="bi bi-arrow-repeat"></i> Needs Revision ({{referred_count}})</h3>
+    </div>
+    <div class="ld-card-body">
+      <p class="ld-revision-intro">The following assignments have been reviewed and need revision. Click <b>Edit Submission</b> on the assignment page to resubmit your updated work.</p>
+      <div class="ld-revision-list">
+        {{#referred_assignments}}
+        <div class="ld-revision-item">
+          <div class="ld-revision-info">
+            <div class="ld-revision-top">
+              <span class="ld-revision-assign">{{{assignname}}}</span>
+              <span class="ld-revision-grade">Refer</span>
+            </div>
+            <span class="ld-revision-course">{{{coursename}}}</span>
+            {{#has_feedback}}
+            <div class="ld-revision-feedback">
+              <span class="ld-revision-meta">Graded by {{{grader_name}}} on {{{graded_on}}}</span>
+              <span class="ld-revision-comment">"{{{feedback}}}"</span>
+            </div>
+            {{/has_feedback}}
+          </div>
+          <a href="{{{assign_link}}}" class="ld-btn-resubmit">
+            <i class="bi bi-upload"></i> Resubmit
+          </a>
+        </div>
+        {{/referred_assignments}}
+      </div>
+    </div>
+  </div>
+  {{/has_referred}}
 
   <!-- ===== MY PROGRESSION ===== -->
   <div class="ld-card">
@@ -344,11 +419,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!isOpen) {
                 try {
                     var items = JSON.parse(course.getAttribute('data-assignments'));
-                    var h = '<table class="ld-tbl"><thead><tr><th>Assignment</th><th>Status</th></tr></thead><tbody>';
+                    var h = '<table class="ld-tbl"><thead><tr><th>Assignment</th><th>Status</th><th></th></tr></thead><tbody>';
                     for (var i = 0; i < items.length; i++) {
-                        var a = items[i], cls = 'ld-st--none';
+                        var a = items[i], cls = 'ld-st--none', label = a.status;
                         if (a.status==='Pass') cls='ld-st--pass';
-                        else if (a.status==='Refer') cls='ld-st--refer';
+                        else if (a.status==='Refer') { cls='ld-st--refer'; label='Needs Revision'; }
                         else if (a.status==='Pending Grading') cls='ld-st--pending';
                         else if (a.status==='Submitted') cls='ld-st--submitted';
                         else if (a.status==='Approved') cls='ld-st--approved';
@@ -370,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                         h += '</td></tr>';
                     }
-                    if (!items.length) h += '<tr><td colspan="2" class="ld-tbl-empty">No assignments</td></tr>';
+                    if (!items.length) h += '<tr><td colspan="3" class="ld-tbl-empty">No assignments</td></tr>';
                     h += '</tbody></table>';
                     detail.innerHTML = h;
                 } catch(e) { detail.innerHTML = '<p class="ld-tbl-empty">Unable to load</p>'; }
@@ -745,6 +820,61 @@ document.addEventListener('DOMContentLoaded', function() {
     vertical-align: middle;
 }
 
+/* Resubmit link in progression table */
+.ld-tbl-resubmit {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600; color: #e65100;
+    text-decoration: none; padding: 4px 12px; border-radius: 6px;
+    background: #fff3e0; border: 1px solid #ffcc80;
+    transition: all 0.2s ease; white-space: nowrap;
+}
+.ld-tbl-resubmit:hover { background: #ffe0b2; color: #bf360c; text-decoration: none; }
+.ld-tbl-resubmit i { font-size: 11px; }
+
+/* ===== NEEDS REVISION CARD ===== */
+.ld-card--revision { border: 2px solid #ffcc80; }
+.ld-revision-intro {
+    font-size: 14px; color: #78350f; margin: 0 0 16px 0;
+    padding: 10px 14px; background: #fffbeb; border-radius: 8px;
+    border-left: 3px solid #f59e0b;
+}
+.ld-revision-list { display: flex; flex-direction: column; gap: 10px; }
+.ld-revision-item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 12px 16px; background: #fff8f0; border-radius: 10px;
+    border: 1px solid #fed7aa; flex-wrap: wrap;
+}
+.ld-revision-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.ld-revision-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ld-revision-assign {
+    font-size: 14px; font-weight: 600; color: #1e293b;
+    overflow: hidden; text-overflow: ellipsis;
+}
+.ld-revision-grade {
+    display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    padding: 2px 10px; border-radius: 20px; letter-spacing: 0.5px;
+    background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;
+}
+.ld-revision-course { font-size: 12px; color: #64748b; }
+.ld-revision-feedback { margin-top: 4px; }
+.ld-revision-meta { display: block; font-size: 11px; color: #94a3b8; }
+.ld-revision-comment { display: block; font-size: 12px; color: #475569; font-style: italic; margin-top: 2px; }
+.ld-btn-resubmit {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px; border-radius: 8px; text-decoration: none;
+    background: linear-gradient(135deg, #e65100 0%, #f57c00 100%);
+    color: white; font-size: 13px; font-weight: 600;
+    transition: all 0.2s ease; flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(230, 81, 0, 0.25);
+}
+.ld-btn-resubmit:hover { background: linear-gradient(135deg, #bf360c 0%, #e65100 100%); color: white; text-decoration: none; transform: translateY(-1px); }
+.ld-btn-resubmit i { font-size: 14px; }
+
+@media (max-width: 600px) {
+    .ld-revision-item { flex-direction: column; align-items: flex-start; }
+    .ld-btn-resubmit { width: 100%; justify-content: center; }
+}
+
 /* ===== TUTOR CARD ===== */
 .ld-tutor {
     display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
@@ -795,6 +925,37 @@ document.addEventListener('DOMContentLoaded', function() {
 .ld-status--pending { background: #FFF3E0; color: #E65100; }
 .ld-status--reviewed { background: #E8F5E9; color: #2E7D32; }
 .ld-status--revised { background: #E3F2FD; color: #1565C0; }
+
+/* ===== NEWS SECTION ===== */
+.ld-news-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 28px; border-bottom: 1px solid #f1f5f9;
+    text-decoration: none; color: inherit; transition: background .15s;
+    border-left: 3px solid transparent;
+}
+.ld-news-item:last-child { border-bottom: none; }
+.ld-news-item:hover { background: rgba(241,245,249,0.5); text-decoration: none; color: inherit; }
+.ld-news-item--unread { background: rgba(239,246,255,0.6); border-left-color: #3b82f6; }
+.ld-news-left { flex: 1; min-width: 0; }
+.ld-news-title { font-size: 14px; font-weight: 600; color: #0f172a; margin-bottom: 4px; }
+.ld-news-meta { font-size: 12px; color: #94a3b8; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ld-news-cat {
+    font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+}
+.nw-cat-update { background: #E3F2FD; color: #1565C0; }
+.nw-cat-announcement { background: #E8F5E9; color: #2E7D32; }
+.nw-cat-maintenance { background: #FFF3E0; color: #E65100; }
+.nw-cat-policy-change { background: #F3E5F5; color: #7B1FA2; }
+.ld-news-right { flex-shrink: 0; }
+.ld-news-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 12px;
+    text-transform: uppercase;
+}
+.ld-news-badge--unread { background: #3b82f6; color: #fff; animation: ld-pulse 2s infinite; }
+.ld-news-badge--pending { background: #f59e0b; color: #fff; }
+.ld-news-badge--ack { background: #dcfce7; color: #166534; font-size: 14px; padding: 4px 8px; }
 
 /* ===== EMPTY STATES ===== */
 .ld-empty { text-align: center; padding: 40px 16px; }

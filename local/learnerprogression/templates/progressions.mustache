@@ -5,7 +5,7 @@
     with expandable unit-wise (per-course + per-assignment) breakdown.
 
     @package   local_learnerprogression
-    @copyright 2026 Epearl Academy
+    @copyright 2026 Integer Training
     @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
 
@@ -16,7 +16,7 @@
     <div class="prog-header-inner">
       <div>
         <h1 class="prog-title">Learner Progressions</h1>
-        <p class="prog-subtitle">Progression tracking with unit-wise breakdown &middot; Epearl Academy</p>
+        <p class="prog-subtitle">Progression tracking with unit-wise breakdown &middot; Integer Training</p>
       </div>
       {{#is_manager}}
       <div class="prog-header-actions">
@@ -367,8 +367,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 for (var j = 0; j < c.assignments.length; j++) {
                     var a = c.assignments[j];
                     var statusClass = 'prog-unit-status--notsubmitted';
+                    var displayStatus = a.status;
                     if (a.status === 'Pass') statusClass = 'prog-unit-status--pass';
-                    else if (a.status === 'Refer') statusClass = 'prog-unit-status--refer';
+                    else if (a.status === 'Refer') { statusClass = 'prog-unit-status--refer'; displayStatus = 'Needs Revision'; }
                     else if (a.status === 'Pending Grading') statusClass = 'prog-unit-status--pending';
                     else if (a.status === 'Submitted') statusClass = 'prog-unit-status--submitted';
                     else if (a.status === 'Approved') statusClass = 'prog-unit-status--approved';

@@ -25,7 +25,7 @@ defined('MOODLE_INTERNAL') || die();
  * Cron picks it up and executes without blocking the browser.
  *
  * @package   local_sitebackup
- * @copyright 2026 Epearl Academy
+ * @copyright 2026 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class run_backup extends \core\task\adhoc_task {

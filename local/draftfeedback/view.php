@@ -18,7 +18,7 @@
  * View a single draft with AI check option.
  *
  * @package    local_draftfeedback
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -406,8 +406,47 @@ echo $OUTPUT->header();
             <?php else: ?>
                 <p class="text-muted">No content available.</p>
             <?php endif; ?>
+
+            <?php if (!empty($draft->drafttext) && $content['type'] === 'file'): ?>
+            <div style="margin-top: 16px; padding: 14px 16px; background: #EDE7F6; border-left: 4px solid #9C27B0; border-radius: 0 8px 8px 0;">
+                <div style="font-weight: 600; color: #7B1FA2; font-size: 13px; margin-bottom: 6px;">
+                    <i class="bi bi-chat-dots"></i> Learner's Comments
+                </div>
+                <div style="color: #333; font-size: 14px; line-height: 1.6;"><?php echo format_text($draft->drafttext, FORMAT_HTML); ?></div>
+            </div>
+            <?php endif; ?>
         </div>
     </div>
+
+    <?php
+    // Show feedback files if any.
+    $feedbackfiles = manager::get_feedback_files($draft->id, $draft->cmid);
+    if (!empty($feedbackfiles)):
+    ?>
+    <div class="df-card">
+        <div class="df-card-header"><i class="bi bi-paperclip"></i> Feedback Attachments</div>
+        <div class="df-card-body">
+            <?php foreach ($feedbackfiles as $fbfile):
+                $fburl = moodle_url::make_pluginfile_url(
+                    $modcontext->id,
+                    'local_draftfeedback',
+                    'feedbackfiles',
+                    $draft->id,
+                    '/',
+                    $fbfile->get_filename()
+                );
+            ?>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eee;">
+                <i class="bi bi-file-earmark" style="font-size: 18px; color: #666;"></i>
+                <a href="<?php echo $fburl; ?>" target="_blank" style="color: #1a2238; font-weight: 500;">
+                    <?php echo s($fbfile->get_filename()); ?>
+                </a>
+                <span style="font-size: 12px; color: #999;">(<?php echo display_size($fbfile->get_filesize()); ?>)</span>
+            </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 
 <?php

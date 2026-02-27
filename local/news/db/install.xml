@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/news/db" VERSION="20260204" COMMENT="News and Updates plugin tables">
+  <TABLES>
+    <!-- Main news items table -->
+    <TABLE NAME="local_news" COMMENT="Stores news/update items">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="title" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="content" TYPE="text" NOTNULL="true" COMMENT="HTML content"/>
+        <FIELD NAME="contentformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="category" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="announcement"
+               COMMENT="update, announcement, maintenance, policy_change"/>
+        <FIELD NAME="important" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"
+               COMMENT="1=triggers popup and email"/>
+        <FIELD NAME="requires_acknowledgement" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"
+               COMMENT="1=user must click Acknowledge"/>
+        <FIELD NAME="published" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="publishdate" TYPE="int" LENGTH="10" NOTNULL="true"
+               COMMENT="When to show (future scheduling)"/>
+        <FIELD NAME="expirydate" TYPE="int" LENGTH="10" NOTNULL="false"
+               COMMENT="When to stop showing (null=never)"/>
+        <FIELD NAME="createdby" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="modifiedby" TYPE="int" LENGTH="10" NOTNULL="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="createdby_fk" TYPE="foreign" FIELDS="createdby" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="category_idx" UNIQUE="false" FIELDS="category"/>
+        <INDEX NAME="published_idx" UNIQUE="false" FIELDS="published, publishdate"/>
+        <INDEX NAME="important_idx" UNIQUE="false" FIELDS="important"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- User read/acknowledgement tracking -->
+    <TABLE NAME="local_news_read" COMMENT="Tracks which users have read/acknowledged news">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="newsid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="timeread" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="acknowledged" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"
+               COMMENT="1=user clicked acknowledge button"/>
+        <FIELD NAME="timeacknowledged" TYPE="int" LENGTH="10" NOTNULL="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="newsid_fk" TYPE="foreign" FIELDS="newsid" REFTABLE="local_news" REFFIELDS="id"/>
+        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="newsid_userid_idx" UNIQUE="true" FIELDS="newsid, userid"/>
+        <INDEX NAME="userid_idx" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <!-- Email notification log -->
+    <TABLE NAME="local_news_notifications" COMMENT="Log of sent email notifications">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="newsid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="timesent" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="sent"
+               COMMENT="sent, failed"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="newsid_fk" TYPE="foreign" FIELDS="newsid" REFTABLE="local_news" REFFIELDS="id"/>
+        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="newsid_userid_idx" UNIQUE="true" FIELDS="newsid, userid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

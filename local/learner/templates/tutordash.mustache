@@ -143,6 +143,15 @@
       <i class="bi bi-arrow-right td-alert-arrow"></i>
     </a>
 
+    <a href="{{{ai_checks_url}}}" class="td-alert td-alert--ai">
+      <div class="td-alert-icon"><i class="bi bi-robot"></i></div>
+      <div class="td-alert-content">
+        <span class="td-alert-label">AI Check Tool</span>
+        <span class="td-alert-value" style="font-size:14px;">Upload &amp; Check</span>
+      </div>
+      <i class="bi bi-arrow-right td-alert-arrow"></i>
+    </a>
+
   </div>
 
   <!-- ===== SECTION 2: CHARTS ===== -->
@@ -214,6 +223,11 @@
             <td class="text-center"><span class="td-pill td-pill--purple">{{{draft_feedback_count}}}</span></td>
             <td class="text-center"><a href="{{{draft_feedback_url}}}" class="td-action-link">View <i class="bi bi-arrow-right"></i></a></td>
           </tr>
+          <tr>
+            <td class="td-cell-name"><i class="bi bi-robot" style="color:#6ea3c1;"></i> AI Check Tool</td>
+            <td class="text-center"><span class="td-pill td-pill--teal">Tool</span></td>
+            <td class="text-center"><a href="{{{ai_checks_url}}}" class="td-action-link">Open <i class="bi bi-arrow-right"></i></a></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -251,6 +265,51 @@
           {{/courses}}
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 5: NEWS & UPDATES ===== -->
+  <div class="td-panel">
+    <div class="td-panel-hdr" style="background: linear-gradient(135deg, #1a2238 0%, #3a5ba0 100%);">
+      <div>
+        <h3><i class="bi bi-megaphone-fill"></i> News &amp; Updates</h3>
+        <p>Stay informed about platform changes</p>
+      </div>
+      {{#has_news}}<a href="{{{news_link}}}" class="td-hdr-btn" style="margin-left:auto;"><i class="bi bi-arrow-right"></i> View All</a>{{/has_news}}
+    </div>
+    <div class="td-panel-body" style="padding: 0;">
+      {{#has_news}}
+      {{#recent_news}}
+      <a href="{{{view_url}}}" class="td-news-item{{#is_unread}} td-news-item--unread{{/is_unread}}">
+        <div class="td-news-left">
+          <div class="td-news-title">
+            {{#is_important}}<i class="bi bi-exclamation-triangle-fill" style="color:#dc2626;margin-right:6px;"></i>{{/is_important}}
+            {{{title}}}
+          </div>
+          <div class="td-news-meta">
+            <span class="td-news-cat {{{category_class}}}">{{{category}}}</span>
+            <span style="color:#94a3b8;margin:0 6px;">&middot;</span>
+            <span style="color:#6b7280;">{{{formatted_date}}}</span>
+          </div>
+        </div>
+        <div class="td-news-right">
+          {{#is_unread}}<span class="td-news-badge td-news-badge--unread">New</span>{{/is_unread}}
+          {{^is_unread}}
+            {{#requires_ack}}
+              {{#is_acknowledged}}<span class="td-news-badge td-news-badge--ack"><i class="bi bi-check-circle"></i></span>{{/is_acknowledged}}
+              {{^is_acknowledged}}<span class="td-news-badge td-news-badge--pending">Action</span>{{/is_acknowledged}}
+            {{/requires_ack}}
+          {{/is_unread}}
+        </div>
+      </a>
+      {{/recent_news}}
+      {{/has_news}}
+      {{^has_news}}
+      <div style="text-align:center;padding:40px 24px;color:#6b7280;font-style:italic;">
+        <i class="bi bi-megaphone" style="font-size:32px;color:#cbd5e1;display:block;margin-bottom:10px;"></i>
+        No news or updates at the moment
+      </div>
+      {{/has_news}}
     </div>
   </div>
 
@@ -748,6 +807,7 @@ a.td-kpi-card--link:hover {
 .td-alert--warning::before { background: #f7c873; }
 .td-alert--info::before { background: #3a5ba0; }
 .td-alert--draft::before { background: #9C27B0; }
+.td-alert--ai::before { background: #6ea3c1; }
 
 .td-alert:hover {
     transform: translateY(-2px);
@@ -769,6 +829,7 @@ a.td-kpi-card--link:hover {
 .td-alert--warning .td-alert-icon { background: #fef3c7; color: #92400e; }
 .td-alert--info .td-alert-icon { background: rgba(58,91,160,0.1); color: #3a5ba0; }
 .td-alert--draft .td-alert-icon { background: #F3E5F5; color: #9C27B0; }
+.td-alert--ai .td-alert-icon { background: rgba(110,163,193,0.15); color: #6ea3c1; }
 
 .td-alert-content {
     flex: 1;
@@ -796,6 +857,41 @@ a.td-kpi-card--link:hover {
     transform: translateX(4px);
     color: #3a5ba0;
 }
+
+/* ==========================================================================
+   NEWS SECTION
+   ========================================================================== */
+.td-news-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 16px 24px; border-bottom: 1px solid #f1f5f9;
+    text-decoration: none; color: #1a2238; transition: background .15s;
+    border-left: 3px solid transparent;
+}
+.td-news-item:last-child { border-bottom: none; }
+.td-news-item:hover { background: #f8fafc; text-decoration: none; color: #1a2238; }
+.td-news-item--unread { background: rgba(58,91,160,0.04); border-left-color: #3a5ba0; }
+.td-news-left { flex: 1; min-width: 0; }
+.td-news-title { font-size: 14px; font-weight: 600; color: #1a2238; margin-bottom: 4px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+.td-news-meta { font-size: 12px; display: flex; align-items: center; flex-wrap: wrap; }
+.td-news-cat {
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.3px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.td-cat-update { background: #E3F2FD; color: #1565C0; }
+.td-cat-announcement { background: #E8F5E9; color: #2E7D32; }
+.td-cat-maintenance { background: #FFF3E0; color: #E65100; }
+.td-cat-policy-change { background: #F3E5F5; color: #7B1FA2; }
+.td-news-right { flex-shrink: 0; }
+.td-news-badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 12px;
+    text-transform: uppercase;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.td-news-badge--unread { background: #3a5ba0; color: #fff; }
+.td-news-badge--pending { background: #f7c873; color: #92400e; }
+.td-news-badge--ack { background: #dcfce7; color: #166534; font-size: 14px; padding: 4px 8px; }
 
 /* ==========================================================================
    HIGHCHARTS CLEANUP

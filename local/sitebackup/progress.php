@@ -19,7 +19,7 @@
  * Also serves as AJAX endpoint when ?ajax=1 is passed.
  *
  * @package   local_sitebackup
- * @copyright 2026 Epearl Academy
+ * @copyright 2026 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

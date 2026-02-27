@@ -83,7 +83,7 @@ if ($mform->is_cancelled()) {
        $newuserobj->id = user_create_user($newuserobj, false, false);
 
       // Set password safely
-      update_internal_user_password($newuserobj, 'Epearl@123');
+      update_internal_user_password($newuserobj, 'Integer@123');
 
       // Force password change on first login
       set_user_preference('auth_forcepasswordchange', 1, $newuserobj->id);
@@ -114,7 +114,7 @@ if ($mform->is_cancelled()) {
               <ul class="list-unstyled ms-3">
                 <li>Learning website: <a href="https://epearlacademy.com" target="_blank" rel="noopener">https://epearlacademy.com</a></li>
                 <li>Username: <span class="credential">'.$to->username.'</span></li>
-                <li>Password: <span class="credential">Epearl@123</span></li>
+                <li>Password: <span class="credential">Integer@123</span></li>
               </ul>
             </div>
 

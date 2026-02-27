@@ -18,7 +18,7 @@
  * Manager class for Draft Feedback plugin.
  *
  * @package    local_draftfeedback
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -260,9 +260,10 @@ class manager {
      * @param int $draftid Draft ID
      * @param string $feedback Feedback text
      * @param int $tutorid Tutor user ID
+     * @param int|null $feedbackfileitemid File draft area item ID for feedback files
      * @return bool Success
      */
-    public static function save_feedback($draftid, $feedback, $tutorid) {
+    public static function save_feedback($draftid, $feedback, $tutorid, $feedbackfileitemid = null) {
         global $DB;
 
         $now = time();
@@ -277,12 +278,50 @@ class manager {
 
         $result = $DB->update_record('local_draftfeedback', $draft);
 
+        // Save feedback files if uploaded.
+        if ($result && $feedbackfileitemid) {
+            self::save_feedback_files($draftid, $feedbackfileitemid, $draft->cmid);
+        }
+
         if ($result) {
             // Send notification to learner.
             self::notify_learner($draft);
         }
 
         return $result;
+    }
+
+    /**
+     * Save feedback files from draft area.
+     *
+     * @param int $draftid Draft record ID
+     * @param int $draftitemid Draft area item ID
+     * @param int $cmid Course module ID
+     */
+    public static function save_feedback_files($draftid, $draftitemid, $cmid) {
+        $context = \context_module::instance($cmid);
+
+        file_save_draft_area_files(
+            $draftitemid,
+            $context->id,
+            'local_draftfeedback',
+            'feedbackfiles',
+            $draftid,
+            ['subdirs' => 0, 'maxfiles' => 10]
+        );
+    }
+
+    /**
+     * Get feedback files for a draft.
+     *
+     * @param int $draftid Draft record ID
+     * @param int $cmid Course module ID
+     * @return array Array of stored_file objects
+     */
+    public static function get_feedback_files($draftid, $cmid) {
+        $context = \context_module::instance($cmid);
+        $fs = get_file_storage();
+        return $fs->get_area_files($context->id, 'local_draftfeedback', 'feedbackfiles', $draftid, 'filename', false);
     }
 
     /**

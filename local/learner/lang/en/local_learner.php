@@ -55,7 +55,7 @@ $string['alertsoverview'] = 'Alerts & Action Items';
 
 // Learner view (view.php) strings.
 $string['learnermanagement'] = 'Learner Management';
-$string['learnermanagement_subtitle'] = 'Manage all learners &middot; Epearl Academy';
+$string['learnermanagement_subtitle'] = 'Manage all learners &middot; Integer Training';
 $string['totallearners_kpi'] = 'Total Learners';
 $string['active_kpi'] = 'Active';
 $string['inactive_kpi'] = 'Inactive (30+ Days)';

@@ -18,7 +18,7 @@
  * SMS log viewer for local_twiliosms.
  *
  * @package   local_twiliosms
- * @copyright 2025 Epearl Academy
+ * @copyright 2025 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -40,7 +40,7 @@ if ($action === 'retry' && $logid > 0 && confirm_sesskey()) {
             // Re-build message from current template.
             $template = get_config('local_twiliosms', 'messagetemplate');
             if (empty($template)) {
-                $template = 'Epearl Academy - User: {username} Pass: Epearl@123 Login: epearlacademy.com';
+                $template = 'Integer Training - User: {username} Pass: Integer@123 Login: epearlacademy.com';
             }
             $message = str_replace(
                 ['{firstname}', '{lastname}', '{username}', '{email}'],

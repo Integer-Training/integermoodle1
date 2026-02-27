@@ -20,7 +20,7 @@ namespace local_errorlogger;
  * Hook callbacks for Error Logger.
  *
  * @package    local_errorlogger
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class hook_callbacks {

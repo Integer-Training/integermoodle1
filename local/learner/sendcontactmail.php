@@ -35,10 +35,10 @@ echo $OUTPUT->header();
 //
 //print_object($_POST);die;
 $to = 'student.support@integertraining.com';
-$subject = "EpearlAcademy Contact Us";
+$subject = "Integer Training Contact Us";
 //
 $htmlmessage = '<p>Hi ,</p>
-               <p>I would like to enquire on EpearlAcademy Courses.
+               <p>I would like to enquire on Integer Training Courses.
                <p>Please reach me by:-</p>
                <p>Name: '.$_POST['name'].'</p>
                <p>Email: '.$_POST['email'].'</p>

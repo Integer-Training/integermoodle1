@@ -16,14 +16,14 @@
 
 /**
  * @package   local_learnerdashboard
- * @copyright 2026 Epearl Academy
+ * @copyright 2026 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_learnerdashboard';
-$plugin->version   = 2026020201;
+$plugin->version   = 2026020500;
 $plugin->requires  = 2024042200;
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.1.0';
+$plugin->release   = '1.2.0';

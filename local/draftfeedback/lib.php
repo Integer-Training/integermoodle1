@@ -18,7 +18,7 @@
  * Library functions for Draft Feedback plugin.
  *
  * @package    local_draftfeedback
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -181,7 +181,7 @@ function local_draftfeedback_extend_navigation(global_navigation $navigation) {
 function local_draftfeedback_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
     global $DB, $USER;
 
-    if ($filearea !== 'draftfiles') {
+    if ($filearea !== 'draftfiles' && $filearea !== 'feedbackfiles') {
         return false;
     }
 

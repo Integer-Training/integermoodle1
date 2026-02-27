@@ -1,4 +1,4 @@
-# Epearl LMS — UX Overhaul Plan
+# Integer Training LMS — UX Overhaul Plan
 
 **Focus areas (in order):** Navigation → Grading → Ease of Learning → Clear Language
 

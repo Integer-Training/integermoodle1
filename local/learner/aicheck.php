@@ -132,7 +132,11 @@ try {
         'userid' => $submission->userid
     ]);
 
-    if ($existingscan && !empty($existingscan->predicted_class)) {
+    // If the scan is older than the submission, it's stale (e.g., learner resubmitted).
+    $scanIsStale = ($existingscan && !empty($existingscan->timesubmitted)
+        && $existingscan->timesubmitted < $submission->timemodified);
+
+    if ($existingscan && !empty($existingscan->predicted_class) && !$scanIsStale) {
         // Return existing results with link to detailed report.
         $reporturl = new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]);
 
@@ -253,42 +257,74 @@ try {
         exit;
     }
 
-    // Load GPTZero API class.
-    require_once($CFG->dirroot . '/plagiarism/gptzero/classes/api.php');
-    $api = new \plagiarism_gptzero\api();
-
-    // Prepare API parameters.
-    $params = [
-        'assignmentName' => $assignment->name,
-        'userId' => $learner->id,
-        'userName' => $learner->username,
-        'userEmail' => $learner->email,
-    ];
-
-    // Check if there's a GPTZero assignment ID configured.
-    $gptzeroconfig = $DB->get_record('plagiarism_gptzero_config', ['cm' => $cm->id, 'name' => 'use_gptzero']);
-    if ($gptzeroconfig) {
-        $params['assignmentId'] = $gptzeroconfig->gptzero_assignment_id;
-    }
-
-    // Call GPTZero API.
+    // Call GPTZero API directly to get full response with sentence-level data.
+    // (Bypasses plagiarism plugin's transform_response which strips sentences and class_probabilities.)
     if ($hasfile && $file) {
-        $response = $api->submit_file($file, $params);
+        $filecontent = $file->get_content();
+        $filetype = $file->get_mimetype();
+        $boundary = '----CustomBoundary' . uniqid();
+        $payload = '--' . $boundary . "\r\n";
+        $payload .= 'Content-Disposition: form-data; name="files"; filename="' . basename($file->get_filename()) . "\"\r\n";
+        $payload .= 'Content-Type: ' . $filetype . "\r\n\r\n";
+        $payload .= $filecontent . "\r\n";
+        $payload .= '--' . $boundary . "--\r\n";
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => 'https://api.gptzero.me/v2/predict/files',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => [
+                'Accept: application/json',
+                'Content-Type: multipart/form-data; boundary=' . $boundary,
+                'x-api-key: ' . $apikey,
+            ],
+        ]);
+        $rawresponse = curl_exec($ch);
+        $curlerror = curl_error($ch);
+        curl_close($ch);
     } else {
-        $response = $api->submit_text($content, $params);
+        $postdata = json_encode(['document' => $content]);
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => 'https://api.gptzero.me/v2/predict/text',
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 120,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $postdata,
+            CURLOPT_HTTPHEADER => [
+                'Accept: application/json',
+                'Content-Type: application/json',
+                'x-api-key: ' . $apikey,
+            ],
+        ]);
+        $rawresponse = curl_exec($ch);
+        $curlerror = curl_error($ch);
+        curl_close($ch);
     }
 
-    $response = json_decode($response, true);
-
-    if (isset($response['error'])) {
+    if (!empty($curlerror)) {
         echo json_encode([
             'success' => false,
-            'error' => 'GPTZero API error: ' . $response['error']
+            'error' => 'GPTZero API connection error: ' . $curlerror
         ]);
         exit;
     }
 
-    if (!isset($response['results'])) {
+    $scandata = json_decode($rawresponse, true);
+
+    if (isset($scandata['error'])) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'GPTZero API error: ' . ($scandata['error'] ?? 'Unknown error')
+        ]);
+        exit;
+    }
+
+    if (!isset($scandata['documents']) || empty($scandata['documents'])) {
         echo json_encode([
             'success' => false,
             'error' => 'Invalid response from GPTZero API.'
@@ -296,7 +332,20 @@ try {
         exit;
     }
 
-    // Store the result.
+    // Extract document-level data from raw GPTZero response.
+    $doc = $scandata['documents'][0];
+    $classProbs = $doc['class_probabilities'] ?? [];
+    $predictedClass = $doc['predicted_class'] ?? 'unknown';
+    $classProbability = $classProbs[strtolower($predictedClass)] ?? ($doc['completely_generated_prob'] ?? 0);
+
+    $confidenceCategory = 'low';
+    if ($classProbability >= 0.8) {
+        $confidenceCategory = 'high';
+    } else if ($classProbability >= 0.5) {
+        $confidenceCategory = 'medium';
+    }
+
+    // Store the result with FULL GPTZero response (including sentences for aireport.php).
     $plagiarismfile = new stdClass();
     $plagiarismfile->cm = $cm->id;
     $plagiarismfile->userid = $learner->id;
@@ -305,24 +354,12 @@ try {
     $plagiarismfile->filename = $hasfile ? $file->get_filename() : 'onlinetext_' . $submissionid;
     $plagiarismfile->attempt = $submission->attemptnumber;
     $plagiarismfile->timesubmitted = time();
-    $plagiarismfile->predicted_class = $response['results']['predicted_class'];
-    $plagiarismfile->class_probability = $response['results']['class_probability'];
-    $plagiarismfile->confidence_category = $response['results']['confidence_category'] ?? '';
-    $plagiarismfile->scanid = $response['results']['scanId'] ?? '';
-
-    // Store class_probabilities as JSON in scanurl if available (for accurate display in table).
-    if (isset($response['results']['class_probabilities'])) {
-        // Store in a format compatible with aireport.php's expected structure.
-        $plagiarismfile->scanurl = json_encode([
-            'documents' => [[
-                'predicted_class' => $response['results']['predicted_class'],
-                'class_probabilities' => $response['results']['class_probabilities'],
-                'result_message' => $response['results']['result_message'] ?? ''
-            ]]
-        ]);
-    } else {
-        $plagiarismfile->scanurl = $response['results']['scanUrl'] ?? '';
-    }
+    $plagiarismfile->predicted_class = $predictedClass;
+    $plagiarismfile->class_probability = $classProbability;
+    $plagiarismfile->confidence_category = $confidenceCategory;
+    $plagiarismfile->scanid = uniqid('gptzero_');
+    // Store the complete GPTZero response so aireport.php doesn't need to rescan.
+    $plagiarismfile->scanurl = json_encode($scandata);
 
     // Insert or update the record.
     if ($existingscan) {
@@ -351,40 +388,18 @@ try {
         set_config('last_scan_time', time(), 'plagiarism_gptzero');
     }
 
-    // Extract all 3 class probabilities if available.
-    $classProbs = $response['results']['class_probabilities'] ?? null;
-    $aiPct = 0;
-    $mixedPct = 0;
-    $humanPct = 0;
+    // Extract class probabilities directly from GPTZero response.
+    $aiPct = round(($classProbs['ai'] ?? 0) * 100);
+    $mixedPct = round(($classProbs['mixed'] ?? 0) * 100);
+    $humanPct = round(($classProbs['human'] ?? 0) * 100);
 
-    if ($classProbs) {
-        $aiPct = round(($classProbs['ai'] ?? 0) * 100);
-        $mixedPct = round(($classProbs['mixed'] ?? 0) * 100);
-        $humanPct = round(($classProbs['human'] ?? 0) * 100);
-    } else {
-        // Fallback: use single class_probability for predicted class.
-        $cls = strtolower($response['results']['predicted_class']);
-        $prob = round($response['results']['class_probability'] * 100);
-        if ($cls === 'ai') {
-            $aiPct = $prob;
-            $humanPct = 100 - $prob;
-        } else if ($cls === 'human') {
-            $humanPct = $prob;
-            $aiPct = 100 - $prob;
-        } else {
-            $mixedPct = $prob;
-            $aiPct = round((100 - $prob) / 2);
-            $humanPct = 100 - $prob - $aiPct;
-        }
-    }
-
-    // Return success with results - include link to detailed report.
+    // Return success with results.
     $reporturl = new moodle_url('/local/learner/aireport.php', ['id' => $submissionid]);
     echo json_encode([
         'success' => true,
         'cached' => false,
-        'predicted_class' => $response['results']['predicted_class'],
-        'class_probability' => round($response['results']['class_probability'] * 100),
+        'predicted_class' => $predictedClass,
+        'class_probability' => round($classProbability * 100),
         'ai_pct' => $aiPct,
         'mixed_pct' => $mixedPct,
         'human_pct' => $humanPct,

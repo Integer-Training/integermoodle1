@@ -20,7 +20,7 @@
  * Sends an SMS via Twilio when a new user is created.
  *
  * @package   local_twiliosms
- * @copyright 2025 Epearl Academy
+ * @copyright 2025 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -66,7 +66,7 @@ class observer {
         // Build message from template.
         $template = get_config('local_twiliosms', 'messagetemplate');
         if (empty($template)) {
-            $template = 'Epearl Academy - User: {username} Pass: Epearl@123 Login: epearlacademy.com';
+            $template = 'Integer Training - User: {username} Pass: Integer@123 Login: epearlacademy.com';
         }
 
         $message = str_replace(

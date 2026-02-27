@@ -18,7 +18,7 @@
  * Event observers for local_twiliosms.
  *
  * @package   local_twiliosms
- * @copyright 2025 Epearl Academy
+ * @copyright 2025 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

@@ -23,7 +23,7 @@ namespace local_errorlogger;
  * before passing them through to the original handlers.
  *
  * @package    local_errorlogger
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class handler {

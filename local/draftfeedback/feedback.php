@@ -18,7 +18,7 @@
  * Provide feedback on a draft.
  *
  * @package    local_draftfeedback
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -77,6 +77,13 @@ class local_draftfeedback_feedback_form extends moodleform {
             $mform->setDefault('feedback', ['text' => $draft->feedback, 'format' => FORMAT_HTML]);
         }
 
+        // File upload for annotated/marked documents.
+        $mform->addElement('filemanager', 'feedbackfiles', 'Attach files (e.g. marked workbook)', null, [
+            'subdirs' => 0,
+            'maxfiles' => 10,
+            'accepted_types' => ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.xlsx', '.xls', '.pptx', '.png', '.jpg'],
+        ]);
+
         $this->add_action_buttons(true, get_string('savefeedback', 'local_draftfeedback'));
     }
 }
@@ -89,7 +96,8 @@ if ($form->is_cancelled()) {
 
 if ($data = $form->get_data()) {
     $feedback = $data->feedback['text'];
-    manager::save_feedback($id, $feedback, $USER->id);
+    $feedbackfileitemid = !empty($data->feedbackfiles) ? $data->feedbackfiles : null;
+    manager::save_feedback($id, $feedback, $USER->id, $feedbackfileitemid);
 
     redirect(
         new moodle_url('/local/draftfeedback/index.php'),
@@ -192,6 +200,14 @@ echo $OUTPUT->header();
             }
             ?>
         </div>
+        <?php if (!empty($draft->drafttext) && $content['type'] === 'file'): ?>
+        <div style="margin-top: 14px; padding: 14px 16px; background: #EDE7F6; border-left: 4px solid #9C27B0; border-radius: 0 8px 8px 0;">
+            <div style="font-weight: 600; color: #7B1FA2; font-size: 13px; margin-bottom: 6px;">
+                <i class="bi bi-chat-dots"></i> Learner's Comments
+            </div>
+            <div style="color: #333; font-size: 14px; line-height: 1.6; white-space: pre-wrap;"><?php echo format_text($draft->drafttext, FORMAT_HTML); ?></div>
+        </div>
+        <?php endif; ?>
     </div>
 
     <div class="card">

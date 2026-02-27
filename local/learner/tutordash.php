@@ -21,7 +21,7 @@
  * pipeline stats, pass rate, and per-course caseload breakdown.
  *
  * @package   local_learner
- * @copyright 2025 Epearl Academy
+ * @copyright 2025 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -182,7 +182,13 @@ $mark_sql = "SELECT COUNT(DISTINCT sub.id)
 $yet_to_grade = $DB->count_records_sql($mark_sql);
 
 // ============================================================
-// 6. RESUBMISSIONS AWAITING REVIEW (attemptnumber > 0)
+// 6. RESUBMISSIONS AWAITING REVIEW
+//    Case 1: Normal resubmission (attemptnumber > 0) not yet graded.
+//    Case 2: Re-upload on same attempt — learner uploaded NEW files
+//            AFTER receiving a grade. Verified by checking the {files}
+//            table for submission files created after the grading time.
+//            This catches the common scenario where attemptreopenmethod
+//            didn't fire and the learner re-uploaded on attemptnumber = 0.
 // ============================================================
 $resub_sql = "SELECT COUNT(DISTINCT sub.id)
     FROM {$prefix}groups_members gm_t
@@ -196,13 +202,25 @@ $resub_sql = "SELECT COUNT(DISTINCT sub.id)
     JOIN {$prefix}modules mod_r ON mod_r.name = 'assign'
     JOIN {$prefix}course_modules cm_r ON cm_r.instance = a.id AND cm_r.course = a.course AND cm_r.module = mod_r.id AND cm_r.visible = 1
     JOIN {$prefix}assign_submission sub ON sub.assignment = a.id AND sub.userid = gm_s.userid
-        AND sub.status = 'submitted' AND sub.attemptnumber > 0 AND sub.latest = 1
+        AND sub.status = 'submitted' AND sub.latest = 1
     LEFT JOIN {$prefix}assign_grades gr ON gr.assignment = a.id AND gr.userid = gm_s.userid
         AND gr.attemptnumber = sub.attemptnumber
     WHERE gm_t.userid = {$tutorid}
         AND a.name NOT LIKE '%IAG%'
         AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-        AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
+        AND (
+            (sub.attemptnumber > 0 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0))
+            OR
+            (gr.id IS NOT NULL AND gr.grade IS NOT NULL AND gr.grade >= 0
+             AND EXISTS (
+                 SELECT 1 FROM {$prefix}files f
+                 WHERE f.component = 'assignsubmission_file'
+                 AND f.filearea = 'submission_files'
+                 AND f.itemid = sub.id
+                 AND f.filename <> '.'
+                 AND f.timecreated > gr.timemodified
+             ))
+        )";
 
 $resubmissions = $DB->count_records_sql($resub_sql);
 
@@ -327,6 +345,64 @@ if ($DB->get_manager()->table_exists('local_draftfeedback')) {
 }
 
 // ============================================================
+// 12. RECENT NEWS (from local_news plugin)
+// ============================================================
+$recent_news = [];
+$unread_news_count = 0;
+$has_news = false;
+
+$news_table_exists = $DB->get_manager()->table_exists('local_news');
+
+if ($news_table_exists) {
+    // Get 5 most recent published news items with read status.
+    $news_sql = "SELECT n.id, n.title, n.category, n.important, n.requires_acknowledgement,
+                        n.publishdate, n.timecreated,
+                        nr.id AS read_id, nr.acknowledged
+                 FROM {local_news} n
+                 LEFT JOIN {local_news_read} nr ON nr.newsid = n.id AND nr.userid = :userid
+                 WHERE n.published = 1
+                   AND n.publishdate <= :now1
+                   AND (n.expirydate IS NULL OR n.expirydate > :now2)
+                 ORDER BY n.publishdate DESC
+                 LIMIT 5";
+
+    $news_records = $DB->get_records_sql($news_sql, [
+        'userid' => $tutorid,
+        'now1' => $now,
+        'now2' => $now,
+    ]);
+
+    // Get category labels.
+    $category_labels = [
+        'update' => get_string('category_update', 'local_news'),
+        'announcement' => get_string('category_announcement', 'local_news'),
+        'maintenance' => get_string('category_maintenance', 'local_news'),
+        'policy_change' => get_string('category_policy_change', 'local_news'),
+    ];
+
+    foreach ($news_records as $nr) {
+        $is_unread = empty($nr->read_id);
+        if ($is_unread) {
+            $unread_news_count++;
+        }
+
+        $recent_news[] = [
+            'id' => $nr->id,
+            'title' => $nr->title,
+            'category' => $category_labels[$nr->category] ?? $nr->category,
+            'category_class' => 'td-cat-' . str_replace('_', '-', $nr->category),
+            'is_important' => (bool) $nr->important,
+            'is_unread' => $is_unread,
+            'requires_ack' => (bool) $nr->requires_acknowledgement,
+            'is_acknowledged' => !empty($nr->acknowledged),
+            'formatted_date' => userdate($nr->publishdate, '%d %b %Y'),
+            'view_url' => (new moodle_url('/local/news/view.php', ['id' => $nr->id]))->out(false),
+        ];
+    }
+    $has_news = !empty($recent_news);
+}
+
+// ============================================================
 // BUILD TEMPLATE CONTEXT
 // ============================================================
 $templatecontext = [
@@ -366,6 +442,15 @@ $templatecontext = [
     'draft_feedback_count' => $draft_feedback_count,
     'draft_feedback_url'   => new moodle_url('/local/draftfeedback/index.php'),
     'has_draft_feedback'   => ($draft_feedback_count > 0),
+
+    // News.
+    'recent_news'          => $recent_news,
+    'has_news'             => $has_news,
+    'unread_news_count'    => $unread_news_count,
+    'news_link'            => new moodle_url('/local/news/index.php'),
+
+    // AI Check Tool.
+    'ai_checks_url'        => new moodle_url('/local/learner/aichecks.php'),
 ];
 
 echo $OUTPUT->render_from_template('local_learner/tutordash', $templatecontext);

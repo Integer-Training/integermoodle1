@@ -20,7 +20,7 @@
  * Accessible to managers (all learners) and tutors (their group learners).
  *
  * @package   local_learner
- * @copyright 2026 Epearl Academy
+ * @copyright 2026 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

@@ -18,7 +18,7 @@
  * AI Detection Report for draft feedback.
  *
  * @package    local_draftfeedback
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -70,19 +70,12 @@ $sentences = $doc['sentences'] ?? [];
 $overall_prob = round(($doc['completely_generated_prob'] ?? 0) * 100);
 $result = $draft->aicheck_result;
 
-// Calculate stats.
+// Extract GPTZero's document-level class probabilities (the authoritative numbers).
+$classProbs = $doc['class_probabilities'] ?? [];
+$aiPct = round(($classProbs['ai'] ?? 0) * 100);
+$mixedPct = round(($classProbs['mixed'] ?? 0) * 100);
+$humanPct = round(($classProbs['human'] ?? 0) * 100);
 $total_sentences = count($sentences);
-$ai_sentences = 0;
-$human_sentences = 0;
-foreach ($sentences as $s) {
-    $prob = $s['generated_prob'] ?? 0;
-    if ($prob >= 0.8) {
-        $ai_sentences++;
-    } else {
-        $human_sentences++;
-    }
-}
-$ai_percentage = $total_sentences > 0 ? round(($ai_sentences / $total_sentences) * 100) : 0;
 
 echo $OUTPUT->header();
 ?>
@@ -306,25 +299,36 @@ echo $OUTPUT->header();
 
     <div class="air-summary">
         <div class="air-circle <?php echo $result; ?>">
-            <span class="air-circle-percent"><?php echo $overall_prob; ?>%</span>
-            <span class="air-circle-label"><?php echo ucfirst($result); ?></span>
+            <span class="air-circle-label" style="font-size: 18px; margin-bottom: 4px;"><?php echo ucfirst($result); ?></span>
         </div>
+        <div>
+            <h3 style="margin: 0 0 8px 0; color: #1a2238;">Detection Result</h3>
+            <p style="color: #666; margin: 0 0 12px 0;"><?php echo s($doc['result_message'] ?? ''); ?></p>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <span style="display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; background: #fff3e0; border: 1px solid #ffcc80; color: #e65100;">AI <?php echo $aiPct; ?>%</span>
+                <span style="display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; background: #fff8e1; border: 1px solid #ffe082; color: #f57f17;">Mixed <?php echo $mixedPct; ?>%</span>
+                <span style="display: inline-flex; align-items: center; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; <?php echo $result === 'human' ? 'background: #2e7d32; border-color: #2e7d32; color: white; font-weight: 600;' : 'background: #e8f5e9; border: 1px solid #a5d6a7; color: #2e7d32;'; ?>">Human <?php echo $humanPct; ?>%</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="air-summary" style="grid-template-columns: 1fr;">
         <div class="air-stats">
             <div class="air-stat">
                 <div class="air-stat-value"><?php echo $total_sentences; ?></div>
-                <div class="air-stat-label">Total Sentences</div>
+                <div class="air-stat-label">Sentences Analyzed</div>
             </div>
             <div class="air-stat">
-                <div class="air-stat-value" style="color: #E65100;"><?php echo $ai_sentences; ?></div>
-                <div class="air-stat-label">AI-Detected</div>
+                <div class="air-stat-value" style="color: #E65100;"><?php echo $aiPct; ?>%</div>
+                <div class="air-stat-label">AI Probability</div>
             </div>
             <div class="air-stat">
-                <div class="air-stat-value" style="color: #2E7D32;"><?php echo $human_sentences; ?></div>
-                <div class="air-stat-label">Human-Written</div>
+                <div class="air-stat-value" style="color: #f57f17;"><?php echo $mixedPct; ?>%</div>
+                <div class="air-stat-label">Mixed</div>
             </div>
             <div class="air-stat">
-                <div class="air-stat-value"><?php echo $ai_percentage; ?>%</div>
-                <div class="air-stat-label">AI Percentage</div>
+                <div class="air-stat-value" style="color: #2E7D32;"><?php echo $humanPct; ?>%</div>
+                <div class="air-stat-label">Human</div>
             </div>
         </div>
     </div>

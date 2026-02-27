@@ -585,16 +585,6 @@ echo $OUTPUT->header();
     $humanPct = isset($classProbs['human']) ? round($classProbs['human'] * 100) : 0;
     $resultMessage = $doc['result_message'] ?? '';
     $sentences = $doc['sentences'] ?? [];
-
-    $aiSentences = 0;
-    $humanSentences = 0;
-    foreach ($sentences as $s) {
-        if (($s['generated_prob'] ?? 0) >= 0.8) {
-            $aiSentences++;
-        } else {
-            $humanSentences++;
-        }
-    }
     ?>
 
     <div class="ai-score-card">
@@ -615,19 +605,19 @@ echo $OUTPUT->header();
     <div class="ai-stats-grid">
         <div class="ai-stat-card">
             <div class="ai-stat-value"><?php echo count($sentences); ?></div>
-            <div class="ai-stat-label">Total Sentences</div>
+            <div class="ai-stat-label">Sentences Analyzed</div>
         </div>
         <div class="ai-stat-card">
-            <div class="ai-stat-value" style="color: #FF9800;"><?php echo $aiSentences; ?></div>
-            <div class="ai-stat-label">AI-Detected</div>
+            <div class="ai-stat-value" style="color: #e65100;"><?php echo $aiPct; ?>%</div>
+            <div class="ai-stat-label">AI Probability</div>
         </div>
         <div class="ai-stat-card">
-            <div class="ai-stat-value" style="color: #4CAF50;"><?php echo $humanSentences; ?></div>
-            <div class="ai-stat-label">Human-Written</div>
+            <div class="ai-stat-value" style="color: #f57f17;"><?php echo $mixedPct; ?>%</div>
+            <div class="ai-stat-label">Mixed</div>
         </div>
         <div class="ai-stat-card">
-            <div class="ai-stat-value"><?php echo count($sentences) > 0 ? round($aiSentences / count($sentences) * 100) : 0; ?>%</div>
-            <div class="ai-stat-label">AI Percentage</div>
+            <div class="ai-stat-value" style="color: #2e7d32;"><?php echo $humanPct; ?>%</div>
+            <div class="ai-stat-label">Human</div>
         </div>
     </div>
 

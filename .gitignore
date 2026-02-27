@@ -1,0 +1,29 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Deployment ZIPs (local only)
+deploy_zips/
+
+# Duplicate/temp directories
+local 2/
+local 3/
+hotfix_originals/
+
+# ZIP artifacts
+*.zip
+
+# Moodle data (never commit)
+moodledata/
+
+# Local backups
+*.local-backup

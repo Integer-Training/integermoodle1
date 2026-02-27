@@ -5,7 +5,7 @@
     Shows KPIs, charts, tutor performance, course overview, and alerts.
 
     @package   local_admindashboard
-    @copyright 2025 Epearl Academy
+    @copyright 2025 Integer Training
     @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
 
@@ -16,7 +16,7 @@
     <div class="admindash-header-inner">
       <div>
         <h1 class="admindash-title">Admin Dashboard</h1>
-        <p class="admindash-subtitle">Platform overview &middot; Epearl Academy</p>
+        <p class="admindash-subtitle">Platform overview &middot; Integer Training</p>
       </div>
       <div class="admindash-header-actions">
         <a href="{{{learners_link}}}" class="admindash-hdr-btn">
@@ -334,6 +334,9 @@
         <h3><i class="bi bi-robot"></i> AI Detection Checks <span class="admindash-ai-badge">{{{ai_checks_count}}}</span></h3>
         <p>GPTZero AI detection scan history</p>
       </div>
+      <a href="{{{ai_checks_url}}}" class="admindash-hdr-btn" style="margin-left:auto;">
+        <i class="bi bi-upload"></i> AI Check Tool
+      </a>
     </div>
     <div class="admindash-panel-body">
       {{#has_ai_checks}}

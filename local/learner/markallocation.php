@@ -124,6 +124,14 @@ if($action == 'mark'){
         'AI Check',
         'Tutor',
     );
+    // ============================================================
+    // RESUBMISSIONS AWAITING REVIEW
+    //   Case 1: Normal resubmission (attemptnumber > 0) not yet graded.
+    //   Case 2: Re-upload on same attempt — learner updated their submission
+    //           AFTER receiving a grade (sub.timemodified > gr.timemodified).
+    //           This catches the common scenario where attemptreopenmethod
+    //           didn't fire and the learner re-uploaded on attemptnumber = 0.
+    // ============================================================
     $resub_sql = "SELECT sub.id as submision_id,sub.userid,a.course,a.id as assign_id,sub.timemodified as subtime
             FROM {$prefix}groups_members gm_t
             JOIN {$prefix}groups g
@@ -158,7 +166,6 @@ if($action == 'mark'){
                 AND sub.userid = gm_s.userid
                 AND sub.status = 'submitted'
                 AND sub.latest = 1
-                AND sub.attemptnumber > 0
             LEFT JOIN {$prefix}assign_grades gr
                 ON gr.assignment = a.id
                 AND gr.userid = gm_s.userid
@@ -167,7 +174,19 @@ if($action == 'mark'){
                 gm_t.userid = ".(int)$USER->id."
                 AND a.name NOT LIKE '%IAG%'
                 AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-                AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
+                AND (
+                    (sub.attemptnumber > 0 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0))
+                    OR
+                    (gr.id IS NOT NULL AND gr.grade IS NOT NULL AND gr.grade >= 0
+                     AND EXISTS (
+                         SELECT 1 FROM {$prefix}files f
+                         WHERE f.component = 'assignsubmission_file'
+                         AND f.filearea = 'submission_files'
+                         AND f.itemid = sub.id
+                         AND f.filename <> '.'
+                         AND f.timecreated > gr.timemodified
+                     ))
+                )";
 //
     $results = $DB->get_recordset_sql($resub_sql);
 
@@ -336,6 +355,12 @@ if($results){
                    'cm' => $cm->id,
                    'userid' => $record->userid
                ]);
+           }
+
+           // For resubmissions, invalidate stale scan results (done before re-upload).
+           if ($action == 'resub' && $existing_scan && !empty($existing_scan->timesubmitted)
+               && $existing_scan->timesubmitted < $record->subtime) {
+               $existing_scan = null;
            }
 
            if ($existing_scan && !empty($existing_scan->predicted_class)) {

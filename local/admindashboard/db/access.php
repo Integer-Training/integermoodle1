@@ -18,7 +18,7 @@
  * Capability definitions for local_admindashboard.
  *
  * @package   local_admindashboard
- * @copyright 2025 Epearl Academy
+ * @copyright 2025 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

@@ -179,7 +179,9 @@ foreach ($tutors_raw as $traw) {
         );
         $total_caseload += $learner_count;
 
-        // Awaiting marking — overdue (submitted > 72h ago, not graded, first submissions only).
+        // Awaiting marking — overdue (submitted > 72h ago, needs grading).
+        // Includes: first submissions not yet graded + re-uploads after grading
+        // (where learner modified submission after receiving a grade).
         $awaiting_overdue = $DB->count_records_sql(
             "SELECT COUNT(DISTINCT CONCAT(sub.userid, '-', sub.assignment))
              FROM {groups_members} gm_t
@@ -192,17 +194,30 @@ foreach ($tutors_raw as $traw) {
              JOIN {assign} a ON a.course = g.courseid
              JOIN {modules} mdl_m ON mdl_m.name = 'assign'
              JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mdl_m.id AND cm.visible = 1
-             JOIN {assign_submission} sub ON sub.assignment = a.id AND sub.userid = gm_s.userid AND sub.status = 'submitted' AND sub.latest = 1 AND sub.attemptnumber = 0
+             JOIN {assign_submission} sub ON sub.assignment = a.id AND sub.userid = gm_s.userid AND sub.status = 'submitted' AND sub.latest = 1
              LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = gm_s.userid AND gr.attemptnumber = sub.attemptnumber
              WHERE gm_t.userid = :tutorid3
                  AND a.name NOT LIKE '%IAG%'
                  AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-                 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
+                 AND (
+                     (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
+                     OR
+                     (gr.id IS NOT NULL AND gr.grade IS NOT NULL AND gr.grade >= 0
+                      AND EXISTS (
+                          SELECT 1 FROM {files} f
+                          WHERE f.component = 'assignsubmission_file'
+                          AND f.filearea = 'submission_files'
+                          AND f.itemid = sub.id
+                          AND f.filename <> '.'
+                          AND f.timecreated > gr.timemodified
+                      ))
+                 )
                  AND sub.timemodified <= :sla",
             ['tutorid3' => $t->id, 'sla' => $sla_threshold]
         );
 
-        // Awaiting marking — on time (submitted <= 72h ago, not graded, first submissions only).
+        // Awaiting marking — on time (submitted <= 72h ago, needs grading).
+        // Includes: first submissions not yet graded + re-uploads after grading.
         $awaiting_ok = $DB->count_records_sql(
             "SELECT COUNT(DISTINCT CONCAT(sub.userid, '-', sub.assignment))
              FROM {groups_members} gm_t
@@ -215,12 +230,24 @@ foreach ($tutors_raw as $traw) {
              JOIN {assign} a ON a.course = g.courseid
              JOIN {modules} mdl_m ON mdl_m.name = 'assign'
              JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mdl_m.id AND cm.visible = 1
-             JOIN {assign_submission} sub ON sub.assignment = a.id AND sub.userid = gm_s.userid AND sub.status = 'submitted' AND sub.latest = 1 AND sub.attemptnumber = 0
+             JOIN {assign_submission} sub ON sub.assignment = a.id AND sub.userid = gm_s.userid AND sub.status = 'submitted' AND sub.latest = 1
              LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = gm_s.userid AND gr.attemptnumber = sub.attemptnumber
              WHERE gm_t.userid = :tutorid4
                  AND a.name NOT LIKE '%IAG%'
                  AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-                 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
+                 AND (
+                     (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
+                     OR
+                     (gr.id IS NOT NULL AND gr.grade IS NOT NULL AND gr.grade >= 0
+                      AND EXISTS (
+                          SELECT 1 FROM {files} f
+                          WHERE f.component = 'assignsubmission_file'
+                          AND f.filearea = 'submission_files'
+                          AND f.itemid = sub.id
+                          AND f.filename <> '.'
+                          AND f.timecreated > gr.timemodified
+                      ))
+                 )
                  AND sub.timemodified > :sla2",
             ['tutorid4' => $t->id, 'sla2' => $sla_threshold]
         );
@@ -440,7 +467,7 @@ foreach ($courses_raw as $course) {
 // QUERY BLOCK D: Assignment / Grading Stats (Global)
 // ============================================================
 
-// Global awaiting marking (first submissions only).
+// Global awaiting marking (first submissions + re-uploads after grading).
 $global_awaiting = $DB->count_records_sql(
     "SELECT COUNT(DISTINCT CONCAT(sub.userid, '-', sub.assignment))
      FROM {assign_submission} sub
@@ -449,10 +476,22 @@ $global_awaiting = $DB->count_records_sql(
      JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mdl_m.id AND cm.visible = 1
      JOIN {user} u ON u.id = sub.userid AND u.suspended = 0 AND u.deleted = 0
      LEFT JOIN {assign_grades} gr ON gr.assignment = sub.assignment AND gr.userid = sub.userid AND gr.attemptnumber = sub.attemptnumber
-     WHERE sub.status = 'submitted' AND sub.latest = 1 AND sub.attemptnumber = 0
+     WHERE sub.status = 'submitted' AND sub.latest = 1
      AND a.name NOT LIKE '%IAG%'
      AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
-     AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)"
+     AND (
+         (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
+         OR
+         (gr.id IS NOT NULL AND gr.grade IS NOT NULL AND gr.grade >= 0
+          AND EXISTS (
+              SELECT 1 FROM {files} f
+              WHERE f.component = 'assignsubmission_file'
+              AND f.filearea = 'submission_files'
+              AND f.itemid = sub.id
+              AND f.filename <> '.'
+              AND f.timecreated > gr.timemodified
+          ))
+     )"
 );
 
 // Global overdue (submitted but ungraded, past assignment due date).

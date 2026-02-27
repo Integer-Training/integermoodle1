@@ -1438,8 +1438,15 @@ class core_renderer extends \core_renderer {
                                 <span class="rui-sidebar-nav-icon"><i class="fa fa-user-circle" aria-hidden="true"></i></span>
                                 <span class="rui-sidebar-nav-text">User Creation</span>
                             </a>
+                        </li>';
+                $news_manage_link = new moodle_url('/local/news/manage.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$news_manage_link.'" id="itemNewsManage" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-bullhorn"></i></span>
+                                <span class="rui-sidebar-nav-text">News Management</span>
+                            </a>
                         </li>
-                    
+
                     <style>
                     .list-unstyled1 {
                         margin: 5px 0;
@@ -1565,6 +1572,11 @@ class core_renderer extends \core_renderer {
                                 </a>
                             </li>';
                 }
+            }
+
+            // News & Updates sidebar widget - for all authenticated users
+            if (function_exists('local_news_get_sidebar_widget_html')) {
+                $html .= local_news_get_sidebar_widget_html();
             }
 
             return $html;

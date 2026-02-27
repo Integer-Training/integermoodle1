@@ -22,7 +22,7 @@ foreach ($users as $user) {
     context_user::instance($user->id);
 
     // Set new password (temporary)
-    update_internal_user_password($user, 'Epearl@123');
+    update_internal_user_password($user, 'Integer@123');
 
     // Force password change
     set_user_preference('auth_forcepasswordchange', 1, $user->id);
