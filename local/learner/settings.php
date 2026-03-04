@@ -15,15 +15,26 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package   local_learnerdashboard
+ * Settings for local_learner.
+ *
+ * @package   local_learner
  * @copyright 2026 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_learnerdashboard';
-$plugin->version   = 2026030400;
-$plugin->requires  = 2024042200;
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.0';
+if ($hassiteconfig) {
+    $settings = new admin_settingpage('local_learner_settings',
+        get_string('pluginname', 'local_learner'));
+
+    $settings->add(new admin_setting_configtext(
+        'local_learner/turnaround_reset_date',
+        get_string('turnaround_reset_date', 'local_learner'),
+        get_string('turnaround_reset_date_desc', 'local_learner'),
+        '',
+        PARAM_TEXT
+    ));
+
+    $ADMIN->add('localplugins', $settings);
+}

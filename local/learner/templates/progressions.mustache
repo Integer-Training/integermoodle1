@@ -127,8 +127,8 @@
             <th>Start Date</th>
             <th>Activity</th>
             <th>Current %</th>
-            <th style="text-align:center">Submitted / Total</th>
-            <th style="text-align:center">Passed / Total</th>
+            <th style="text-align:center">Workbooks</th>
+            <th style="text-align:center">Case Studies</th>
           </tr>
         </thead>
         <tbody>
@@ -145,10 +145,10 @@
               <span class="prog-bar-label">{{overall_current}}%</span>
             </td>
             <td class="text-center">
-              <span class="prog-pill prog-pill--submitted">{{{submitted_assignments}}} / {{{total_assignments}}}</span>
+              <span class="prog-pill">{{{passed_assignments}}} / {{{total_assignments}}} Passed</span>
             </td>
             <td class="text-center">
-              <span class="prog-pill">{{{passed_assignments}}} / {{{total_assignments}}}</span>
+              <span class="prog-pill prog-pill--cs">{{{cs_approved}}} / {{{cs_total}}} Approved</span>
             </td>
           </tr>
           {{/learners}}
@@ -271,8 +271,10 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="prog-course-header">';
             html += '<div class="prog-course-name"><i class="bi bi-journal-bookmark"></i> ' + escHtml(c.name) + '</div>';
             html += '<div class="prog-course-stats">';
-            html += '<span class="prog-pill" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff">Submitted: ' + c.submitted + ' / ' + c.total + '</span>';
-            html += '<span class="prog-pill" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff">Passed: ' + c.passed + ' / ' + c.total + '</span>';
+            html += '<span class="prog-pill" style="margin-left:8px;background:rgba(255,255,255,0.2);color:#fff">WB: ' + c.passed + '/' + c.total + ' Passed</span>';
+            if (c.cs_total > 0) {
+                html += '<span class="prog-pill" style="margin-left:8px;background:rgba(200,160,255,0.3);color:#fff">CS: ' + (c.cs_approved || 0) + '/' + c.cs_total + ' Approved</span>';
+            }
             html += '<div class="prog-bar-wrap" style="width:100px;margin-left:8px"><div class="prog-bar prog-bar--default" style="width:' + cPct + '%"></div></div>';
             html += '<span class="prog-bar-label">' + cPct + '%</span>';
             html += '</div></div>';
@@ -732,6 +734,10 @@ document.addEventListener('DOMContentLoaded', function() {
 .prog-pill--submitted {
     background: rgba(30,64,175,0.1);
     color: #1e40af;
+}
+.prog-pill--cs {
+    background: rgba(124,58,237,0.1);
+    color: #6d28d9;
 }
 
 /* Toggle button */

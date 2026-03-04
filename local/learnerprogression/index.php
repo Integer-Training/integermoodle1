@@ -261,6 +261,8 @@ if (!empty($learner_ids)) {
                 'total_passed' => 0,
                 'total_submitted' => 0,
                 'total_all' => 0,
+                'cs_total_all' => 0,
+                'cs_total_approved' => 0,
                 'courses' => [],
             ];
         }
@@ -271,6 +273,8 @@ if (!empty($learner_ids)) {
                 'total' => 0,
                 'passed' => 0,
                 'submitted' => 0,
+                'cs_total' => 0,
+                'cs_approved' => 0,
                 'assignments' => [],
             ];
         }
@@ -285,6 +289,11 @@ if (!empty($learner_ids)) {
             }
             if ($is_submitted) {
                 $cd['submitted']++;
+            }
+        } else {
+            $cd['cs_total']++;
+            if ($row->grade_status === 'Approved') {
+                $cd['cs_approved']++;
             }
         }
 
@@ -309,6 +318,11 @@ if (!empty($learner_ids)) {
             }
             if ($is_submitted) {
                 $learner_data[$uid]['total_submitted']++;
+            }
+        } else {
+            $learner_data[$uid]['cs_total_all']++;
+            if ($row->grade_status === 'Approved') {
+                $learner_data[$uid]['cs_total_approved']++;
             }
         }
     }
@@ -484,6 +498,8 @@ if (!empty($learner_ids)) {
                 'passed' => $cd['passed'],
                 'submitted' => $cd['submitted'],
                 'total' => $cd['total'],
+                'cs_total' => $cd['cs_total'],
+                'cs_approved' => $cd['cs_approved'],
                 'assignments' => $sorted_assignments,
                 'hours' => $course_hrs ? $course_hrs['formatted'] : '0m',
                 'hours_seconds' => $course_hrs ? $course_hrs['total_seconds'] : 0,
@@ -508,6 +524,8 @@ if (!empty($learner_ids)) {
             'passed_assignments' => $passed,
             'submitted_assignments' => $ld['total_submitted'],
             'total_assignments' => $total,
+            'cs_approved' => $ld['cs_total_approved'],
+            'cs_total' => $ld['cs_total_all'],
             'detail_json' => json_encode($course_details),
             'course_names' => implode('||', $learner_course_names),
         ];

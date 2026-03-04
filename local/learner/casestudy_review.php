@@ -69,6 +69,14 @@ try {
             $DB->insert_record('local_casestudy_reviews', $record);
         }
 
+        // Send notification to learner.
+        \local_learner\observer::send_casestudy_notification(
+            $userid,
+            $assign->name,
+            $action === 'approve' ? 'approved' : 'rejected',
+            $feedback
+        );
+
         // On rejection, revert submission to draft so learner can edit.
         if ($action === 'reject') {
             // Get the course module for this assignment.

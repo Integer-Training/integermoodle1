@@ -158,6 +158,8 @@ if (!empty($allcourseids)) {
                 'total'       => 0,
                 'passed'      => 0,
                 'submitted'   => 0,
+                'cs_total'    => 0,
+                'cs_approved' => 0,
                 'assignments' => [],
             ];
         }
@@ -172,6 +174,11 @@ if (!empty($allcourseids)) {
             }
             if ($is_submitted) {
                 $cd['submitted']++;
+            }
+        } else {
+            $cd['cs_total']++;
+            if ($row->grade_status === 'Approved') {
+                $cd['cs_approved']++;
             }
         }
 
@@ -604,6 +611,8 @@ foreach ($course_progression as $cid => $cd) {
         'passed'           => $cd['passed'],
         'submitted'        => $cd['submitted'],
         'total'            => $cd['total'],
+        'cs_total'         => $cd['cs_total'],
+        'cs_approved'      => $cd['cs_approved'],
         'assignments_json' => json_encode($sorted),
     ];
 }

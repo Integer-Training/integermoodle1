@@ -15,15 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * @package   local_learnerdashboard
+ * Event observers for local_learner.
+ *
+ * @package   local_learner
  * @copyright 2026 Integer Training
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_learnerdashboard';
-$plugin->version   = 2026030400;
-$plugin->requires  = 2024042200;
-$plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.3.0';
+$observers = [
+    [
+        'eventname' => '\mod_assign\event\submission_graded',
+        'callback'  => '\local_learner\observer::submission_graded',
+        'internal'  => false,
+    ],
+];

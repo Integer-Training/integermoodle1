@@ -314,11 +314,29 @@ $pass_rate = ($graded_count > 0) ? round(($pass_count / $graded_count) * 100) : 
 
 // ============================================================
 // 10. AVERAGE TURNAROUND (days between submission and grading)
+//     Optionally filtered from a configurable reset date.
 // ============================================================
 $avg_turnaround = 0;
+$turnaround_since = '';
+$reset_date_raw = get_config('local_learner', 'turnaround_reset_date');
+$reset_timestamp = 0;
+if (!empty($reset_date_raw)) {
+    $parsed = strtotime($reset_date_raw);
+    if ($parsed !== false) {
+        $reset_timestamp = $parsed;
+        $turnaround_since = userdate($reset_timestamp, '%d %b %Y');
+    }
+}
+
 if (!empty($learner_ids)) {
     list($at_sql, $at_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'at');
     $at_params['graderid'] = $tutorid;
+
+    $turnaround_where = '';
+    if ($reset_timestamp > 0) {
+        $turnaround_where = ' AND ag.timemodified >= :resetdate';
+        $at_params['resetdate'] = $reset_timestamp;
+    }
 
     $turnaround_result = $DB->get_record_sql(
         "SELECT AVG(ag.timemodified - sub.timemodified) AS avg_seconds
@@ -328,7 +346,7 @@ if (!empty($learner_ids)) {
          WHERE ag.grader = :graderid
              AND ag.userid {$at_sql}
              AND ag.grade IS NOT NULL AND ag.grade >= 0
-             AND ag.timemodified > sub.timemodified",
+             AND ag.timemodified > sub.timemodified{$turnaround_where}",
         $at_params
     );
     if ($turnaround_result && $turnaround_result->avg_seconds > 0) {
@@ -419,6 +437,8 @@ $templatecontext = [
     'pass_count'        => $pass_count,
     'refer_count'       => $refer_count,
     'avg_turnaround'    => $avg_turnaround,
+    'turnaround_since'  => $turnaround_since,
+    'has_turnaround_since' => !empty($turnaround_since),
 
     // Learner activity breakdown.
     'active_count'    => $active_count,

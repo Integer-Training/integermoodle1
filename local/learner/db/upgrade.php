@@ -58,5 +58,15 @@ function xmldb_local_learner_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026022001, 'local', 'learner');
     }
 
+    if ($oldversion < 2026030400) {
+        // Version 1.4.0: Notification providers (workbook_graded, casestudy_approved,
+        // casestudy_rejected) and event observer registered via db/messages.php and
+        // db/events.php. Turnaround reset date setting added via settings.php.
+        // No database schema changes — the version bump triggers Moodle to re-read
+        // message providers and event observers.
+
+        upgrade_plugin_savepoint(true, 2026030400, 'local', 'learner');
+    }
+
     return true;
 }

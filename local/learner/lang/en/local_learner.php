@@ -77,3 +77,12 @@ $string['unassigned'] = 'Unassigned';
 $string['never'] = 'Never';
 $string['confirm_activate'] = 'Are you sure you want to activate this learner?';
 $string['confirm_deactivate'] = 'Are you sure you want to deactivate this learner?';
+
+// Message provider strings (notifications).
+$string['messageprovider:workbook_graded'] = 'Workbook grading notification';
+$string['messageprovider:casestudy_approved'] = 'Case study approved notification';
+$string['messageprovider:casestudy_rejected'] = 'Case study rejected notification';
+
+// Settings.
+$string['turnaround_reset_date'] = 'Turnaround reset date';
+$string['turnaround_reset_date_desc'] = 'Average marking turnaround is calculated from this date onwards (YYYY-MM-DD). Leave blank to use all-time data.';
