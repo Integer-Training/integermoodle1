@@ -150,8 +150,7 @@ if (!empty($allcourses)) {
              AND cm.module = mdl_m.id AND cm.visible = 1
          WHERE a.course {$crs_sql}
              AND a.name NOT LIKE '%IAG%'
-             AND a.name NOT LIKE '%ID Proof%'
-             AND a.name NOT LIKE '%Case Stud%'",
+             AND a.name NOT LIKE '%ID Proof%'",
         $crs_params
     );
 }
@@ -176,7 +175,7 @@ $mark_sql = "SELECT COUNT(DISTINCT sub.id)
         AND gr.attemptnumber = sub.attemptnumber
     WHERE gm_t.userid = {$tutorid}
         AND a.name NOT LIKE '%IAG%'
-        AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+        AND a.name NOT LIKE '%ID Proof%'
         AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
 
 $yet_to_grade = $DB->count_records_sql($mark_sql);
@@ -207,7 +206,7 @@ $resub_sql = "SELECT COUNT(DISTINCT sub.id)
         AND gr.attemptnumber = sub.attemptnumber
     WHERE gm_t.userid = {$tutorid}
         AND a.name NOT LIKE '%IAG%'
-        AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+        AND a.name NOT LIKE '%ID Proof%'
         AND (
             (sub.attemptnumber > 0 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0))
             OR
@@ -244,7 +243,7 @@ $o_sql = "SELECT COUNT(DISTINCT sub.id)
         AND gr.attemptnumber = sub.attemptnumber
     WHERE gm_t.userid = {$tutorid}
         AND a.name NOT LIKE '%IAG%'
-        AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+        AND a.name NOT LIKE '%ID Proof%'
         AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
         AND sub.timemodified <= {$sla_threshold}";
 
@@ -269,7 +268,7 @@ $m_sql = "SELECT COUNT(DISTINCT CONCAT(a.id, '-', u.id))
     WHERE gm_t.userid = {$tutorid}
         AND a.duedate > 0 AND a.duedate >= {$now} AND a.duedate <= {$three_days}
         AND a.name NOT LIKE '%IAG%'
-        AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+        AND a.name NOT LIKE '%ID Proof%'
         AND (sub.id IS NULL OR sub.status <> 'submitted')";
 
 $imm_assigns = $DB->count_records_sql($m_sql);
