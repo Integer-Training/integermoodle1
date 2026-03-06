@@ -198,7 +198,7 @@ foreach ($tutors_raw as $traw) {
              LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = gm_s.userid AND gr.attemptnumber = sub.attemptnumber
              WHERE gm_t.userid = :tutorid3
                  AND a.name NOT LIKE '%IAG%'
-                 AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                 AND a.name NOT LIKE '%ID Proof%'
                  AND (
                      (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
                      OR
@@ -234,7 +234,7 @@ foreach ($tutors_raw as $traw) {
              LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = gm_s.userid AND gr.attemptnumber = sub.attemptnumber
              WHERE gm_t.userid = :tutorid4
                  AND a.name NOT LIKE '%IAG%'
-                 AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                 AND a.name NOT LIKE '%ID Proof%'
                  AND (
                      (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
                      OR
@@ -329,7 +329,7 @@ foreach ($tutors_raw as $traw) {
          LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = gm_s.userid AND gr.attemptnumber = sub.attemptnumber
          WHERE gm_t.userid = :tid3
            AND a.name NOT LIKE '%IAG%'
-           AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+           AND a.name NOT LIKE '%ID Proof%'
            AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
            AND sub.timemodified > 0
            AND sub.timemodified <= :nowts",
@@ -360,7 +360,7 @@ foreach ($tutors_raw as $traw) {
              WHERE gm_t.userid = :tid_imm
                AND a.course {$tcid_sql}
                AND a.duedate > 0 AND a.name NOT LIKE '%IAG%'
-               AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+               AND a.name NOT LIKE '%ID Proof%'
                AND a.duedate >= :now_imm AND a.duedate <= :three_imm",
             $imm_params
         );
@@ -478,7 +478,7 @@ $global_awaiting = $DB->count_records_sql(
      LEFT JOIN {assign_grades} gr ON gr.assignment = sub.assignment AND gr.userid = sub.userid AND gr.attemptnumber = sub.attemptnumber
      WHERE sub.status = 'submitted' AND sub.latest = 1
      AND a.name NOT LIKE '%IAG%'
-     AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+     AND a.name NOT LIKE '%ID Proof%'
      AND (
          (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
          OR
@@ -505,7 +505,7 @@ $global_overdue = $DB->count_records_sql(
      LEFT JOIN {assign_grades} gr ON gr.assignment = sub.assignment AND gr.userid = sub.userid AND gr.attemptnumber = sub.attemptnumber
      WHERE sub.status = 'submitted' AND sub.latest = 1
      AND a.name NOT LIKE '%IAG%'
-     AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+     AND a.name NOT LIKE '%ID Proof%'
      AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
      AND a.duedate > 0 AND a.duedate < ?",
     [$now]
@@ -521,7 +521,7 @@ $global_imminent = $DB->count_records_sql(
      JOIN {user} u ON u.id = sub.userid AND u.suspended = 0 AND u.deleted = 0
      WHERE a.duedate > 0
      AND a.name NOT LIKE '%IAG%'
-     AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+     AND a.name NOT LIKE '%ID Proof%'
      AND a.duedate >= ? AND a.duedate <= ?",
     [$now, $three_days]
 );
