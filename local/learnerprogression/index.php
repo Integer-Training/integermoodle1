@@ -168,41 +168,41 @@ if (!empty($learner_ids)) {
     );
 
     // ===== SINGLE QUERY: Per-assignment detail per learner per course =====
-    // Check if case study reviews table exists (backward compat before upgrade).
-    $csr_table_exists = $DB->get_manager()->table_exists('local_casestudy_reviews');
-    $csr_select = $csr_table_exists ? ", cm.id AS cmid, csr.status AS review_status, csr.feedback AS review_feedback" : ", cm.id AS cmid";
-    $csr_join = $csr_table_exists ? "LEFT JOIN {local_casestudy_reviews} csr ON csr.assignid = a.id AND csr.userid = u.id" : "";
-
-    // Case study CASE WHEN branches — with review status if table exists.
-    if ($csr_table_exists) {
-        $cs_case = "
-                         WHEN a.name LIKE '%Case Stud%' AND csr.status = 'approved' THEN 'Approved'
-                         WHEN a.name LIKE '%Case Stud%' AND csr.status = 'rejected' THEN 'Rejected'
-                         WHEN a.name LIKE '%Case Stud%' AND csr.status = 'resubmitted'
-                              AND sub.id IS NOT NULL AND (sub.status = 'submitted' OR sub.status = 'draft')
-                              THEN 'Resubmitted'
-                         WHEN a.name LIKE '%Case Stud%' AND sub.id IS NOT NULL
-                              AND (sub.status = 'submitted' OR sub.status = 'draft') AND csr.id IS NULL
-                              THEN 'Submitted'
-                         WHEN a.name LIKE '%Case Stud%' THEN 'Not Submitted'";
-    } else {
-        $cs_case = "
-                         WHEN a.name LIKE '%Case Stud%' AND sub.id IS NOT NULL
-                              AND (sub.status = 'submitted' OR sub.status = 'draft')
-                         THEN 'Submitted'
-                         WHEN a.name LIKE '%Case Stud%'
-                         THEN 'Not Submitted'";
-    }
-
+    // Case studies use the same Pass/Refer grading logic as workbooks — no separate approval.
     $query = "SELECT CONCAT(u.id, '-', a.id) AS rowkey,
                      u.id AS userid,
                      CONCAT(u.firstname, ' ', u.lastname) AS fullname,
                      a.course AS courseid,
                      c.fullname AS coursename,
                      a.id AS assignid,
-                     a.name AS assignname
-                     {$csr_select},
-                     CASE {$cs_case}
+                     a.name AS assignname,
+                     cm.id AS cmid,
+                     sub.id AS subid,
+                     sub.timemodified AS sub_timemodified,
+                     CASE
+                         /* --- Case studies: scale uses Submitted / Rewrite --- */
+                         WHEN a.name LIKE '%Case Stud%'
+                          AND gg.finalgrade IS NOT NULL
+                          AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(sc.scale, ',',
+                              CAST(gg.finalgrade AS UNSIGNED)), ',', -1)) = 'Submitted'
+                         THEN 'Submitted'
+                         WHEN a.name LIKE '%Case Stud%'
+                          AND gg.finalgrade IS NOT NULL AND gg.finalgrade > 0
+                         THEN 'Refer'
+                         WHEN a.name LIKE '%Case Stud%'
+                          AND ag.grade IS NOT NULL AND ag.grade >= 0
+                          AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(sc.scale, ',',
+                              CAST(ag.grade AS UNSIGNED)), ',', -1)) = 'Submitted'
+                         THEN 'Submitted'
+                         WHEN a.name LIKE '%Case Stud%'
+                          AND ag.grade IS NOT NULL AND ag.grade > 0
+                         THEN 'Refer'
+                         WHEN a.name LIKE '%Case Stud%'
+                          AND sub.id IS NOT NULL
+                         THEN 'Pending Grading'
+                         WHEN a.name LIKE '%Case Stud%'
+                         THEN 'Not Submitted'
+                         /* --- Workbooks / assessments: scale uses Pass / Refer --- */
                          WHEN gg.finalgrade IS NOT NULL
                           AND TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(sc.scale, ',',
                               CAST(gg.finalgrade AS UNSIGNED)), ',', -1)) = 'Pass'
@@ -237,13 +237,46 @@ if (!empty($learner_ids)) {
                   AND gi.courseid = a.course
               LEFT JOIN {grade_grades} gg ON gg.itemid = gi.id AND gg.userid = u.id
               LEFT JOIN {scale} sc ON sc.id = gi.scaleid
-              {$csr_join}
               WHERE u.id {$id_sql}
                 AND a.name NOT LIKE '%IAG%'
                 AND a.name NOT LIKE '%ID Proof%'
               ORDER BY u.id, a.course, a.name";
 
     $results = $DB->get_records_sql($query, $id_params);
+
+    // ===== BATCH FILE LOOKUP: latest file per submission =====
+    // Collect all submission IDs to fetch file names in one query.
+    $sub_ids = [];
+    foreach ($results as $row) {
+        if (!empty($row->subid)) {
+            $sub_ids[(int) $row->subid] = true;
+        }
+    }
+    $file_map = []; // subid => ['filename' => ..., 'timemodified' => ...]
+    if (!empty($sub_ids)) {
+        $sub_id_list = array_keys($sub_ids);
+        list($fsql, $fparams) = $DB->get_in_or_equal($sub_id_list, SQL_PARAMS_NAMED, 'fsub');
+        $file_results = $DB->get_records_sql(
+            "SELECT f.id, f.itemid AS subid, f.filename, f.timemodified
+               FROM {files} f
+              WHERE f.component = 'assignsubmission_file'
+                AND f.filearea = 'submission_files'
+                AND f.filename <> '.'
+                AND f.itemid {$fsql}
+              ORDER BY f.timemodified DESC",
+            $fparams
+        );
+        // Keep only the most recent file per submission.
+        foreach ($file_results as $fr) {
+            $sid = (int) $fr->subid;
+            if (!isset($file_map[$sid])) {
+                $file_map[$sid] = [
+                    'filename' => $fr->filename,
+                    'timemodified' => (int) $fr->timemodified,
+                ];
+            }
+        }
+    }
 
     // ===== PHP AGGREGATION =====
     $learner_data = [];
@@ -291,24 +324,40 @@ if (!empty($learner_ids)) {
                 $cd['submitted']++;
             }
         } else {
+            // Case studies: "Submitted" (graded) counts as approved.
             $cd['cs_total']++;
-            if ($row->grade_status === 'Approved') {
+            $cs_approved = ($row->grade_status === 'Submitted');
+            if ($cs_approved) {
                 $cd['cs_approved']++;
             }
         }
 
         // Individual assignment detail (case studies always appear in expandable rows).
+        $cmid_val = isset($row->cmid) ? (int) $row->cmid : 0;
+        $subid_val = !empty($row->subid) ? (int) $row->subid : 0;
+
+        // File name + submission date from batch lookup.
+        $file_name = '';
+        $sub_date = '';
+        if ($subid_val && isset($file_map[$subid_val])) {
+            $file_name = $file_map[$subid_val]['filename'];
+            $sub_date = userdate($file_map[$subid_val]['timemodified'], '%d %b %Y, %H:%M');
+        } else if (!empty($row->sub_timemodified) && $row->sub_timemodified > 0) {
+            // No file but has submission — show submission date only.
+            $sub_date = userdate($row->sub_timemodified, '%d %b %Y, %H:%M');
+        }
+
         $assign_entry = [
             'name' => $row->assignname,
             'status' => $row->grade_status,
             'assignid' => (int) $row->assignid,
             'userid' => $uid,
-            'cmid' => isset($row->cmid) ? (int) $row->cmid : 0,
+            'cmid' => $cmid_val,
             'is_case_study' => $is_case_study,
+            'unit_hours_key' => $uid . '-' . $cmid_val,
+            'file_name' => $file_name,
+            'sub_date' => $sub_date,
         ];
-        if ($is_case_study && $csr_table_exists && !empty($row->review_feedback)) {
-            $assign_entry['feedback'] = $row->review_feedback;
-        }
         $cd['assignments'][] = $assign_entry;
 
         if (!$is_case_study) {
@@ -321,7 +370,7 @@ if (!empty($learner_ids)) {
             }
         } else {
             $learner_data[$uid]['cs_total_all']++;
-            if ($row->grade_status === 'Approved') {
+            if ($cs_approved) {
                 $learner_data[$uid]['cs_total_approved']++;
             }
         }
@@ -442,6 +491,70 @@ if (!empty($learner_ids)) {
         $log_events->close();
     }
 
+    // ===== LOGSTORE: Per-unit (per-assignment) time from module-level events =====
+    $unit_hours = []; // key: "userid-cmid" => formatted time string
+    if (!empty($all_courseids)) {
+        list($ucid_sql, $ucid_params) = $DB->get_in_or_equal($all_courseids, SQL_PARAMS_NAMED, 'ucid');
+        list($uuid_sql, $uuid_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'uuid');
+        $uyearstart = mktime(0, 0, 0, 1, 1, (int) date('Y'));
+
+        $unit_events = $DB->get_recordset_sql(
+            "SELECT l.userid, l.contextinstanceid AS cmid, l.timecreated
+             FROM {logstore_standard_log} l
+             WHERE l.contextlevel = 70
+               AND l.courseid {$ucid_sql}
+               AND l.userid {$uuid_sql}
+               AND l.timecreated >= :uyearstart
+             ORDER BY l.userid, l.contextinstanceid, l.timecreated ASC",
+            array_merge($ucid_params, $uuid_params, ['uyearstart' => $uyearstart])
+        );
+
+        $u_idle_cap = 1800;
+        $u_cur_key = '';
+        $u_sess_start = 0;
+        $u_prev_time = 0;
+        $u_total = 0;
+
+        $save_unit_group = function() use (&$u_cur_key, &$u_sess_start, &$u_prev_time,
+                                            &$u_total, &$unit_hours) {
+            if ($u_cur_key === '' || $u_sess_start <= 0) {
+                return;
+            }
+            $dur = $u_prev_time - $u_sess_start;
+            if ($dur > 0) {
+                $u_total += $dur;
+            }
+            if ($u_total > 0) {
+                $hrs = floor($u_total / 3600);
+                $mins = floor(($u_total % 3600) / 60);
+                $unit_hours[$u_cur_key] = ($hrs > 0 ? $hrs . 'h ' : '') . $mins . 'm';
+            }
+        };
+
+        foreach ($unit_events as $uev) {
+            $ukey = $uev->userid . '-' . $uev->cmid;
+            if ($ukey !== $u_cur_key) {
+                $save_unit_group();
+                $u_cur_key = $ukey;
+                $u_sess_start = (int) $uev->timecreated;
+                $u_prev_time = (int) $uev->timecreated;
+                $u_total = 0;
+            } else {
+                $ugap = (int) $uev->timecreated - $u_prev_time;
+                if ($ugap > $u_idle_cap) {
+                    $dur = $u_prev_time - $u_sess_start;
+                    if ($dur > 0) {
+                        $u_total += $dur;
+                    }
+                    $u_sess_start = (int) $uev->timecreated;
+                }
+                $u_prev_time = (int) $uev->timecreated;
+            }
+        }
+        $save_unit_group();
+        $unit_events->close();
+    }
+
     // Build template array.
     $learners = [];
     $active_count = 0;
@@ -481,6 +594,14 @@ if (!empty($learner_ids)) {
         foreach ($ld['courses'] as $cid => $cd) {
             $c_current = ($cd['total'] > 0) ? round(($cd['passed'] / $cd['total']) * 100) : 0;
             $sorted_assignments = $cd['assignments'];
+            // Resolve per-unit hours into each assignment entry.
+            foreach ($sorted_assignments as &$sa) {
+                $uhk = $sa['unit_hours_key'] ?? '';
+                $sa['unit_hours'] = isset($unit_hours[$uhk]) ? $unit_hours[$uhk] : '';
+                unset($sa['unit_hours_key']);
+            }
+            unset($sa);
+
             usort($sorted_assignments, function($a, $b) {
                 // Extract leading number from names like "Unit 1:", "Unit : 8", "Unit 10 Learner".
                 $na = preg_match('/(\d+)/', $a['name'], $ma) ? (int) $ma[1] : PHP_INT_MAX;
