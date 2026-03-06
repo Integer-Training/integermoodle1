@@ -107,7 +107,7 @@ if($action == 'mark'){
             WHERE
                 gm_t.userid = ".(int)$USER->id."
                 AND a.name NOT LIKE '%IAG%'
-                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                AND a.name NOT LIKE '%ID Proof%'
                 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)";
 //
     $results = $DB->get_recordset_sql($mark_sql);
@@ -173,7 +173,7 @@ if($action == 'mark'){
             WHERE
                 gm_t.userid = ".(int)$USER->id."
                 AND a.name NOT LIKE '%IAG%'
-                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                AND a.name NOT LIKE '%ID Proof%'
                 AND (
                     (sub.attemptnumber > 0 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0))
                     OR
@@ -241,7 +241,7 @@ if($action == 'mark'){
                 gm_t.userid = ".(int)$USER->id."
                 AND sub.status = 'submitted'
                 AND a.name NOT LIKE '%IAG%'
-                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                AND a.name NOT LIKE '%ID Proof%'
                 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
                 AND sub.timemodified > 0 AND sub.timemodified IS NOT NULL
                 AND sub.timemodified <= ".strtotime('now')."";
@@ -297,7 +297,7 @@ if($action == 'mark'){
                 a.course in (".implode(',',$allcourses).")
                 AND a.duedate > 0 AND a.duedate IS NOT NULL
                 AND a.name NOT LIKE '%IAG%'
-                AND a.name NOT LIKE '%ID Proof%' AND a.name NOT LIKE '%Case Stud%'
+                AND a.name NOT LIKE '%ID Proof%'
                 AND a.duedate <= ".strtotime("+3 days")."
                 AND a.duedate >= ".strtotime('now')."";
     $results = $DB->get_recordset_sql($m_sql);
