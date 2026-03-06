@@ -412,13 +412,20 @@ if (!empty($learner_ids)) {
     }
     $all_courseids = array_keys($all_courseids);
 
+    // ===== UNIFIED LOGSTORE: course totals + per-unit time in a single pass =====
+    // One query fetches ALL events (every context level). Time between consecutive
+    // events within the same user+course is attributed to the course total AND,
+    // when the earlier event targets a specific module (contextlevel 70), also to
+    // that module (cmid). This guarantees per-unit times sum up to the course total.
+    $unit_hours = []; // key: "userid-cmid" => total seconds
+
     if (!empty($all_courseids)) {
         list($cid_sql, $cid_params) = $DB->get_in_or_equal($all_courseids, SQL_PARAMS_NAMED, 'cid');
         list($uid2_sql, $uid2_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'luid');
         $yearstart = mktime(0, 0, 0, 1, 1, (int) date('Y'));
 
         $log_events = $DB->get_recordset_sql(
-            "SELECT userid, courseid, timecreated
+            "SELECT userid, courseid, timecreated, contextlevel, contextinstanceid AS cmid
              FROM {logstore_standard_log}
              WHERE courseid {$cid_sql}
                AND userid {$uid2_sql}
@@ -428,9 +435,11 @@ if (!empty($learner_ids)) {
         );
 
         $idle_cap = 1800; // 30-minute idle cap.
-        $cur_key = '';
+        $cur_key = '';     // "userid-courseid"
         $sess_start = 0;
         $prev_time = 0;
+        $prev_cmid = 0;   // cmid of previous event (0 if not module-level)
+        $prev_ctx  = 0;
         $sess_arr = [];
         $sess_total = 0;
 
@@ -459,18 +468,37 @@ if (!empty($learner_ids)) {
             ];
         };
 
+        // Helper: attribute a time gap to a module if the previous event was module-level.
+        $attribute_unit_time = function($userid, $cmid, $seconds) use (&$unit_hours) {
+            if ($cmid <= 0 || $seconds <= 0) {
+                return;
+            }
+            $ukey = $userid . '-' . $cmid;
+            if (!isset($unit_hours[$ukey])) {
+                $unit_hours[$ukey] = 0;
+            }
+            $unit_hours[$ukey] += $seconds;
+        };
+
         foreach ($log_events as $ev) {
             $key = $ev->userid . '-' . $ev->courseid;
+            $ts = (int) $ev->timecreated;
+            $cmid = ((int) $ev->contextlevel === 70) ? (int) $ev->cmid : 0;
+
             if ($key !== $cur_key) {
+                // Flush previous user-course group.
                 $save_session_group();
                 $cur_key = $key;
-                $sess_start = (int) $ev->timecreated;
-                $prev_time = (int) $ev->timecreated;
+                $sess_start = $ts;
+                $prev_time = $ts;
+                $prev_cmid = $cmid;
+                $prev_ctx  = (int) $ev->contextlevel;
                 $sess_arr = [];
                 $sess_total = 0;
             } else {
-                $gap = (int) $ev->timecreated - $prev_time;
+                $gap = $ts - $prev_time;
                 if ($gap > $idle_cap) {
+                    // Session break — save current session.
                     $dur = $prev_time - $sess_start;
                     if ($dur > 0) {
                         $sess_arr[] = [
@@ -482,78 +510,28 @@ if (!empty($learner_ids)) {
                         ];
                         $sess_total += $dur;
                     }
-                    $sess_start = (int) $ev->timecreated;
+                    $sess_start = $ts;
+                } else if ($gap > 0) {
+                    // Within session — attribute gap to previous event's module if applicable.
+                    $attr_cmid = $prev_cmid > 0 ? $prev_cmid : $cmid;
+                    $attribute_unit_time($ev->userid, $attr_cmid, $gap);
                 }
-                $prev_time = (int) $ev->timecreated;
+                $prev_time = $ts;
+                $prev_cmid = $cmid;
+                $prev_ctx  = (int) $ev->contextlevel;
             }
         }
         $save_session_group();
         $log_events->close();
     }
 
-    // ===== LOGSTORE: Per-unit (per-assignment) time from module-level events =====
-    $unit_hours = []; // key: "userid-cmid" => formatted time string
-    if (!empty($all_courseids)) {
-        list($ucid_sql, $ucid_params) = $DB->get_in_or_equal($all_courseids, SQL_PARAMS_NAMED, 'ucid');
-        list($uuid_sql, $uuid_params) = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'uuid');
-        $uyearstart = mktime(0, 0, 0, 1, 1, (int) date('Y'));
-
-        $unit_events = $DB->get_recordset_sql(
-            "SELECT l.userid, l.contextinstanceid AS cmid, l.timecreated
-             FROM {logstore_standard_log} l
-             WHERE l.contextlevel = 70
-               AND l.courseid {$ucid_sql}
-               AND l.userid {$uuid_sql}
-               AND l.timecreated >= :uyearstart
-             ORDER BY l.userid, l.contextinstanceid, l.timecreated ASC",
-            array_merge($ucid_params, $uuid_params, ['uyearstart' => $uyearstart])
-        );
-
-        $u_idle_cap = 1800;
-        $u_cur_key = '';
-        $u_sess_start = 0;
-        $u_prev_time = 0;
-        $u_total = 0;
-
-        $save_unit_group = function() use (&$u_cur_key, &$u_sess_start, &$u_prev_time,
-                                            &$u_total, &$unit_hours) {
-            if ($u_cur_key === '' || $u_sess_start <= 0) {
-                return;
-            }
-            $dur = $u_prev_time - $u_sess_start;
-            if ($dur > 0) {
-                $u_total += $dur;
-            }
-            if ($u_total > 0) {
-                $hrs = floor($u_total / 3600);
-                $mins = floor(($u_total % 3600) / 60);
-                $unit_hours[$u_cur_key] = ($hrs > 0 ? $hrs . 'h ' : '') . $mins . 'm';
-            }
-        };
-
-        foreach ($unit_events as $uev) {
-            $ukey = $uev->userid . '-' . $uev->cmid;
-            if ($ukey !== $u_cur_key) {
-                $save_unit_group();
-                $u_cur_key = $ukey;
-                $u_sess_start = (int) $uev->timecreated;
-                $u_prev_time = (int) $uev->timecreated;
-                $u_total = 0;
-            } else {
-                $ugap = (int) $uev->timecreated - $u_prev_time;
-                if ($ugap > $u_idle_cap) {
-                    $dur = $u_prev_time - $u_sess_start;
-                    if ($dur > 0) {
-                        $u_total += $dur;
-                    }
-                    $u_sess_start = (int) $uev->timecreated;
-                }
-                $u_prev_time = (int) $uev->timecreated;
-            }
-        }
-        $save_unit_group();
-        $unit_events->close();
+    // Format unit_hours from seconds to readable strings.
+    foreach ($unit_hours as $ukey => &$secs) {
+        $hrs = floor($secs / 3600);
+        $mins = floor(($secs % 3600) / 60);
+        $secs = ($hrs > 0 ? $hrs . 'h ' : '') . $mins . 'm';
     }
+    unset($secs);
 
     // Build template array.
     $learners = [];
