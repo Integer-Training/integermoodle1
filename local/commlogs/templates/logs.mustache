@@ -1,0 +1,445 @@
+{{!
+    @template local_commlogs/logs
+
+    Communication Logs — aggregated view of all sent emails, SMS, and notifications.
+
+    @package   local_commlogs
+    @copyright 2026 Integer Training
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<style>
+/* ── Shell ───────────────────────────────────────────────────────── */
+.commlogs-shell { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.commlogs-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.commlogs-header h2 { margin: 0; font-size: 1.5rem; font-weight: 700; }
+.commlogs-header p  { margin: 4px 0 0; opacity: .7; font-size: .9rem; }
+
+/* ── KPI Cards ───────────────────────────────────────────────────── */
+.commlogs-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.commlogs-kpi {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.commlogs-kpi__icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; color: #fff;
+}
+.commlogs-kpi__icon--total  { background: #6366f1; }
+.commlogs-kpi__icon--email  { background: #3b82f6; }
+.commlogs-kpi__icon--sms    { background: #f59e0b; }
+.commlogs-kpi__icon--notif  { background: #14b8a6; }
+.commlogs-kpi__val  { font-size: 1.5rem; font-weight: 700; color: #1e293b; line-height: 1; }
+.commlogs-kpi__label { font-size: .8rem; color: #64748b; margin-top: 2px; }
+
+/* ── Filters ─────────────────────────────────────────────────────── */
+.commlogs-filters {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: end;
+}
+.commlogs-filters label { font-size: .78rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px; }
+.commlogs-filters select,
+.commlogs-filters input[type="date"] {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: .85rem;
+    color: #334155;
+    background: #f8fafc;
+    min-width: 150px;
+}
+.commlogs-filters select:focus,
+.commlogs-filters input:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
+.commlogs-btn-reset {
+    background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
+    padding: 7px 16px; font-size: .85rem; color: #475569; cursor: pointer;
+}
+.commlogs-btn-reset:hover { background: #e2e8f0; }
+
+/* ── Table ───────────────────────────────────────────────────────── */
+.commlogs-table-wrap {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+#commlogs-table { width: 100% !important; }
+#commlogs-table thead th {
+    background: #f8fafc;
+    color: #475569;
+    font-weight: 600;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 12px 14px;
+    white-space: nowrap;
+}
+#commlogs-table tbody td {
+    padding: 10px 14px;
+    font-size: .85rem;
+    color: #334155;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+#commlogs-table tbody tr:hover { background: #f8fafc; }
+
+/* ── Type pills ──────────────────────────────────────────────────── */
+.commlogs-type-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .02em;
+}
+.commlogs-type-pill--email { background: #dbeafe; color: #1d4ed8; }
+.commlogs-type-pill--sms   { background: #fef3c7; color: #92400e; }
+.commlogs-type-pill--notif { background: #ccfbf1; color: #0f766e; }
+
+/* ── Status badges ───────────────────────────────────────────────── */
+.commlogs-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+}
+.commlogs-badge--sent    { background: #dcfce7; color: #166534; }
+.commlogs-badge--failed  { background: #fee2e2; color: #991b1b; }
+.commlogs-badge--skipped { background: #f1f5f9; color: #64748b; }
+.commlogs-badge__dot {
+    width: 6px; height: 6px; border-radius: 50%; display: inline-block;
+}
+.commlogs-badge--sent .commlogs-badge__dot    { background: #22c55e; }
+.commlogs-badge--failed .commlogs-badge__dot  { background: #ef4444; }
+.commlogs-badge--skipped .commlogs-badge__dot { background: #94a3b8; }
+
+/* ── Expand toggle ───────────────────────────────────────────────── */
+td.commlogs-toggle { cursor: pointer; text-align: center; color: #6366f1; font-size: 1.1rem; }
+td.commlogs-toggle:hover { color: #4338ca; }
+
+/* ── Child row ───────────────────────────────────────────────────── */
+.commlogs-detail { padding: 16px 24px; background: #f8fafc; border-left: 3px solid #6366f1; font-size: .85rem; color: #334155; }
+.commlogs-detail h5 { margin: 0 0 8px; font-size: .95rem; font-weight: 600; }
+
+/* ── Export buttons ──────────────────────────────────────────────── */
+.dt-buttons .btn { font-size: .8rem; border-radius: 6px; margin-right: 6px; }
+
+/* ── Empty state ─────────────────────────────────────────────────── */
+.commlogs-empty {
+    text-align: center; padding: 60px 20px; color: #94a3b8;
+}
+.commlogs-empty i { font-size: 3rem; display: block; margin-bottom: 12px; }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .commlogs-header { flex-direction: column; text-align: center; }
+    .commlogs-kpis { grid-template-columns: 1fr 1fr; }
+    .commlogs-filters { flex-direction: column; }
+}
+</style>
+
+<div class="commlogs-shell" id="commlogs">
+
+    <!-- ── Header ─────────────────────────────────────────────── -->
+    <div class="commlogs-header">
+        <div>
+            <h2><i class="bi bi-envelope-paper"></i> Communication Logs</h2>
+            <p>All emails, SMS, and notifications sent in the last 90 days</p>
+        </div>
+    </div>
+
+    <!-- ── KPI Cards ──────────────────────────────────────────── -->
+    <div class="commlogs-kpis">
+        <div class="commlogs-kpi">
+            <div class="commlogs-kpi__icon commlogs-kpi__icon--total"><i class="bi bi-chat-dots"></i></div>
+            <div>
+                <div class="commlogs-kpi__val">{{kpi_total}}</div>
+                <div class="commlogs-kpi__label">Total Communications</div>
+            </div>
+        </div>
+        <div class="commlogs-kpi">
+            <div class="commlogs-kpi__icon commlogs-kpi__icon--email"><i class="bi bi-envelope"></i></div>
+            <div>
+                <div class="commlogs-kpi__val">{{kpi_emails}}</div>
+                <div class="commlogs-kpi__label">Emails Sent</div>
+            </div>
+        </div>
+        <div class="commlogs-kpi">
+            <div class="commlogs-kpi__icon commlogs-kpi__icon--sms"><i class="bi bi-phone"></i></div>
+            <div>
+                <div class="commlogs-kpi__val">{{kpi_sms}}</div>
+                <div class="commlogs-kpi__label">SMS Messages</div>
+            </div>
+        </div>
+        <div class="commlogs-kpi">
+            <div class="commlogs-kpi__icon commlogs-kpi__icon--notif"><i class="bi bi-bell"></i></div>
+            <div>
+                <div class="commlogs-kpi__val">{{kpi_notifs}}</div>
+                <div class="commlogs-kpi__label">Notifications</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Filters ────────────────────────────────────────────── -->
+    <div class="commlogs-filters">
+        <div>
+            <label for="commlogs-filter-type">Type</label>
+            <select id="commlogs-filter-type">
+                <option value="">All</option>
+                <option value="Email">Email</option>
+                <option value="SMS">SMS</option>
+                <option value="Notification">Notification</option>
+            </select>
+        </div>
+        <div>
+            <label for="commlogs-filter-cat">Category</label>
+            <select id="commlogs-filter-cat">
+                <option value="">All</option>
+                <option value="Login Email">Login Email</option>
+                <option value="SMS Credentials">SMS Credentials</option>
+                <option value="Grading Notification">Grading Notification</option>
+                <option value="Case Study Approved">Case Study Approved</option>
+                <option value="Case Study Rejected">Case Study Rejected</option>
+                <option value="Draft Feedback">Draft Feedback</option>
+                <option value="News Alert">News Alert</option>
+            </select>
+        </div>
+        <div>
+            <label for="commlogs-filter-status">Status</label>
+            <select id="commlogs-filter-status">
+                <option value="">All</option>
+                <option value="Sent">Sent</option>
+                <option value="Failed">Failed</option>
+                <option value="Skipped">Skipped</option>
+            </select>
+        </div>
+        <div>
+            <label for="commlogs-filter-from">Date From</label>
+            <input type="date" id="commlogs-filter-from">
+        </div>
+        <div>
+            <label for="commlogs-filter-to">Date To</label>
+            <input type="date" id="commlogs-filter-to">
+        </div>
+        <div>
+            <button class="commlogs-btn-reset" id="commlogs-reset"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        </div>
+    </div>
+
+    <!-- ── Table ──────────────────────────────────────────────── -->
+    {{#has_rows}}
+    <div class="commlogs-table-wrap">
+        <table id="commlogs-table" class="table table-striped">
+            <thead>
+                <tr>
+                    <th style="width:30px"></th>
+                    <th>Date / Time</th>
+                    <th>Type</th>
+                    <th>Category</th>
+                    <th>Recipient</th>
+                    <th>Preview</th>
+                    <th>Status</th>
+                    <th>Sent By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#rows}}
+                <tr data-full-content="{{full_content}}" data-timestamp="{{timestamp}}">
+                    <td class="commlogs-toggle"><i class="bi bi-plus-circle"></i></td>
+                    <td>{{datetime}}</td>
+                    <td>
+                        <span class="commlogs-type-pill {{#is_email}}commlogs-type-pill--email{{/is_email}}{{#is_sms}}commlogs-type-pill--sms{{/is_sms}}{{#is_notification}}commlogs-type-pill--notif{{/is_notification}}">
+                            {{type_label}}
+                        </span>
+                    </td>
+                    <td>{{category}}</td>
+                    <td>
+                        <strong>{{recipient_name}}</strong><br>
+                        <small style="color:#64748b">{{recipient_contact}}</small>
+                    </td>
+                    <td style="max-width:260px">{{content_preview}}</td>
+                    <td>
+                        <span class="commlogs-badge {{#is_sent}}commlogs-badge--sent{{/is_sent}}{{#is_failed}}commlogs-badge--failed{{/is_failed}}{{#is_skipped}}commlogs-badge--skipped{{/is_skipped}}">
+                            <span class="commlogs-badge__dot"></span>
+                            {{status_label}}
+                        </span>
+                    </td>
+                    <td>{{sent_by}}</td>
+                </tr>
+                {{/rows}}
+            </tbody>
+        </table>
+    </div>
+    {{/has_rows}}
+    {{^has_rows}}
+    <div class="commlogs-empty">
+        <i class="bi bi-inbox"></i>
+        <p>No communication logs found for the last 90 days.</p>
+    </div>
+    {{/has_rows}}
+
+</div>
+
+<script>
+require(['jquery'], function($) {
+
+    // Load CDN scripts sequentially, then init.
+    var cdnScripts = [
+        'https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js',
+        'https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js',
+        'https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js',
+        'https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js',
+        'https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js'
+    ];
+
+    function loadScript(url) {
+        return new Promise(function(resolve, reject) {
+            var s = document.createElement('script');
+            s.src = url;
+            s.onload = resolve;
+            s.onerror = reject;
+            document.head.appendChild(s);
+        });
+    }
+
+    // Load jszip and pdfmake first (no dependencies), then DataTables.
+    Promise.all([
+        loadScript(cdnScripts[5]),
+        loadScript(cdnScripts[6])
+    ]).then(function() {
+        return loadScript(cdnScripts[7]);
+    }).then(function() {
+        return loadScript(cdnScripts[0]);
+    }).then(function() {
+        return loadScript(cdnScripts[1]);
+    }).then(function() {
+        return loadScript(cdnScripts[2]);
+    }).then(function() {
+        return loadScript(cdnScripts[3]);
+    }).then(function() {
+        return loadScript(cdnScripts[4]);
+    }).then(function() {
+        initCommLogs($);
+    });
+
+    function initCommLogs($) {
+        if (!$.fn.DataTable) { return; }
+
+        // DataTable init.
+        var table = $('#commlogs-table').DataTable({
+            pageLength: 25,
+            order: [[1, 'desc']],
+            dom: '<"row"<"col-sm-6"B><"col-sm-6"f>>rtip',
+            buttons: [
+                { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-sm btn-outline-success', exportOptions: { columns: [1,2,3,4,5,6,7] } },
+                { extend: 'csvHtml5',   text: '<i class="bi bi-filetype-csv"></i> CSV',   className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: [1,2,3,4,5,6,7] } },
+                { extend: 'pdfHtml5',   text: '<i class="bi bi-file-earmark-pdf"></i> PDF',   className: 'btn btn-sm btn-outline-danger', exportOptions: { columns: [1,2,3,4,5,6,7] }, orientation: 'landscape' }
+            ],
+            columnDefs: [
+                { orderable: false, targets: 0 },
+                { orderData: [1], targets: 1 }
+            ],
+            language: { search: '', searchPlaceholder: 'Search logs...' }
+        });
+
+        // ── Row expand/collapse ────────────────────────────────────
+        $('#commlogs-table tbody').on('click', 'td.commlogs-toggle', function() {
+            var tr = $(this).closest('tr');
+            var row = table.row(tr);
+            if (row.child.isShown()) {
+                row.child.hide();
+                tr.removeClass('shown');
+                $(this).find('i').removeClass('bi-dash-circle').addClass('bi-plus-circle');
+            } else {
+                var content = tr.attr('data-full-content');
+                row.child('<div class="commlogs-detail">' + content + '</div>').show();
+                tr.addClass('shown');
+                $(this).find('i').removeClass('bi-plus-circle').addClass('bi-dash-circle');
+            }
+        });
+
+        // ── Custom filters ─────────────────────────────────────────
+        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            if (settings.nTable.id !== 'commlogs-table') return true;
+
+            var typeVal   = $('#commlogs-filter-type').val();
+            var catVal    = $('#commlogs-filter-cat').val();
+            var statusVal = $('#commlogs-filter-status').val();
+            var fromVal   = $('#commlogs-filter-from').val();
+            var toVal     = $('#commlogs-filter-to').val();
+
+            if (typeVal && data[2].indexOf(typeVal) === -1) return false;
+            if (catVal && data[3].indexOf(catVal) === -1) return false;
+            if (statusVal && data[6].indexOf(statusVal) === -1) return false;
+
+            if (fromVal || toVal) {
+                var row = table.row(dataIndex).node();
+                var ts  = parseInt($(row).attr('data-timestamp')) || 0;
+                var tsDate = new Date(ts * 1000);
+                tsDate.setHours(0,0,0,0);
+                if (fromVal) {
+                    var from = new Date(fromVal);
+                    if (tsDate < from) return false;
+                }
+                if (toVal) {
+                    var to = new Date(toVal);
+                    to.setHours(23,59,59,999);
+                    if (tsDate > to) return false;
+                }
+            }
+
+            return true;
+        });
+
+        // Re-draw on filter change.
+        $('#commlogs-filter-type, #commlogs-filter-cat, #commlogs-filter-status, #commlogs-filter-from, #commlogs-filter-to')
+            .on('change', function() { table.draw(); });
+
+        // Reset filters.
+        $('#commlogs-reset').on('click', function() {
+            $('#commlogs-filter-type, #commlogs-filter-cat, #commlogs-filter-status').val('');
+            $('#commlogs-filter-from, #commlogs-filter-to').val('');
+            table.draw();
+        });
+    }
+});
+</script>
