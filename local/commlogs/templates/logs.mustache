@@ -273,6 +273,7 @@ td.commlogs-toggle:hover { color: #4338ca; }
                     <th>Preview</th>
                     <th>Status</th>
                     <th>Reason</th>
+                    <th>Email Opened</th>
                     <th>Sent By</th>
                 </tr>
             </thead>
@@ -299,10 +300,31 @@ td.commlogs-toggle:hover { color: #4338ca; }
                         </span>
                     </td>
                     <td style="max-width:200px; font-size:.8rem; color:#991b1b;">{{#has_reason}}{{reason}}{{/has_reason}}{{^has_reason}}<span style="color:#94a3b8">—</span>{{/has_reason}}</td>
+                    <td>
+                        {{#is_tracked}}
+                            {{#email_opened}}
+                                <span class="commlogs-badge commlogs-badge--sent" title="IP: {{opened_ip}}">
+                                    <span class="commlogs-badge__dot"></span>
+                                    Opened
+                                </span>
+                                <br><small style="color:#64748b">{{opened_at}}</small>
+                                <br><small style="color:#94a3b8">IP: {{opened_ip}}</small>
+                            {{/email_opened}}
+                            {{^email_opened}}
+                                <span class="commlogs-badge commlogs-badge--skipped">
+                                    <span class="commlogs-badge__dot"></span>
+                                    Not Opened
+                                </span>
+                            {{/email_opened}}
+                        {{/is_tracked}}
+                        {{^is_tracked}}
+                            <span style="color:#94a3b8">—</span>
+                        {{/is_tracked}}
+                    </td>
                     <td>{{sent_by}}</td>
                 </tr>
                 <tr class="commlogs-detail-row" style="display:none">
-                    <td colspan="9">
+                    <td colspan="10">
                         <div class="commlogs-detail">{{{full_content}}}</div>
                     </td>
                 </tr>
@@ -352,9 +374,9 @@ document.addEventListener('DOMContentLoaded', function() {
         order: [[1, 'desc']],
         dom: '<"row"<"col-sm-6"B><"col-sm-6"f>>rtip',
         buttons: [
-            { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-sm btn-outline-success', exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
-            { extend: 'csvHtml5',   text: '<i class="bi bi-filetype-csv"></i> CSV',   className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
-            { extend: 'pdfHtml5',   text: '<i class="bi bi-file-earmark-pdf"></i> PDF',   className: 'btn btn-sm btn-outline-danger', exportOptions: { columns: [1,2,3,4,5,6,7,8] }, orientation: 'landscape' }
+            { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-sm btn-outline-success', exportOptions: { columns: [1,2,3,4,5,6,7,8,9] } },
+            { extend: 'csvHtml5',   text: '<i class="bi bi-filetype-csv"></i> CSV',   className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: [1,2,3,4,5,6,7,8,9] } },
+            { extend: 'pdfHtml5',   text: '<i class="bi bi-file-earmark-pdf"></i> PDF',   className: 'btn btn-sm btn-outline-danger', exportOptions: { columns: [1,2,3,4,5,6,7,8,9] }, orientation: 'landscape' }
         ],
         columnDefs: [
             { orderable: false, targets: 0 },

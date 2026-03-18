@@ -49,7 +49,14 @@ $cutoff = time() - (90 * 86400);
 $rows = [];
 
 // ─── 1. Manual Login Emails ──────────────────────────────────────────
+$has_tracking = $dbman->table_exists('local_commlogs_tracking');
 if ($dbman->table_exists('local_leaner_email')) {
+    $trackjoin = '';
+    $trackfields = '';
+    if ($has_tracking) {
+        $trackfields = ', ct.opened AS track_opened, ct.opened_at AS track_opened_at, ct.opened_ip AS track_opened_ip';
+        $trackjoin = 'LEFT JOIN {local_commlogs_tracking} ct ON ct.email_log_id = le.id';
+    }
     $sql = "SELECT le.id,
                    le.userid,
                    le.email_status,
@@ -60,14 +67,21 @@ if ($dbman->table_exists('local_leaner_email')) {
                    u.email       AS rec_email,
                    s.firstname   AS send_first,
                    s.lastname    AS send_last
+                   {$trackfields}
               FROM {local_leaner_email} le
               JOIN {user} u ON u.id = le.userid
          LEFT JOIN {user} s ON s.id = CAST(le.sentby AS SIGNED)
+              {$trackjoin}
              WHERE CAST(le.timecreated AS SIGNED) >= :cutoff
           ORDER BY timecreated DESC";
     $records = $DB->get_records_sql($sql, ['cutoff' => $cutoff]);
 
     foreach ($records as $r) {
+        // Tracking info.
+        $opened = !empty($r->track_opened);
+        $opened_at = $opened ? userdate($r->track_opened_at, '%d %b %Y, %H:%M') : '';
+        $opened_ip = $opened ? $r->track_opened_ip : '';
+
         $rows[] = [
             'timestamp'         => (int)$r->timecreated,
             'type'              => 'email',
@@ -77,10 +91,15 @@ if ($dbman->table_exists('local_leaner_email')) {
             'content_preview'   => 'Manual login credentials email',
             'full_content'      => '<p>Manual login credentials email sent to <strong>' .
                                    s($r->rec_first . ' ' . $r->rec_last) . '</strong> (' . s($r->rec_email) . ').</p>' .
-                                   '<p>Status: ' . s($r->email_status) . '</p>',
+                                   '<p>Status: ' . s($r->email_status) . '</p>' .
+                                   ($opened ? '<p><strong>Opened:</strong> ' . $opened_at . ' from IP ' . s($opened_ip) . '</p>' : ''),
             'status'            => 'sent',
             'reason'            => '',
             'sent_by'           => ($r->send_first) ? $r->send_first . ' ' . $r->send_last : 'Unknown',
+            'is_tracked'        => true,
+            'email_opened'      => $opened,
+            'opened_at'         => $opened_at,
+            'opened_ip'         => $opened_ip,
         ];
     }
 }
@@ -117,6 +136,10 @@ if ($dbman->table_exists('local_twiliosms_log')) {
             'status'            => $r->status,
             'reason'            => $r->error_msg ? $r->error_msg : '',
             'sent_by'           => 'System',
+            'is_tracked'        => false,
+            'email_opened'      => false,
+            'opened_at'         => '',
+            'opened_ip'         => '',
         ];
     }
 }
@@ -154,6 +177,10 @@ if ($dbman->table_exists('local_news_notifications') && $dbman->table_exists('lo
             'status'            => $r->status,
             'reason'            => '',
             'sent_by'           => 'System',
+            'is_tracked'        => false,
+            'email_opened'      => false,
+            'opened_at'         => '',
+            'opened_ip'         => '',
         ];
     }
 }
@@ -207,6 +234,10 @@ foreach ($records as $r) {
         'status'            => 'sent',
         'reason'            => '',
         'sent_by'           => $sentby,
+        'is_tracked'        => false,
+        'email_opened'      => false,
+        'opened_at'         => '',
+        'opened_ip'         => '',
     ];
 }
 

@@ -105,6 +105,12 @@ $htmlmessage = '<p>Hi <strong>'.$to->firstname.'</strong>,</p>
               </div>
             </div>';
 //print_object($to);
+// Generate tracking pixel token and inject into email HTML.
+$trackingtoken = bin2hex(random_bytes(16));
+$trackingurl = $CFG->wwwroot . '/local/commlogs/track.php?t=' . $trackingtoken;
+$trackingpixel = '<img src="' . $trackingurl . '" width="1" height="1" alt="" style="display:none" />';
+$htmlmessage .= $trackingpixel;
+
 $status = email_to_user($to,$from,$subject, html_to_text($htmlmessage), $htmlmessage, '', '', true);
 if($status){
   //insert
@@ -113,7 +119,20 @@ if($status){
   $newobj->email_status = 'Email Sent';
   $newobj->sentby = $USER->id;
   $newobj->timecreated = time();
-  $DB->insert_record('local_leaner_email',$newobj);
+  $emaillogid = $DB->insert_record('local_leaner_email',$newobj);
+
+  // Create tracking record.
+  $dbman = $DB->get_manager();
+  if ($dbman->table_exists('local_commlogs_tracking')) {
+      $tracking = new stdClass();
+      $tracking->email_log_id = $emaillogid;
+      $tracking->token = $trackingtoken;
+      $tracking->userid = $userid;
+      $tracking->opened = 0;
+      $tracking->timecreated = time();
+      $DB->insert_record('local_commlogs_tracking', $tracking);
+  }
+
    redirect(new moodle_url('/local/learner/view.php'),'Email has been Sent...');
    die;
 }

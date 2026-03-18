@@ -103,6 +103,11 @@ class observer {
             $phone = '+44' . substr($phone, 1);
         }
 
+        // 7xxx -> +447xxx (bare UK mobile without leading 0).
+        if (preg_match('/^7[0-9]+$/', $phone)) {
+            $phone = '+44' . $phone;
+        }
+
         // 447xxx -> +447xxx
         if (preg_match('/^44[0-9]+$/', $phone)) {
             $phone = '+' . $phone;

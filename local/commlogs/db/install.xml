@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/commlogs/db" VERSION="2026031801" COMMENT="Email open tracking for commlogs">
+  <TABLES>
+    <TABLE NAME="local_commlogs_tracking" COMMENT="Tracks email opens via pixel">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="email_log_id" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to local_leaner_email.id"/>
+        <FIELD NAME="token" TYPE="char" LENGTH="64" NOTNULL="true" COMMENT="Unique tracking token"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Recipient user ID"/>
+        <FIELD NAME="opened" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="1 if opened"/>
+        <FIELD NAME="opened_at" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Timestamp of first open"/>
+        <FIELD NAME="opened_ip" TYPE="char" LENGTH="45" NOTNULL="false" COMMENT="IP address at first open"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="When tracking record was created"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_token" UNIQUE="true" FIELDS="token"/>
+        <INDEX NAME="idx_email_log_id" UNIQUE="false" FIELDS="email_log_id"/>
+        <INDEX NAME="idx_userid" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
