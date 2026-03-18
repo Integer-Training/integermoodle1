@@ -36,6 +36,11 @@ $PAGE->set_title(get_string('commlogs', 'local_commlogs'));
 $PAGE->set_heading(get_string('commlogs', 'local_commlogs'));
 $PAGE->set_pagelayout('admin');
 
+// CDN includes — echoed before header so they're in <head>.
+echo '<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">';
+echo '<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">';
+echo '<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.6.2/css/buttons.dataTables.min.css">';
+
 $dbman = $DB->get_manager();
 
 // 90-day cutoff.
@@ -74,6 +79,7 @@ if ($dbman->table_exists('local_leaner_email')) {
                                    s($r->rec_first . ' ' . $r->rec_last) . '</strong> (' . s($r->rec_email) . ').</p>' .
                                    '<p>Status: ' . s($r->email_status) . '</p>',
             'status'            => 'sent',
+            'reason'            => '',
             'sent_by'           => ($r->send_first) ? $r->send_first . ' ' . $r->send_last : 'Unknown',
         ];
     }
@@ -109,6 +115,7 @@ if ($dbman->table_exists('local_twiliosms_log')) {
             'full_content'      => '<p>' . s($r->message) . '</p>' .
                                    ($r->error_msg ? '<p class="text-danger"><strong>Error:</strong> ' . s($r->error_msg) . '</p>' : ''),
             'status'            => $r->status,
+            'reason'            => $r->error_msg ? $r->error_msg : '',
             'sent_by'           => 'System',
         ];
     }
@@ -145,6 +152,7 @@ if ($dbman->table_exists('local_news_notifications') && $dbman->table_exists('lo
             'full_content'      => '<h5>' . s($r->news_title) . '</h5>' .
                                    format_text($r->news_content, FORMAT_HTML),
             'status'            => $r->status,
+            'reason'            => '',
             'sent_by'           => 'System',
         ];
     }
@@ -197,6 +205,7 @@ foreach ($records as $r) {
         'full_content'      => '<h5>' . s($r->subject) . '</h5>' .
                                format_text($r->fullmessagehtml, FORMAT_HTML),
         'status'            => 'sent',
+        'reason'            => '',
         'sent_by'           => $sentby,
     ];
 }
@@ -244,6 +253,10 @@ foreach ($rows as &$row) {
     // Status label.
     $row['status_label'] = ucfirst($row['status']);
 
+    // Reason (for skipped/failed).
+    $row['has_reason'] = !empty($row['reason']);
+    $row['reason'] = s($row['reason']);
+
     // KPI counts.
     if ($row['is_sent'])    $kpi_sent++;
     if ($row['is_failed'])  $kpi_failed++;
@@ -266,4 +279,16 @@ $templatecontext = [
 
 echo $OUTPUT->header();
 echo $OUTPUT->render_from_template('local_commlogs/logs', $templatecontext);
+
+// All JS scripts echoed here — AFTER template HTML, BEFORE footer.
+// This ensures correct load order: jQuery (from Moodle) → DataTables core → Buttons → init script.
+echo '<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>';
+echo '<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>';
+echo '<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>';
+echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>';
+echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>';
+echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>';
+echo '<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.html5.min.js"></script>';
+echo '<script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.print.min.js"></script>';
+
 echo $OUTPUT->footer();

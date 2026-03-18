@@ -8,9 +8,6 @@
     @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 }}
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap4.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
 <style>
 /* ── Shell ───────────────────────────────────────────────────────── */
@@ -275,13 +272,14 @@ td.commlogs-toggle:hover { color: #4338ca; }
                     <th>Recipient</th>
                     <th>Preview</th>
                     <th>Status</th>
+                    <th>Reason</th>
                     <th>Sent By</th>
                 </tr>
             </thead>
             <tbody>
                 {{#rows}}
-                <tr data-full-content="{{full_content}}" data-timestamp="{{timestamp}}">
-                    <td class="commlogs-toggle"><i class="bi bi-plus-circle"></i></td>
+                <tr class="commlogs-row" data-timestamp="{{timestamp}}">
+                    <td class="commlogs-toggle" onclick="commlogsToggle(this)"><i class="bi bi-plus-circle"></i></td>
                     <td>{{datetime}}</td>
                     <td>
                         <span class="commlogs-type-pill {{#is_email}}commlogs-type-pill--email{{/is_email}}{{#is_sms}}commlogs-type-pill--sms{{/is_sms}}{{#is_notification}}commlogs-type-pill--notif{{/is_notification}}">
@@ -300,7 +298,13 @@ td.commlogs-toggle:hover { color: #4338ca; }
                             {{status_label}}
                         </span>
                     </td>
+                    <td style="max-width:200px; font-size:.8rem; color:#991b1b;">{{#has_reason}}{{reason}}{{/has_reason}}{{^has_reason}}<span style="color:#94a3b8">—</span>{{/has_reason}}</td>
                     <td>{{sent_by}}</td>
+                </tr>
+                <tr class="commlogs-detail-row" style="display:none">
+                    <td colspan="9">
+                        <div class="commlogs-detail">{{{full_content}}}</div>
+                    </td>
                 </tr>
                 {{/rows}}
             </tbody>
@@ -316,130 +320,89 @@ td.commlogs-toggle:hover { color: #4338ca; }
 
 </div>
 
+<!-- ── Pure JS toggle (no DataTables dependency) ──────────── -->
 <script>
-require(['jquery'], function($) {
+function commlogsToggle(td) {
+    var mainRow = td.closest('tr');
+    var detailRow = mainRow.nextElementSibling;
+    if (!detailRow || !detailRow.classList.contains('commlogs-detail-row')) return;
 
-    // Load CDN scripts sequentially, then init.
-    var cdnScripts = [
-        'https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js',
-        'https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap4.min.js',
-        'https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js',
-        'https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap4.min.js',
-        'https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js'
-    ];
-
-    function loadScript(url) {
-        return new Promise(function(resolve, reject) {
-            var s = document.createElement('script');
-            s.src = url;
-            s.onload = resolve;
-            s.onerror = reject;
-            document.head.appendChild(s);
-        });
+    var icon = td.querySelector('i');
+    if (detailRow.style.display === 'none') {
+        detailRow.style.display = '';
+        icon.className = 'bi bi-dash-circle';
+    } else {
+        detailRow.style.display = 'none';
+        icon.className = 'bi bi-plus-circle';
     }
+}
+</script>
 
-    // Load jszip and pdfmake first (no dependencies), then DataTables.
-    Promise.all([
-        loadScript(cdnScripts[5]),
-        loadScript(cdnScripts[6])
-    ]).then(function() {
-        return loadScript(cdnScripts[7]);
-    }).then(function() {
-        return loadScript(cdnScripts[0]);
-    }).then(function() {
-        return loadScript(cdnScripts[1]);
-    }).then(function() {
-        return loadScript(cdnScripts[2]);
-    }).then(function() {
-        return loadScript(cdnScripts[3]);
-    }).then(function() {
-        return loadScript(cdnScripts[4]);
-    }).then(function() {
-        initCommLogs($);
+<!-- ── DataTables init (runs after CDN scripts loaded from index.php) ── -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (typeof jQuery === 'undefined' || !jQuery.fn.DataTable) return;
+    var $ = jQuery;
+
+    // Hide detail rows from DataTables by moving them out temporarily isn't needed
+    // since DataTables will ignore hidden rows with display:none.
+
+    var table = $('#commlogs-table').DataTable({
+        pageLength: 25,
+        order: [[1, 'desc']],
+        dom: '<"row"<"col-sm-6"B><"col-sm-6"f>>rtip',
+        buttons: [
+            { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-sm btn-outline-success', exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
+            { extend: 'csvHtml5',   text: '<i class="bi bi-filetype-csv"></i> CSV',   className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: [1,2,3,4,5,6,7,8] } },
+            { extend: 'pdfHtml5',   text: '<i class="bi bi-file-earmark-pdf"></i> PDF',   className: 'btn btn-sm btn-outline-danger', exportOptions: { columns: [1,2,3,4,5,6,7,8] }, orientation: 'landscape' }
+        ],
+        columnDefs: [
+            { orderable: false, targets: 0 },
+            { targets: '_all', orderable: true }
+        ],
+        language: { search: '', searchPlaceholder: 'Search logs...' }
     });
 
-    function initCommLogs($) {
-        if (!$.fn.DataTable) { return; }
+    // ── Custom filters ─────────────────────────────────────────
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+        if (settings.nTable.id !== 'commlogs-table') return true;
 
-        // DataTable init.
-        var table = $('#commlogs-table').DataTable({
-            pageLength: 25,
-            order: [[1, 'desc']],
-            dom: '<"row"<"col-sm-6"B><"col-sm-6"f>>rtip',
-            buttons: [
-                { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel"></i> Excel', className: 'btn btn-sm btn-outline-success', exportOptions: { columns: [1,2,3,4,5,6,7] } },
-                { extend: 'csvHtml5',   text: '<i class="bi bi-filetype-csv"></i> CSV',   className: 'btn btn-sm btn-outline-secondary', exportOptions: { columns: [1,2,3,4,5,6,7] } },
-                { extend: 'pdfHtml5',   text: '<i class="bi bi-file-earmark-pdf"></i> PDF',   className: 'btn btn-sm btn-outline-danger', exportOptions: { columns: [1,2,3,4,5,6,7] }, orientation: 'landscape' }
-            ],
-            columnDefs: [
-                { orderable: false, targets: 0 },
-                { orderData: [1], targets: 1 }
-            ],
-            language: { search: '', searchPlaceholder: 'Search logs...' }
-        });
+        var typeVal   = $('#commlogs-filter-type').val();
+        var catVal    = $('#commlogs-filter-cat').val();
+        var statusVal = $('#commlogs-filter-status').val();
+        var fromVal   = $('#commlogs-filter-from').val();
+        var toVal     = $('#commlogs-filter-to').val();
 
-        // ── Row expand/collapse ────────────────────────────────────
-        $('#commlogs-table tbody').on('click', 'td.commlogs-toggle', function() {
-            var tr = $(this).closest('tr');
-            var row = table.row(tr);
-            if (row.child.isShown()) {
-                row.child.hide();
-                tr.removeClass('shown');
-                $(this).find('i').removeClass('bi-dash-circle').addClass('bi-plus-circle');
-            } else {
-                var content = tr.attr('data-full-content');
-                row.child('<div class="commlogs-detail">' + content + '</div>').show();
-                tr.addClass('shown');
-                $(this).find('i').removeClass('bi-plus-circle').addClass('bi-dash-circle');
+        if (typeVal && data[2].indexOf(typeVal) === -1) return false;
+        if (catVal && data[3].indexOf(catVal) === -1) return false;
+        if (statusVal && data[6].indexOf(statusVal) === -1) return false;
+
+        if (fromVal || toVal) {
+            var rowNode = table.row(dataIndex).node();
+            var ts  = parseInt($(rowNode).attr('data-timestamp')) || 0;
+            var tsDate = new Date(ts * 1000);
+            tsDate.setHours(0,0,0,0);
+            if (fromVal) {
+                var from = new Date(fromVal);
+                if (tsDate < from) return false;
             }
-        });
-
-        // ── Custom filters ─────────────────────────────────────────
-        $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-            if (settings.nTable.id !== 'commlogs-table') return true;
-
-            var typeVal   = $('#commlogs-filter-type').val();
-            var catVal    = $('#commlogs-filter-cat').val();
-            var statusVal = $('#commlogs-filter-status').val();
-            var fromVal   = $('#commlogs-filter-from').val();
-            var toVal     = $('#commlogs-filter-to').val();
-
-            if (typeVal && data[2].indexOf(typeVal) === -1) return false;
-            if (catVal && data[3].indexOf(catVal) === -1) return false;
-            if (statusVal && data[6].indexOf(statusVal) === -1) return false;
-
-            if (fromVal || toVal) {
-                var row = table.row(dataIndex).node();
-                var ts  = parseInt($(row).attr('data-timestamp')) || 0;
-                var tsDate = new Date(ts * 1000);
-                tsDate.setHours(0,0,0,0);
-                if (fromVal) {
-                    var from = new Date(fromVal);
-                    if (tsDate < from) return false;
-                }
-                if (toVal) {
-                    var to = new Date(toVal);
-                    to.setHours(23,59,59,999);
-                    if (tsDate > to) return false;
-                }
+            if (toVal) {
+                var to = new Date(toVal);
+                to.setHours(23,59,59,999);
+                if (tsDate > to) return false;
             }
+        }
 
-            return true;
-        });
+        return true;
+    });
 
-        // Re-draw on filter change.
-        $('#commlogs-filter-type, #commlogs-filter-cat, #commlogs-filter-status, #commlogs-filter-from, #commlogs-filter-to')
-            .on('change', function() { table.draw(); });
+    $('#commlogs-filter-type, #commlogs-filter-cat, #commlogs-filter-status, #commlogs-filter-from, #commlogs-filter-to')
+        .on('change', function() { table.draw(); });
 
-        // Reset filters.
-        $('#commlogs-reset').on('click', function() {
-            $('#commlogs-filter-type, #commlogs-filter-cat, #commlogs-filter-status').val('');
-            $('#commlogs-filter-from, #commlogs-filter-to').val('');
-            table.draw();
-        });
-    }
+    $('#commlogs-reset').on('click', function() {
+        $('#commlogs-filter-type, #commlogs-filter-cat, #commlogs-filter-status').val('');
+        $('#commlogs-filter-from, #commlogs-filter-to').val('');
+        table.draw();
+    });
 });
 </script>
