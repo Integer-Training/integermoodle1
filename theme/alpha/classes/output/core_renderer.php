@@ -1445,6 +1445,13 @@ class core_renderer extends \core_renderer {
                                 <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-bullhorn"></i></span>
                                 <span class="rui-sidebar-nav-text">News Management</span>
                             </a>
+                        </li>';
+                $commlogs_link = new moodle_url('/local/commlogs/index.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$commlogs_link.'" id="itemCommLogs" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-envelope-open-text"></i></span>
+                                <span class="rui-sidebar-nav-text">Communication Logs</span>
+                            </a>
                         </li>
 
                     <style>
