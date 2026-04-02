@@ -97,7 +97,10 @@ if($action == 'mark'){
             JOIN {$prefix}assign_submission sub
                 ON sub.assignment = a.id
                 AND sub.userid = gm_s.userid
-                AND sub.status IN ('submitted', 'draft')
+                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
+                    SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
+                    AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+                )))
                 AND sub.latest = 1
                 AND sub.attemptnumber = 0
             LEFT JOIN {$prefix}assign_grades gr
@@ -164,7 +167,10 @@ if($action == 'mark'){
             JOIN {$prefix}assign_submission sub
                 ON sub.assignment = a.id
                 AND sub.userid = gm_s.userid
-                AND sub.status IN ('submitted', 'draft')
+                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
+                    SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
+                    AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+                )))
                 AND sub.latest = 1
             LEFT JOIN {$prefix}assign_grades gr
                 ON gr.assignment = a.id
@@ -177,7 +183,7 @@ if($action == 'mark'){
                 AND (
                     (sub.attemptnumber > 0 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0))
                     OR
-                    (gr.id IS NOT NULL AND gr.grade IS NOT NULL AND gr.grade >= 0
+                    (sub.status = 'submitted' AND gr.id IS NOT NULL AND gr.grade IS NOT NULL AND gr.grade >= 0
                      AND EXISTS (
                          SELECT 1 FROM {$prefix}files f
                          WHERE f.component = 'assignsubmission_file'
@@ -239,7 +245,10 @@ if($action == 'mark'){
                 AND gr.attemptnumber = sub.attemptnumber
             WHERE
                 gm_t.userid = ".(int)$USER->id."
-                AND sub.status IN ('submitted', 'draft')
+                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
+                    SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
+                    AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+                )))
                 AND a.name NOT LIKE '%IAG%'
                 AND a.name NOT LIKE '%ID Proof%'
                 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)
