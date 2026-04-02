@@ -97,7 +97,7 @@ if($action == 'mark'){
             JOIN {$prefix}assign_submission sub
                 ON sub.assignment = a.id
                 AND sub.userid = gm_s.userid
-                AND sub.status = 'submitted'
+                AND sub.status IN ('submitted', 'draft')
                 AND sub.latest = 1
                 AND sub.attemptnumber = 0
             LEFT JOIN {$prefix}assign_grades gr
@@ -164,7 +164,7 @@ if($action == 'mark'){
             JOIN {$prefix}assign_submission sub
                 ON sub.assignment = a.id
                 AND sub.userid = gm_s.userid
-                AND sub.status = 'submitted'
+                AND sub.status IN ('submitted', 'draft')
                 AND sub.latest = 1
             LEFT JOIN {$prefix}assign_grades gr
                 ON gr.assignment = a.id
@@ -239,7 +239,7 @@ if($action == 'mark'){
                 AND gr.attemptnumber = sub.attemptnumber
             WHERE
                 gm_t.userid = ".(int)$USER->id."
-                AND sub.status = 'submitted'
+                AND sub.status IN ('submitted', 'draft')
                 AND a.name NOT LIKE '%IAG%'
                 AND a.name NOT LIKE '%ID Proof%'
                 AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0)

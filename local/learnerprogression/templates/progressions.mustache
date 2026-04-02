@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Assignment rows under this course.
             html += '<table class="prog-unit-table">';
-            html += '<thead><tr><th style="text-align:center">Assignment / Unit</th><th style="text-align:center">Document</th><th style="text-align:center">Date</th><th style="text-align:center">Status</th><th style="text-align:center">Time Spent</th></tr></thead>';
+            html += '<thead><tr><th style="text-align:center">Assignment / Unit</th><th style="text-align:center">Document</th><th style="text-align:center">Submitted Date</th><th style="text-align:center">Marked Date</th><th style="text-align:center">Status</th><th style="text-align:center">Time Spent</th></tr></thead>';
             html += '<tbody>';
             if (c.assignments && c.assignments.length > 0) {
                 for (var j = 0; j < c.assignments.length; j++) {
@@ -358,16 +358,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     var unitTime = a.unit_hours || '—';
                     var fileName = a.file_name || '—';
                     var subDate = a.sub_date || '—';
+                    var gradeDate = a.grade_date || '—';
                     html += '<tr>';
                     html += '<td class="prog-unit-name" style="text-align:center">' + escHtml(a.name) + '</td>';
                     html += '<td style="text-align:center"><span class="prog-unit-file">' + escHtml(fileName) + '</span></td>';
                     html += '<td style="text-align:center"><span class="prog-unit-date">' + escHtml(subDate) + '</span></td>';
+                    html += '<td style="text-align:center"><span class="prog-unit-graded">' + escHtml(gradeDate) + '</span></td>';
                     html += '<td style="text-align:center"><span class="prog-unit-status ' + statusClass + '">' + escHtml(a.status) + '</span></td>';
                     html += '<td style="text-align:center"><span class="prog-unit-time">' + escHtml(unitTime) + '</span></td>';
                     html += '</tr>';
                 }
             } else {
-                html += '<tr><td colspan="5" class="prog-unit-empty">No assignments</td></tr>';
+                html += '<tr><td colspan="6" class="prog-unit-empty">No assignments</td></tr>';
             }
             html += '</tbody></table>';
             html += '</div>';

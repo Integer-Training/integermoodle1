@@ -170,7 +170,7 @@ $mark_sql = "SELECT COUNT(DISTINCT sub.id)
     JOIN {$prefix}modules mod_m ON mod_m.name = 'assign'
     JOIN {$prefix}course_modules cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mod_m.id AND cm.visible = 1
     JOIN {$prefix}assign_submission sub ON sub.assignment = a.id AND sub.userid = gm_s.userid
-        AND sub.status = 'submitted' AND sub.latest = 1 AND sub.attemptnumber = 0
+        AND sub.status IN ('submitted', 'draft') AND sub.latest = 1 AND sub.attemptnumber = 0
     LEFT JOIN {$prefix}assign_grades gr ON gr.assignment = a.id AND gr.userid = gm_s.userid
         AND gr.attemptnumber = sub.attemptnumber
     WHERE gm_t.userid = {$tutorid}
@@ -201,7 +201,7 @@ $resub_sql = "SELECT COUNT(DISTINCT sub.id)
     JOIN {$prefix}modules mod_r ON mod_r.name = 'assign'
     JOIN {$prefix}course_modules cm_r ON cm_r.instance = a.id AND cm_r.course = a.course AND cm_r.module = mod_r.id AND cm_r.visible = 1
     JOIN {$prefix}assign_submission sub ON sub.assignment = a.id AND sub.userid = gm_s.userid
-        AND sub.status = 'submitted' AND sub.latest = 1
+        AND sub.status IN ('submitted', 'draft') AND sub.latest = 1
     LEFT JOIN {$prefix}assign_grades gr ON gr.assignment = a.id AND gr.userid = gm_s.userid
         AND gr.attemptnumber = sub.attemptnumber
     WHERE gm_t.userid = {$tutorid}
@@ -238,7 +238,7 @@ $o_sql = "SELECT COUNT(DISTINCT sub.id)
     JOIN {$prefix}modules mod_o ON mod_o.name = 'assign'
     JOIN {$prefix}course_modules cm_o ON cm_o.instance = a.id AND cm_o.course = a.course AND cm_o.module = mod_o.id AND cm_o.visible = 1
     JOIN {$prefix}assign_submission sub ON sub.assignment = a.id AND sub.userid = u.id
-        AND sub.status = 'submitted' AND sub.latest = 1
+        AND sub.status IN ('submitted', 'draft') AND sub.latest = 1
     LEFT JOIN {$prefix}assign_grades gr ON gr.assignment = a.id AND gr.userid = u.id
         AND gr.attemptnumber = sub.attemptnumber
     WHERE gm_t.userid = {$tutorid}

@@ -151,7 +151,7 @@ if($fromform && !$action){
             $row['Resubmission'] = 'N/A';
             //
             $sub_sql = "SELECT sub.timemodified as subtime FROM {assign_submission} sub
-                    WHERE sub.status = 'submitted'
+                    WHERE sub.status IN ('submitted', 'draft')
                     AND userid=".$record->userid." AND assignment=".$assign_obj->id."";
             //
             $sub_time = $DB->get_record_sql($sub_sql);
@@ -279,7 +279,7 @@ if($fromform && !$action){
             $row['Resubmission'] = 'N/A';
             //
             $sub_sql = "SELECT sub.timemodified as subtime FROM {assign_submission} sub
-                    WHERE sub.status = 'submitted'
+                    WHERE sub.status IN ('submitted', 'draft')
                     AND userid=".$record->userid." AND assignment=".$assign_obj->id."";
             //
             $sub_time = $DB->get_record_sql($sub_sql);

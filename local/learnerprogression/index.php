@@ -179,6 +179,7 @@ if (!empty($learner_ids)) {
                      cm.id AS cmid,
                      sub.id AS subid,
                      sub.timemodified AS sub_timemodified,
+                     ag.timemodified AS grade_timemodified,
                      CASE
                          /* --- Case studies: scale uses Submitted / Rewrite --- */
                          WHEN a.name LIKE '%Case Stud%'
@@ -347,6 +348,12 @@ if (!empty($learner_ids)) {
             $sub_date = userdate($row->sub_timemodified, '%d %b %Y, %H:%M');
         }
 
+        // Marked date: when tutor graded this assignment.
+        $grade_date = '';
+        if (!empty($row->grade_timemodified) && $row->grade_timemodified > 0) {
+            $grade_date = userdate($row->grade_timemodified, '%d %b %Y, %H:%M');
+        }
+
         $assign_entry = [
             'name' => $row->assignname,
             'status' => $row->grade_status,
@@ -357,6 +364,7 @@ if (!empty($learner_ids)) {
             'unit_hours_key' => $uid . '-' . $cmid_val,
             'file_name' => $file_name,
             'sub_date' => $sub_date,
+            'grade_date' => $grade_date,
         ];
         $cd['assignments'][] = $assign_entry;
 
