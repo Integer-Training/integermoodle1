@@ -32,10 +32,13 @@
 .pr-filter-select:focus, .pr-search-input:focus { border-color: #3a5ba0; outline: none; }
 
 /* Table */
-.pr-table-wrap { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
+.pr-table-wrap { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; max-height: 75vh; overflow-y: auto; }
 .pr-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.pr-table thead { background: #1a2238; color: #fff; }
+.pr-table thead { background: #1a2238; color: #fff; position: sticky; top: 0; z-index: 10; }
 .pr-table thead th { padding: 12px 14px; font-weight: 600; text-align: left; white-space: nowrap; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3px; }
+/* Top scrollbar — mirrors horizontal scroll above the table */
+.pr-top-scroll { overflow-x: auto; overflow-y: hidden; margin-bottom: -1px; background: #fff; border-radius: 10px 10px 0 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.03); }
+.pr-top-scroll-inner { height: 1px; }
 .pr-table tbody tr { border-bottom: 1px solid #eee; transition: background 0.15s; }
 .pr-table tbody tr:hover { background: #f8f9fc; }
 .pr-table tbody td { padding: 10px 14px; vertical-align: middle; }
@@ -137,8 +140,11 @@
         </div>
     </div>
 
+    <!-- Top horizontal scrollbar -->
+    <div class="pr-top-scroll" id="prTopScroll"><div class="pr-top-scroll-inner" id="prTopScrollInner"></div></div>
+
     <!-- Table -->
-    <div class="pr-table-wrap">
+    <div class="pr-table-wrap" id="prTableWrap">
         {{#has_learners}}
         <table class="pr-table" id="prTable">
             <thead>
@@ -272,6 +278,25 @@ function prSyncBatch(offset, totalSynced, totalSkipped) {
 document.addEventListener('DOMContentLoaded', function() {
     var ajaxUrl = '{{ajax_url}}';
     var sesskey = '{{sesskey}}';
+
+    // ===== Top scrollbar sync =====
+    var topScroll = document.getElementById('prTopScroll');
+    var tableWrap = document.getElementById('prTableWrap');
+    var topInner = document.getElementById('prTopScrollInner');
+    if (topScroll && tableWrap && topInner) {
+        function syncScrollWidth() {
+            topInner.style.width = tableWrap.scrollWidth + 'px';
+        }
+        syncScrollWidth();
+        window.addEventListener('resize', syncScrollWidth);
+        var syncing = false;
+        topScroll.addEventListener('scroll', function() {
+            if (!syncing) { syncing = true; tableWrap.scrollLeft = topScroll.scrollLeft; syncing = false; }
+        });
+        tableWrap.addEventListener('scroll', function() {
+            if (!syncing) { syncing = true; topScroll.scrollLeft = tableWrap.scrollLeft; syncing = false; }
+        });
+    }
 
     // ===== Filters =====
     function applyFilters() {
