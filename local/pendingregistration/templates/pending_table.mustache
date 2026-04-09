@@ -24,27 +24,40 @@
 .pr-kpi-value { font-size: 1.6rem; font-weight: 700; color: #1a2238; }
 .pr-kpi--synced { border-left-color: #6ea3c1; }
 
+/* Filters */
+.pr-filters { background: #fff; border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.pr-filter-label { font-size: 0.78rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.3px; }
+.pr-filter-select, .pr-search-input { padding: 6px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; background: #fff; min-width: 140px; }
+.pr-search-input { min-width: 220px; }
+.pr-filter-select:focus, .pr-search-input:focus { border-color: #3a5ba0; outline: none; }
+
 /* Table */
 .pr-table-wrap { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
-.pr-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.pr-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .pr-table thead { background: #1a2238; color: #fff; }
-.pr-table thead th { padding: 12px 14px; font-weight: 600; text-align: left; white-space: nowrap; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.3px; }
+.pr-table thead th { padding: 12px 14px; font-weight: 600; text-align: left; white-space: nowrap; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3px; }
 .pr-table tbody tr { border-bottom: 1px solid #eee; transition: background 0.15s; }
 .pr-table tbody tr:hover { background: #f8f9fc; }
 .pr-table tbody td { padding: 10px 14px; vertical-align: middle; }
 .pr-table tbody tr.pr-row-registered { opacity: 0.4; background: #f0fdf0; transition: opacity 0.5s; }
+.pr-table tbody tr.pr-hidden { display: none; }
 
 /* Status badges */
 .pr-status { padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
 .pr-status--active { background: #d4edda; color: #155724; }
-.pr-status--trialing { background: #fff3cd; color: #856404; }
 .pr-status--other { background: #f8d7da; color: #721c24; }
+
+/* Progress bar */
+.pr-prog-wrap { display: flex; align-items: center; gap: 6px; min-width: 100px; }
+.pr-prog-bar { flex: 1; height: 8px; background: #e9ecef; border-radius: 4px; overflow: hidden; }
+.pr-prog-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+.pr-prog-label { font-size: 0.78rem; font-weight: 600; white-space: nowrap; }
 
 /* Checkboxes */
 .pr-check { width: 18px; height: 18px; cursor: pointer; accent-color: #3a5ba0; }
 
 /* Notes & Links */
-.pr-notes-input, .pr-links-input { width: 100%; min-width: 120px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; resize: vertical; transition: border-color 0.2s; }
+.pr-notes-input, .pr-links-input { width: 100%; min-width: 100px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; resize: vertical; transition: border-color 0.2s; }
 .pr-notes-input:focus, .pr-links-input:focus { border-color: #3a5ba0; outline: none; }
 .pr-save-indicator { font-size: 0.75rem; color: #28a745; display: none; margin-top: 2px; }
 
@@ -82,11 +95,45 @@
     <div class="pr-kpi-row">
         <div class="pr-kpi">
             <div class="pr-kpi-label">Pending Registration</div>
-            <div class="pr-kpi-value">{{total_count}}</div>
+            <div class="pr-kpi-value" id="prKpiCount">{{total_count}}</div>
         </div>
         <div class="pr-kpi pr-kpi--synced">
             <div class="pr-kpi-label">Last Synced</div>
             <div class="pr-kpi-value" style="font-size:1rem">{{last_synced}}</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="pr-filters">
+        <div>
+            <span class="pr-filter-label">Search</span><br>
+            <input type="text" class="pr-search-input" id="prSearch" placeholder="Name, email, ID...">
+        </div>
+        <div>
+            <span class="pr-filter-label">Status</span><br>
+            <select class="pr-filter-select" id="prFilterStatus">
+                <option value="">All</option>
+                <option value="unticked">Unticked (Pending)</option>
+                <option value="ticked">Ticked</option>
+            </select>
+        </div>
+        <div>
+            <span class="pr-filter-label">Tutor</span><br>
+            <select class="pr-filter-select" id="prFilterTutor">
+                <option value="">All Tutors</option>
+                {{#tutor_list}}
+                <option value="{{name}}">{{name}}</option>
+                {{/tutor_list}}
+            </select>
+        </div>
+        <div>
+            <span class="pr-filter-label">Course</span><br>
+            <select class="pr-filter-select" id="prFilterCourse">
+                <option value="">All Courses</option>
+                {{#course_list}}
+                <option value="{{name}}">{{name}}</option>
+                {{/course_list}}
+            </select>
         </div>
     </div>
 
@@ -99,29 +146,42 @@
                     <th>Learner ID</th>
                     <th>Name</th>
                     <th>Email</th>
-                    <th>Company</th>
+                    <th>Course</th>
+                    <th>Tutor</th>
                     <th>Paid to Date</th>
-                    <th>Outstanding</th>
-                    <th>Subscription</th>
+                    <th>Stripe Status</th>
+                    <th>Current %</th>
                     <th style="text-align:center">Registration</th>
                     <th style="text-align:center">Tutor Check</th>
-                    <th style="text-align:center">Admin Check</th>
+                    <th style="text-align:center">Admin ID Check</th>
                     <th>Notes</th>
-                    <th>Links</th>
+                    <th>ID Links</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="prTableBody">
                 {{#learners}}
-                <tr data-id="{{id}}" id="pr-row-{{id}}">
+                <tr data-id="{{id}}" id="pr-row-{{id}}"
+                    data-name="{{learner_name}}" data-email="{{learner_email}}" data-lid="{{learner_id}}"
+                    data-tutor="{{tutor}}" data-course="{{course}}"
+                    data-reg="{{registration_check}}" data-tutor-chk="{{tutor_check}}" data-admin-chk="{{admin_check}}">
                     <td><strong>{{learner_id}}</strong></td>
                     <td>{{learner_name}}</td>
                     <td><a href="mailto:{{learner_email}}">{{learner_email}}</a></td>
-                    <td>{{company}}</td>
+                    <td style="max-width:200px; font-size:0.8rem">{{course}}</td>
+                    <td>{{tutor}}</td>
                     <td>&pound;{{paid_to_date}}</td>
-                    <td>&pound;{{outstanding}}</td>
                     <td>
                         {{#sub_active}}<span class="pr-status pr-status--active">{{subscription_status}}</span>{{/sub_active}}
                         {{^sub_active}}<span class="pr-status pr-status--other">{{subscription_status}}</span>{{/sub_active}}
+                    </td>
+                    <td>
+                        <div class="pr-prog-wrap">
+                            <div class="pr-prog-bar">
+                                <div class="pr-prog-fill" style="width:{{current_pct}}%; background:{{#current_pct}}#3a5ba0{{/current_pct}}{{^current_pct}}#e9ecef{{/current_pct}}"></div>
+                            </div>
+                            <span class="pr-prog-label">{{current_pct}}%</span>
+                        </div>
+                        <span style="font-size:0.72rem;color:#888">{{passed_total}}</span>
                     </td>
                     <td style="text-align:center">
                         <input type="checkbox" class="pr-check" data-field="registration_check" data-id="{{id}}" {{#registration_check}}checked{{/registration_check}}>
@@ -161,6 +221,7 @@
 </style>
 
 <script>
+// ===== Batch sync =====
 var prSyncRunning = false;
 function prStartSync() {
     if (prSyncRunning) return;
@@ -168,10 +229,8 @@ function prStartSync() {
     var btn = document.getElementById('prSyncBtn');
     btn.innerHTML = '<i class="bi bi-arrow-repeat pr-spin"></i> Syncing...';
     btn.disabled = true;
-    var wrap = document.getElementById('prProgressWrap');
-    wrap.style.display = 'block';
-    var totalSynced = 0, totalSkipped = 0;
-    prSyncBatch(0, totalSynced, totalSkipped);
+    document.getElementById('prProgressWrap').style.display = 'block';
+    prSyncBatch(0, 0, 0);
 }
 function prSyncBatch(offset, totalSynced, totalSkipped) {
     var syncUrl = '{{sync_url}}';
@@ -187,14 +246,12 @@ function prSyncBatch(offset, totalSynced, totalSkipped) {
                 document.getElementById('prProgressFill').style.width = pct + '%';
                 document.getElementById('prProgressFill').textContent = pct + '%';
                 document.getElementById('prProgressDetail').textContent =
-                    'Processed ' + resp.processed + ' / ' + resp.total + ' students | ' +
-                    totalSynced + ' synced, ' + totalSkipped + ' skipped';
+                    'Processed ' + resp.processed + ' / ' + resp.total + ' | ' + totalSynced + ' synced, ' + totalSkipped + ' skipped';
                 if (!resp.done) {
                     prSyncBatch(resp.processed, totalSynced, totalSkipped);
                 } else {
                     document.getElementById('prProgressText').textContent = 'Sync complete!';
-                    var btn = document.getElementById('prSyncBtn');
-                    btn.innerHTML = '<i class="bi bi-check-circle"></i> Done';
+                    document.getElementById('prSyncBtn').innerHTML = '<i class="bi bi-check-circle"></i> Done';
                     setTimeout(function() { location.reload(); }, 1500);
                 }
             } catch(e) {
@@ -202,10 +259,6 @@ function prSyncBatch(offset, totalSynced, totalSkipped) {
                 document.getElementById('prSyncBtn').disabled = false;
                 prSyncRunning = false;
             }
-        } else {
-            document.getElementById('prProgressText').textContent = 'Sync error (HTTP ' + xhr.status + ')';
-            document.getElementById('prSyncBtn').disabled = false;
-            prSyncRunning = false;
         }
     };
     xhr.onerror = function() {
@@ -220,15 +273,71 @@ document.addEventListener('DOMContentLoaded', function() {
     var ajaxUrl = '{{ajax_url}}';
     var sesskey = '{{sesskey}}';
 
-    // Checkbox toggle via AJAX.
+    // ===== Filters =====
+    function applyFilters() {
+        var search = document.getElementById('prSearch').value.toLowerCase();
+        var status = document.getElementById('prFilterStatus').value;
+        var tutor = document.getElementById('prFilterTutor').value;
+        var course = document.getElementById('prFilterCourse').value;
+        var rows = document.querySelectorAll('#prTableBody tr');
+        var visible = 0;
+
+        rows.forEach(function(row) {
+            var show = true;
+            // Search filter.
+            if (search) {
+                var name = (row.getAttribute('data-name') || '').toLowerCase();
+                var email = (row.getAttribute('data-email') || '').toLowerCase();
+                var lid = (row.getAttribute('data-lid') || '').toLowerCase();
+                if (name.indexOf(search) === -1 && email.indexOf(search) === -1 && lid.indexOf(search) === -1) {
+                    show = false;
+                }
+            }
+            // Status filter (ticked = any checkbox ticked).
+            if (status === 'ticked') {
+                var reg = row.getAttribute('data-reg') === '1';
+                var tc = row.getAttribute('data-tutor-chk') === '1';
+                var ac = row.getAttribute('data-admin-chk') === '1';
+                if (!reg && !tc && !ac) show = false;
+            } else if (status === 'unticked') {
+                var reg = row.getAttribute('data-reg') === '1';
+                var tc = row.getAttribute('data-tutor-chk') === '1';
+                var ac = row.getAttribute('data-admin-chk') === '1';
+                if (reg || tc || ac) show = false;
+            }
+            // Tutor filter.
+            if (tutor && (row.getAttribute('data-tutor') || '') !== tutor) {
+                show = false;
+            }
+            // Course filter.
+            if (course && (row.getAttribute('data-course') || '').indexOf(course) === -1) {
+                show = false;
+            }
+
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+    }
+
+    document.getElementById('prSearch').addEventListener('input', applyFilters);
+    document.getElementById('prFilterStatus').addEventListener('change', applyFilters);
+    document.getElementById('prFilterTutor').addEventListener('change', applyFilters);
+    document.getElementById('prFilterCourse').addEventListener('change', applyFilters);
+
+    // ===== Checkbox toggle via AJAX =====
     document.querySelectorAll('.pr-check').forEach(function(cb) {
         cb.addEventListener('change', function() {
             var id = this.getAttribute('data-id');
             var field = this.getAttribute('data-field');
             var value = this.checked ? 1 : 0;
+            var row = document.getElementById('pr-row-' + id);
+
+            // Update data attributes for filter.
+            if (field === 'registration_check') row.setAttribute('data-reg', value);
+            if (field === 'tutor_check') row.setAttribute('data-tutor-chk', value);
+            if (field === 'admin_check') row.setAttribute('data-admin-chk', value);
 
             var params = 'action=toggle&id=' + id + '&field=' + field + '&value=' + value + '&sesskey=' + encodeURIComponent(sesskey);
-
             var xhr = new XMLHttpRequest();
             xhr.open('POST', ajaxUrl + '?' + params, true);
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -236,18 +345,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (xhr.status === 200) {
                     var resp = JSON.parse(xhr.responseText);
                     if (resp.success && field === 'registration_check' && value === 1) {
-                        // Fade out the row.
-                        var row = document.getElementById('pr-row-' + id);
-                        if (row) {
-                            row.classList.add('pr-row-registered');
-                            setTimeout(function() { row.style.display = 'none'; }, 800);
-                        }
-                        // Update KPI count.
-                        var kpi = document.querySelector('.pr-kpi-value');
-                        if (kpi) {
-                            var cnt = parseInt(kpi.textContent) - 1;
-                            kpi.textContent = cnt >= 0 ? cnt : 0;
-                        }
+                        row.classList.add('pr-row-registered');
+                        setTimeout(function() { row.style.display = 'none'; }, 800);
+                        var kpi = document.getElementById('prKpiCount');
+                        if (kpi) { kpi.textContent = Math.max(0, parseInt(kpi.textContent) - 1); }
                     }
                 }
             };
@@ -255,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Notes auto-save on blur.
+    // ===== Notes auto-save =====
     var notesTimers = {};
     document.querySelectorAll('.pr-notes-input').forEach(function(ta) {
         ta.addEventListener('input', function() {
@@ -270,7 +371,6 @@ document.addEventListener('DOMContentLoaded', function() {
             saveNotes(id, this.value);
         });
     });
-
     function saveNotes(id, value) {
         var params = 'action=notes&id=' + id + '&notes=' + encodeURIComponent(value) + '&sesskey=' + encodeURIComponent(sesskey);
         var xhr = new XMLHttpRequest();
@@ -278,17 +378,14 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             if (xhr.status === 200) {
-                var indicator = document.getElementById('pr-notes-saved-' + id);
-                if (indicator) {
-                    indicator.style.display = 'block';
-                    setTimeout(function() { indicator.style.display = 'none'; }, 2000);
-                }
+                var ind = document.getElementById('pr-notes-saved-' + id);
+                if (ind) { ind.style.display = 'block'; setTimeout(function() { ind.style.display = 'none'; }, 2000); }
             }
         };
         xhr.send();
     }
 
-    // Links auto-save on blur.
+    // ===== Links auto-save =====
     var linksTimers = {};
     document.querySelectorAll('.pr-links-input').forEach(function(inp) {
         inp.addEventListener('input', function() {
@@ -303,7 +400,6 @@ document.addEventListener('DOMContentLoaded', function() {
             saveLinks(id, this.value);
         });
     });
-
     function saveLinks(id, value) {
         var params = 'action=links&id=' + id + '&links=' + encodeURIComponent(value) + '&sesskey=' + encodeURIComponent(sesskey);
         var xhr = new XMLHttpRequest();
@@ -311,11 +407,8 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
         xhr.onload = function() {
             if (xhr.status === 200) {
-                var indicator = document.getElementById('pr-links-saved-' + id);
-                if (indicator) {
-                    indicator.style.display = 'block';
-                    setTimeout(function() { indicator.style.display = 'none'; }, 2000);
-                }
+                var ind = document.getElementById('pr-links-saved-' + id);
+                if (ind) { ind.style.display = 'block'; setTimeout(function() { ind.style.display = 'none'; }, 2000); }
             }
         };
         xhr.send();
