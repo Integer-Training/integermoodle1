@@ -63,12 +63,14 @@ if (!empty($records)) {
     }
     list($email_sql, $email_params) = $DB->get_in_or_equal($emails, SQL_PARAMS_NAMED, 'em');
     $moodle_users = $DB->get_records_sql(
-        "SELECT id, LOWER(email) AS email FROM {user} WHERE LOWER(email) {$email_sql} AND deleted = 0",
+        "SELECT id, LOWER(email) AS email, timecreated FROM {user} WHERE LOWER(email) {$email_sql} AND deleted = 0",
         $email_params
     );
+    $email_to_created = [];
     foreach ($moodle_users as $mu) {
         $email_to_uid[$mu->email] = (int) $mu->id;
         $uid_list[] = (int) $mu->id;
+        $email_to_created[$mu->email] = (int) $mu->timecreated;
     }
 }
 
@@ -196,6 +198,9 @@ foreach ($records as $r) {
     $passed = $progress ? $progress['passed'] : 0;
     $total = $progress ? $progress['total'] : 0;
 
+    $created_ts = $email_to_created[$email] ?? 0;
+    $moodle_created = $created_ts > 0 ? userdate($created_ts, '%d %b %Y') : '-';
+
     $learners[] = [
         'id' => (int) $r->id,
         'learner_id' => $r->learner_id,
@@ -204,9 +209,12 @@ foreach ($records as $r) {
         'course' => $course_str,
         'tutor' => $tutor,
         'paid_to_date' => number_format((float) $r->paid_to_date, 2),
+        'paid_raw' => (float) $r->paid_to_date,
         'subscription_status' => ucfirst($r->subscription_status ?: '-'),
         'current_pct' => $pct,
         'passed_total' => $total > 0 ? $passed . '/' . $total : '-',
+        'moodle_created' => $moodle_created,
+        'moodle_created_ts' => $created_ts,
         'registration_check' => (int) $r->registration_check,
         'tutor_check' => (int) $r->tutor_check,
         'admin_check' => (int) $r->admin_check,
