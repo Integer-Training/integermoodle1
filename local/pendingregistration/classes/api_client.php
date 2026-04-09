@@ -26,6 +26,8 @@ namespace local_pendingregistration;
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once($GLOBALS['CFG']->libdir . '/filelib.php');
+
 class api_client {
 
     /** @var string API base URL */
