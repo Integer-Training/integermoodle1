@@ -1452,6 +1452,13 @@ class core_renderer extends \core_renderer {
                                 <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-envelope-open-text"></i></span>
                                 <span class="rui-sidebar-nav-text">Communication Logs</span>
                             </a>
+                        </li>';
+                $pendingreg_link = new moodle_url('/local/pendingregistration/index.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$pendingreg_link.'" id="itemPendingReg" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-user-clock"></i></span>
+                                <span class="rui-sidebar-nav-text">Pending Registration</span>
+                            </a>
                         </li>
 
                     <style>

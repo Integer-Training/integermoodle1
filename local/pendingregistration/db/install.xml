@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/pendingregistration/db" VERSION="2026040900" COMMENT="local_pendingregistration tables">
+  <TABLES>
+    <TABLE NAME="local_pendingregistration" COMMENT="Learners pending registration from Pearl LMS">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="learner_email" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false"/>
+        <FIELD NAME="learner_id" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="learner_name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="company" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="paid_to_date" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="outstanding" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="total_fee" TYPE="number" LENGTH="10" DECIMALS="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="subscription_status" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="registration_check" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="tutor_check" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="admin_check" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="links" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="is_active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
+        <FIELD NAME="last_synced" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="idx_email" UNIQUE="true" FIELDS="learner_email"/>
+        <INDEX NAME="idx_regcheck" UNIQUE="false" FIELDS="registration_check"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

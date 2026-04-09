@@ -1,0 +1,254 @@
+{{!
+    Pending Registration table.
+
+    @package   local_pendingregistration
+    @copyright 2026 Integer Training
+    @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+}}
+
+<style>
+/* ===== Pending Registration — pr- namespace ===== */
+.pr-wrap { max-width: 100%; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+.pr-header { background: linear-gradient(135deg, #1a2238 0%, #2d3a5c 100%); color: #fff; border-radius: 12px; padding: 24px 32px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+.pr-header h2 { font-family: 'Libre Baskerville', Georgia, serif; font-size: 1.6rem; margin: 0; font-weight: 600; }
+.pr-header-meta { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.pr-badge { background: rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; }
+.pr-badge i { font-size: 1rem; }
+.pr-sync-btn { background: #f7c873; color: #1a2238; border: none; padding: 8px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; transition: background 0.2s; }
+.pr-sync-btn:hover { background: #f5b94a; color: #1a2238; text-decoration: none; }
+
+/* KPI Cards */
+.pr-kpi-row { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+.pr-kpi { background: #fff; border-radius: 10px; padding: 16px 24px; border-left: 4px solid #3a5ba0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); flex: 1; min-width: 180px; }
+.pr-kpi-label { font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.pr-kpi-value { font-size: 1.6rem; font-weight: 700; color: #1a2238; }
+.pr-kpi--synced { border-left-color: #6ea3c1; }
+
+/* Table */
+.pr-table-wrap { background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow-x: auto; }
+.pr-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.pr-table thead { background: #1a2238; color: #fff; }
+.pr-table thead th { padding: 12px 14px; font-weight: 600; text-align: left; white-space: nowrap; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.3px; }
+.pr-table tbody tr { border-bottom: 1px solid #eee; transition: background 0.15s; }
+.pr-table tbody tr:hover { background: #f8f9fc; }
+.pr-table tbody td { padding: 10px 14px; vertical-align: middle; }
+.pr-table tbody tr.pr-row-registered { opacity: 0.4; background: #f0fdf0; transition: opacity 0.5s; }
+
+/* Status badges */
+.pr-status { padding: 3px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
+.pr-status--active { background: #d4edda; color: #155724; }
+.pr-status--trialing { background: #fff3cd; color: #856404; }
+.pr-status--other { background: #f8d7da; color: #721c24; }
+
+/* Checkboxes */
+.pr-check { width: 18px; height: 18px; cursor: pointer; accent-color: #3a5ba0; }
+
+/* Notes & Links */
+.pr-notes-input, .pr-links-input { width: 100%; min-width: 120px; padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.82rem; resize: vertical; transition: border-color 0.2s; }
+.pr-notes-input:focus, .pr-links-input:focus { border-color: #3a5ba0; outline: none; }
+.pr-save-indicator { font-size: 0.75rem; color: #28a745; display: none; margin-top: 2px; }
+
+/* Empty state */
+.pr-empty { text-align: center; padding: 48px 20px; color: #888; }
+.pr-empty i { font-size: 3rem; display: block; margin-bottom: 12px; color: #ccc; }
+</style>
+
+<div class="pr-wrap">
+    <!-- Header -->
+    <div class="pr-header">
+        <h2><i class="bi bi-person-check"></i> Pending Registration</h2>
+        <div class="pr-header-meta">
+            <span class="pr-badge"><i class="bi bi-clock-history"></i> Last synced: {{last_synced}}</span>
+            <a href="{{sync_url}}" class="pr-sync-btn" onclick="this.innerHTML='<i class=\'bi bi-arrow-repeat pr-spin\'></i> Syncing...'"><i class="bi bi-arrow-repeat"></i> Sync Now</a>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="pr-kpi-row">
+        <div class="pr-kpi">
+            <div class="pr-kpi-label">Pending Registration</div>
+            <div class="pr-kpi-value">{{total_count}}</div>
+        </div>
+        <div class="pr-kpi pr-kpi--synced">
+            <div class="pr-kpi-label">Last Synced</div>
+            <div class="pr-kpi-value" style="font-size:1rem">{{last_synced}}</div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="pr-table-wrap">
+        {{#has_learners}}
+        <table class="pr-table" id="prTable">
+            <thead>
+                <tr>
+                    <th>Learner ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Company</th>
+                    <th>Paid to Date</th>
+                    <th>Outstanding</th>
+                    <th>Subscription</th>
+                    <th style="text-align:center">Registration</th>
+                    <th style="text-align:center">Tutor Check</th>
+                    <th style="text-align:center">Admin Check</th>
+                    <th>Notes</th>
+                    <th>Links</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#learners}}
+                <tr data-id="{{id}}" id="pr-row-{{id}}">
+                    <td><strong>{{learner_id}}</strong></td>
+                    <td>{{learner_name}}</td>
+                    <td><a href="mailto:{{learner_email}}">{{learner_email}}</a></td>
+                    <td>{{company}}</td>
+                    <td>&pound;{{paid_to_date}}</td>
+                    <td>&pound;{{outstanding}}</td>
+                    <td>
+                        {{#sub_active}}<span class="pr-status pr-status--active">{{subscription_status}}</span>{{/sub_active}}
+                        {{^sub_active}}<span class="pr-status pr-status--other">{{subscription_status}}</span>{{/sub_active}}
+                    </td>
+                    <td style="text-align:center">
+                        <input type="checkbox" class="pr-check" data-field="registration_check" data-id="{{id}}" {{#registration_check}}checked{{/registration_check}}>
+                    </td>
+                    <td style="text-align:center">
+                        <input type="checkbox" class="pr-check" data-field="tutor_check" data-id="{{id}}" {{#tutor_check}}checked{{/tutor_check}}>
+                    </td>
+                    <td style="text-align:center">
+                        <input type="checkbox" class="pr-check" data-field="admin_check" data-id="{{id}}" {{#admin_check}}checked{{/admin_check}}>
+                    </td>
+                    <td>
+                        <textarea class="pr-notes-input" data-id="{{id}}" rows="1" placeholder="Add notes...">{{notes}}</textarea>
+                        <div class="pr-save-indicator" id="pr-notes-saved-{{id}}"><i class="bi bi-check-circle"></i> Saved</div>
+                    </td>
+                    <td>
+                        <input type="text" class="pr-links-input" data-id="{{id}}" placeholder="URL or reference..." value="{{links}}">
+                        <div class="pr-save-indicator" id="pr-links-saved-{{id}}"><i class="bi bi-check-circle"></i> Saved</div>
+                    </td>
+                </tr>
+                {{/learners}}
+            </tbody>
+        </table>
+        {{/has_learners}}
+        {{^has_learners}}
+        <div class="pr-empty">
+            <i class="bi bi-check-circle"></i>
+            {{norecords}}
+        </div>
+        {{/has_learners}}
+    </div>
+</div>
+
+<!-- Spin animation -->
+<style>
+@keyframes pr-spin-anim { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.pr-spin { animation: pr-spin-anim 1s linear infinite; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var ajaxUrl = '{{ajax_url}}';
+    var sesskey = '{{sesskey}}';
+
+    // Checkbox toggle via AJAX.
+    document.querySelectorAll('.pr-check').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            var id = this.getAttribute('data-id');
+            var field = this.getAttribute('data-field');
+            var value = this.checked ? 1 : 0;
+
+            var params = 'action=toggle&id=' + id + '&field=' + field + '&value=' + value + '&sesskey=' + encodeURIComponent(sesskey);
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', ajaxUrl + '?' + params, true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    var resp = JSON.parse(xhr.responseText);
+                    if (resp.success && field === 'registration_check' && value === 1) {
+                        // Fade out the row.
+                        var row = document.getElementById('pr-row-' + id);
+                        if (row) {
+                            row.classList.add('pr-row-registered');
+                            setTimeout(function() { row.style.display = 'none'; }, 800);
+                        }
+                        // Update KPI count.
+                        var kpi = document.querySelector('.pr-kpi-value');
+                        if (kpi) {
+                            var cnt = parseInt(kpi.textContent) - 1;
+                            kpi.textContent = cnt >= 0 ? cnt : 0;
+                        }
+                    }
+                }
+            };
+            xhr.send();
+        });
+    });
+
+    // Notes auto-save on blur.
+    var notesTimers = {};
+    document.querySelectorAll('.pr-notes-input').forEach(function(ta) {
+        ta.addEventListener('input', function() {
+            var id = this.getAttribute('data-id');
+            clearTimeout(notesTimers[id]);
+            var el = this;
+            notesTimers[id] = setTimeout(function() { saveNotes(id, el.value); }, 800);
+        });
+        ta.addEventListener('blur', function() {
+            var id = this.getAttribute('data-id');
+            clearTimeout(notesTimers[id]);
+            saveNotes(id, this.value);
+        });
+    });
+
+    function saveNotes(id, value) {
+        var params = 'action=notes&id=' + id + '&notes=' + encodeURIComponent(value) + '&sesskey=' + encodeURIComponent(sesskey);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', ajaxUrl + '?' + params, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var indicator = document.getElementById('pr-notes-saved-' + id);
+                if (indicator) {
+                    indicator.style.display = 'block';
+                    setTimeout(function() { indicator.style.display = 'none'; }, 2000);
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    // Links auto-save on blur.
+    var linksTimers = {};
+    document.querySelectorAll('.pr-links-input').forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            var id = this.getAttribute('data-id');
+            clearTimeout(linksTimers[id]);
+            var el = this;
+            linksTimers[id] = setTimeout(function() { saveLinks(id, el.value); }, 800);
+        });
+        inp.addEventListener('blur', function() {
+            var id = this.getAttribute('data-id');
+            clearTimeout(linksTimers[id]);
+            saveLinks(id, this.value);
+        });
+    });
+
+    function saveLinks(id, value) {
+        var params = 'action=links&id=' + id + '&links=' + encodeURIComponent(value) + '&sesskey=' + encodeURIComponent(sesskey);
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', ajaxUrl + '?' + params, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var indicator = document.getElementById('pr-links-saved-' + id);
+                if (indicator) {
+                    indicator.style.display = 'block';
+                    setTimeout(function() { indicator.style.display = 'none'; }, 2000);
+                }
+            }
+        };
+        xhr.send();
+    }
+});
+</script>
