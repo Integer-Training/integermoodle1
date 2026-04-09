@@ -94,19 +94,13 @@ class api_client {
      */
     public function meets_criteria(object $learner): bool {
         // Must have payment data.
-        if (empty($learner->payment) || empty($learner->stripe)) {
+        if (empty($learner->payment)) {
             return false;
         }
 
         // paid_to_date > 500.
         $paid = (float) ($learner->payment->paid_to_date ?? 0);
         if ($paid <= 500) {
-            return false;
-        }
-
-        // subscription_status is "active" or "trialing".
-        $substatus = strtolower($learner->stripe->subscription_status ?? '');
-        if (!in_array($substatus, ['active', 'trialing'])) {
             return false;
         }
 
