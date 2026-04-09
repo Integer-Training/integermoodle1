@@ -51,6 +51,12 @@
 /* Empty state */
 .pr-empty { text-align: center; padding: 48px 20px; color: #888; }
 .pr-empty i { font-size: 3rem; display: block; margin-bottom: 12px; color: #ccc; }
+
+/* Sync progress bar */
+.pr-progress-wrap { display: none; margin-bottom: 24px; background: #fff; border-radius: 10px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.pr-progress-bar { height: 24px; background: #e9ecef; border-radius: 12px; overflow: hidden; margin: 10px 0; }
+.pr-progress-fill { height: 100%; background: linear-gradient(90deg, #3a5ba0, #6ea3c1); border-radius: 12px; transition: width 0.3s; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.78rem; font-weight: 600; }
+.pr-progress-text { font-size: 0.85rem; color: #555; }
 </style>
 
 <div class="pr-wrap">
@@ -59,8 +65,17 @@
         <h2><i class="bi bi-person-check"></i> Pending Registration</h2>
         <div class="pr-header-meta">
             <span class="pr-badge"><i class="bi bi-clock-history"></i> Last synced: {{last_synced}}</span>
-            <a href="{{sync_url}}" class="pr-sync-btn" onclick="this.innerHTML='<i class=\'bi bi-arrow-repeat pr-spin\'></i> Syncing...'"><i class="bi bi-arrow-repeat"></i> Sync Now</a>
+            <button type="button" class="pr-sync-btn" id="prSyncBtn" onclick="prStartSync()"><i class="bi bi-arrow-repeat"></i> Sync Now</button>
         </div>
+    </div>
+
+    <!-- Sync progress bar -->
+    <div class="pr-progress-wrap" id="prProgressWrap">
+        <div class="pr-progress-text" id="prProgressText">Syncing learner data from Pearl LMS...</div>
+        <div class="pr-progress-bar">
+            <div class="pr-progress-fill" id="prProgressFill" style="width: 0%">0%</div>
+        </div>
+        <div class="pr-progress-text" id="prProgressDetail"></div>
     </div>
 
     <!-- KPI Cards -->
@@ -146,6 +161,61 @@
 </style>
 
 <script>
+var prSyncRunning = false;
+function prStartSync() {
+    if (prSyncRunning) return;
+    prSyncRunning = true;
+    var btn = document.getElementById('prSyncBtn');
+    btn.innerHTML = '<i class="bi bi-arrow-repeat pr-spin"></i> Syncing...';
+    btn.disabled = true;
+    var wrap = document.getElementById('prProgressWrap');
+    wrap.style.display = 'block';
+    var totalSynced = 0, totalSkipped = 0;
+    prSyncBatch(0, totalSynced, totalSkipped);
+}
+function prSyncBatch(offset, totalSynced, totalSkipped) {
+    var syncUrl = '{{sync_url}}';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', syncUrl + (syncUrl.indexOf('?') > -1 ? '&' : '?') + 'offset=' + offset, true);
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            try {
+                var resp = JSON.parse(xhr.responseText);
+                totalSynced += resp.synced || 0;
+                totalSkipped += resp.skipped || 0;
+                var pct = resp.total > 0 ? Math.round((resp.processed / resp.total) * 100) : 100;
+                document.getElementById('prProgressFill').style.width = pct + '%';
+                document.getElementById('prProgressFill').textContent = pct + '%';
+                document.getElementById('prProgressDetail').textContent =
+                    'Processed ' + resp.processed + ' / ' + resp.total + ' students | ' +
+                    totalSynced + ' synced, ' + totalSkipped + ' skipped';
+                if (!resp.done) {
+                    prSyncBatch(resp.processed, totalSynced, totalSkipped);
+                } else {
+                    document.getElementById('prProgressText').textContent = 'Sync complete!';
+                    var btn = document.getElementById('prSyncBtn');
+                    btn.innerHTML = '<i class="bi bi-check-circle"></i> Done';
+                    setTimeout(function() { location.reload(); }, 1500);
+                }
+            } catch(e) {
+                document.getElementById('prProgressText').textContent = 'Sync error — please try again.';
+                document.getElementById('prSyncBtn').disabled = false;
+                prSyncRunning = false;
+            }
+        } else {
+            document.getElementById('prProgressText').textContent = 'Sync error (HTTP ' + xhr.status + ')';
+            document.getElementById('prSyncBtn').disabled = false;
+            prSyncRunning = false;
+        }
+    };
+    xhr.onerror = function() {
+        document.getElementById('prProgressText').textContent = 'Network error — please try again.';
+        document.getElementById('prSyncBtn').disabled = false;
+        prSyncRunning = false;
+    };
+    xhr.send();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     var ajaxUrl = '{{ajax_url}}';
     var sesskey = '{{sesskey}}';
