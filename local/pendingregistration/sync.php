@@ -43,14 +43,18 @@ header('Content-Type: application/json');
 $offset = optional_param('offset', 0, PARAM_INT);
 $batchsize = 5;
 
-// Get all student emails.
+// Get ALL non-deleted Moodle users (excluding guest and primary admin).
+// Pearl LMS learners may not have a Moodle 'student' role yet — they may
+// exist as users but not be enrolled in any course. We check everyone
+// against the Pearl LMS API and let the API response + criteria filter decide.
 $students = $DB->get_records_sql(
-    "SELECT DISTINCT u.id, u.email
-     FROM {role_assignments} ra
-     JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'student'
-     JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50
-     JOIN {user} u ON u.id = ra.userid AND u.deleted = 0 AND u.suspended = 0
-     WHERE u.email IS NOT NULL AND u.email <> ''
+    "SELECT u.id, u.email
+     FROM {user} u
+     WHERE u.deleted = 0
+       AND u.id > 2
+       AND u.email IS NOT NULL
+       AND u.email <> ''
+       AND u.email NOT LIKE '%@example.com'
      ORDER BY u.id ASC"
 );
 

@@ -49,14 +49,16 @@ class sync_manager {
             return $result;
         }
 
-        // Get all active, non-deleted Moodle users with student role.
+        // Get ALL non-deleted Moodle users (excluding guest and primary admin).
+        // Pearl LMS learners may not have a Moodle 'student' role yet.
         $students = $DB->get_records_sql(
-            "SELECT DISTINCT u.id, u.email, u.firstname, u.lastname
-             FROM {role_assignments} ra
-             JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'student'
-             JOIN {context} ctx ON ctx.id = ra.contextid AND ctx.contextlevel = 50
-             JOIN {user} u ON u.id = ra.userid AND u.deleted = 0 AND u.suspended = 0
-             WHERE u.email IS NOT NULL AND u.email <> ''"
+            "SELECT u.id, u.email, u.firstname, u.lastname
+             FROM {user} u
+             WHERE u.deleted = 0
+               AND u.id > 2
+               AND u.email IS NOT NULL
+               AND u.email <> ''
+               AND u.email NOT LIKE '%@example.com'"
         );
 
         $now = time();
