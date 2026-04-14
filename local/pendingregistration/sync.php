@@ -29,7 +29,18 @@
 define('AJAX_SCRIPT', true);
 require_once('../../config.php');
 require_login();
-require_capability('local/pendingregistration:view', context_system::instance());
+
+// Access check: admins, managers, teachers, editing teachers.
+$has_access = is_siteadmin() || $DB->record_exists_sql(
+    "SELECT 1 FROM {role_assignments} ra
+     JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('manager', 'teacher', 'editingteacher')
+     WHERE ra.userid = ?", [$USER->id]
+);
+if (!$has_access) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'No permission']);
+    die();
+}
 
 $sesskey = required_param('sesskey', PARAM_RAW);
 if (!confirm_sesskey($sesskey)) {

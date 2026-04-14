@@ -26,7 +26,16 @@ require_once('../../config.php');
 require_login();
 
 $context = context_system::instance();
-require_capability('local/pendingregistration:view', $context);
+
+// Access check: admins, managers, teachers, editing teachers.
+$has_access = is_siteadmin() || $DB->record_exists_sql(
+    "SELECT 1 FROM {role_assignments} ra
+     JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('manager', 'teacher', 'editingteacher')
+     WHERE ra.userid = ?", [$USER->id]
+);
+if (!$has_access) {
+    throw new moodle_exception('nopermission', 'error', '', null, 'You do not have permission to view this page.');
+}
 
 $PAGE->set_url(new moodle_url('/local/pendingregistration/index.php'));
 $PAGE->set_context($context);
