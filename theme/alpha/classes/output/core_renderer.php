@@ -1453,7 +1453,7 @@ class core_renderer extends \core_renderer {
                                 <span class="rui-sidebar-nav-text">Communication Logs</span>
                             </a>
                         </li>';
-
+                $html .= '
                     <style>
                     .list-unstyled1 {
                         margin: 5px 0;
