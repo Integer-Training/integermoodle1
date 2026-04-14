@@ -97,9 +97,11 @@ if($action == 'mark'){
             JOIN {$prefix}assign_submission sub
                 ON sub.assignment = a.id
                 AND sub.userid = gm_s.userid
-                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-                    SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
-                    AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+                    EXISTS (SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
+                        AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+                    OR EXISTS (SELECT 1 FROM {$prefix}assignsubmission_onlinetext ot
+                        WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
                 )))
                 AND sub.latest = 1
                 AND sub.attemptnumber = 0
@@ -167,9 +169,11 @@ if($action == 'mark'){
             JOIN {$prefix}assign_submission sub
                 ON sub.assignment = a.id
                 AND sub.userid = gm_s.userid
-                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-                    SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
-                    AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+                    EXISTS (SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
+                        AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+                    OR EXISTS (SELECT 1 FROM {$prefix}assignsubmission_onlinetext ot
+                        WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
                 )))
                 AND sub.latest = 1
             LEFT JOIN {$prefix}assign_grades gr
@@ -245,9 +249,11 @@ if($action == 'mark'){
                 AND gr.attemptnumber = sub.attemptnumber
             WHERE
                 gm_t.userid = ".(int)$USER->id."
-                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-                    SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
-                    AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+                AND (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+                    EXISTS (SELECT 1 FROM {$prefix}files df WHERE df.component = 'assignsubmission_file'
+                        AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+                    OR EXISTS (SELECT 1 FROM {$prefix}assignsubmission_onlinetext ot
+                        WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
                 )))
                 AND a.name NOT LIKE '%IAG%'
                 AND a.name NOT LIKE '%ID Proof%'

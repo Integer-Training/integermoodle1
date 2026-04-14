@@ -195,9 +195,11 @@ foreach ($tutors_raw as $traw) {
              JOIN {modules} mdl_m ON mdl_m.name = 'assign'
              JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mdl_m.id AND cm.visible = 1
              JOIN {assign_submission} sub ON sub.assignment = a.id AND sub.userid = gm_s.userid
-                 AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-                     SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
-                     AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+                 AND (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+                     EXISTS (SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
+                         AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+                     OR EXISTS (SELECT 1 FROM {assignsubmission_onlinetext} ot
+                         WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
                  ))) AND sub.latest = 1
              LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = gm_s.userid AND gr.attemptnumber = sub.attemptnumber
              WHERE gm_t.userid = :tutorid3
@@ -235,9 +237,11 @@ foreach ($tutors_raw as $traw) {
              JOIN {modules} mdl_m ON mdl_m.name = 'assign'
              JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mdl_m.id AND cm.visible = 1
              JOIN {assign_submission} sub ON sub.assignment = a.id AND sub.userid = gm_s.userid
-                 AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-                     SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
-                     AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+                 AND (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+                     EXISTS (SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
+                         AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+                     OR EXISTS (SELECT 1 FROM {assignsubmission_onlinetext} ot
+                         WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
                  ))) AND sub.latest = 1
              LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = gm_s.userid AND gr.attemptnumber = sub.attemptnumber
              WHERE gm_t.userid = :tutorid4
@@ -273,9 +277,11 @@ foreach ($tutors_raw as $traw) {
         "SELECT AVG(ag.timemodified - sub.timemodified) / 86400 as avg_days
          FROM {assign_grades} ag
          JOIN {assign_submission} sub ON sub.assignment = ag.assignment AND sub.userid = ag.userid
-               AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-                   SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
-                   AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+               AND (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+                   EXISTS (SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
+                       AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+                   OR EXISTS (SELECT 1 FROM {assignsubmission_onlinetext} ot
+                       WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
                )))
          WHERE ag.grader = ? AND ag.timemodified > sub.timemodified AND ag.grade IS NOT NULL",
         [$t->id]
@@ -338,9 +344,11 @@ foreach ($tutors_raw as $traw) {
          JOIN {modules} mdl_m ON mdl_m.name = 'assign'
          JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mdl_m.id AND cm.visible = 1
          JOIN {assign_submission} sub ON sub.assignment = a.id AND sub.userid = gm_s.userid
-             AND (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-                 SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
-                 AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+             AND (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+                 EXISTS (SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
+                     AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+                 OR EXISTS (SELECT 1 FROM {assignsubmission_onlinetext} ot
+                     WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
              ))) AND sub.latest = 1
          LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = gm_s.userid AND gr.attemptnumber = sub.attemptnumber
          WHERE gm_t.userid = :tid3
@@ -492,9 +500,11 @@ $global_awaiting = $DB->count_records_sql(
      JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mdl_m.id AND cm.visible = 1
      JOIN {user} u ON u.id = sub.userid AND u.suspended = 0 AND u.deleted = 0
      LEFT JOIN {assign_grades} gr ON gr.assignment = sub.assignment AND gr.userid = sub.userid AND gr.attemptnumber = sub.attemptnumber
-     WHERE (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-         SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
-         AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+     WHERE (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+         EXISTS (SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
+             AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+         OR EXISTS (SELECT 1 FROM {assignsubmission_onlinetext} ot
+             WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
      ))) AND sub.latest = 1
      AND a.name NOT LIKE '%IAG%'
      AND a.name NOT LIKE '%ID Proof%'
@@ -522,9 +532,11 @@ $global_overdue = $DB->count_records_sql(
      JOIN {course_modules} cm ON cm.instance = a.id AND cm.course = a.course AND cm.module = mdl_m.id AND cm.visible = 1
      JOIN {user} u ON u.id = sub.userid AND u.suspended = 0 AND u.deleted = 0
      LEFT JOIN {assign_grades} gr ON gr.assignment = sub.assignment AND gr.userid = sub.userid AND gr.attemptnumber = sub.attemptnumber
-     WHERE (sub.status = 'submitted' OR (sub.status = 'draft' AND EXISTS (
-         SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
-         AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.'
+     WHERE (sub.status = 'submitted' OR (sub.status = 'draft' AND (
+         EXISTS (SELECT 1 FROM {files} df WHERE df.component = 'assignsubmission_file'
+             AND df.filearea = 'submission_files' AND df.itemid = sub.id AND df.filename <> '.')
+         OR EXISTS (SELECT 1 FROM {assignsubmission_onlinetext} ot
+             WHERE ot.submission = sub.id AND ot.onlinetext IS NOT NULL AND ot.onlinetext <> '')
      ))) AND sub.latest = 1
      AND a.name NOT LIKE '%IAG%'
      AND a.name NOT LIKE '%ID Proof%'
