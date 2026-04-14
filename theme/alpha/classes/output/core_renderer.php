@@ -1453,13 +1453,6 @@ class core_renderer extends \core_renderer {
                                 <span class="rui-sidebar-nav-text">Communication Logs</span>
                             </a>
                         </li>';
-                $pendingreg_link = new moodle_url('/local/pendingregistration/index.php');
-                $html .= '<li class="rui-sidebar-nav-item">
-                            <a href="'.$pendingreg_link.'" id="itemPendingReg" class="rui-sidebar-nav-item-link">
-                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-user-clock"></i></span>
-                                <span class="rui-sidebar-nav-text">Pending Registration</span>
-                            </a>
-                        </li>
 
                     <style>
                     .list-unstyled1 {
@@ -1519,6 +1512,16 @@ class core_renderer extends \core_renderer {
                     });
                     </script>
                     ';
+            }
+            // Pending Registration — visible to admins AND tutors.
+            if (has_capability('local/pendingregistration:view', \context_system::instance())) {
+                $pendingreg_link = new moodle_url('/local/pendingregistration/index.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$pendingreg_link.'" id="itemPendingReg" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-user-clock"></i></span>
+                                <span class="rui-sidebar-nav-text">Pending Registration</span>
+                            </a>
+                        </li>';
             }
             //
             if (get_config('local_performance', 'enable_role_cache')
