@@ -1514,7 +1514,12 @@ class core_renderer extends \core_renderer {
                     ';
             }
             // Pending Registration — visible to admins AND tutors.
-            if (has_capability('local/pendingregistration:view', \context_system::instance())) {
+            $show_pendingreg = is_siteadmin($USER) || $DB->record_exists_sql(
+                "SELECT 1 FROM {role_assignments} ra
+                 JOIN {role} r ON r.id = ra.roleid AND r.shortname IN ('teacher', 'editingteacher')
+                 WHERE ra.userid = ?", [$USER->id]
+            );
+            if ($show_pendingreg) {
                 $pendingreg_link = new moodle_url('/local/pendingregistration/index.php');
                 $html .= '<li class="rui-sidebar-nav-item">
                             <a href="'.$pendingreg_link.'" id="itemPendingReg" class="rui-sidebar-nav-item-link">
