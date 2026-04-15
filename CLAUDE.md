@@ -977,7 +977,7 @@ Navy-blue palette matching admin dashboard: `#1a2238`, `#3a5ba0`, `#6ea3c1`, `#f
 
 Standalone plugin showing each learner's **Current %** (assignments passed / total) with expandable per-course (unit-wise) breakdown. Accessible to managers (all learners) and tutors (their group learners only).
 
-**Version:** 2026020201 (1.1.0) | **Capability:** `local/learnerprogression:view` (manager only; tutors access via `teacher` role check)
+**Version:** 2026040200 (1.4.0) | **Capability:** `local/learnerprogression:view` (manager only; tutors access via `teacher` role check)
 
 #### File Structure
 
@@ -1624,6 +1624,65 @@ Roles & Contexts                              ▼
 - Extended learner data lives in `local_users` table, keyed by `userid`
 - Assignment deadlines can be per-user via `assign_overrides` or global in `assign`
 
+### `local/pendingregistration` — Pending Registration (Pearl LMS Integration)
+
+Tracks learners who have paid >£500 in Pearl LMS but haven't been registered yet. Syncs payment data from the Pearl LMS Supabase API and presents a checklist for admin/tutor verification.
+
+**Version:** 2026041400 (1.1.0) | **Access:** Admins + Tutors (role-based check, not capability — tutors have roles at course context, not system context)
+
+```
+local/pendingregistration/
+├── index.php                            # Main page — filterable, sortable table
+├── ajax.php                             # AJAX handler for checkbox toggles + notes/links auto-save
+├── sync.php                             # Batch sync endpoint (5 students per AJAX call to avoid Hostinger timeout)
+├── version.php                          # Plugin metadata
+├── settings.php                         # Admin settings: API URL, API Key, Auth Token
+├── lib.php                              # Navigation hook (ineffective with Alpha theme)
+├── db/install.xml                       # Table: local_pendingregistration
+├── db/access.php                        # Capability definition (manager + teacher + editingteacher)
+├── db/tasks.php                         # Hourly scheduled task for auto-sync
+├── classes/api_client.php               # Pearl LMS API client (Supabase edge function)
+├── classes/sync_manager.php             # Sync logic — iterates Moodle users, calls API
+├── classes/task/sync_learners.php       # Scheduled task class
+├── templates/pending_table.mustache     # Full UI: header, KPI, filters, sortable table, expandable rows
+└── lang/en/local_pendingregistration.php
+```
+
+**API Integration:**
+- Endpoint: `https://mrebutwqngfxtooeyydc.supabase.co/functions/v1/moodle-payment-api`
+- Lookup by email: `GET ?email=learner@email.com`
+- Headers: `x-api-key` + `Authorization: Bearer` (stored in admin settings)
+- No bulk/list endpoint — must iterate one email at a time
+
+**Filter Criteria (which learners appear):**
+- `payment.paid_to_date > 500`
+- `status = "Active"`
+- `registration_check = 0` (not yet registered in Moodle DB)
+
+**Table Columns:** Learner ID, Name, Email, Tutor, Paid to Date, Stripe Status, Current %, Moodle Created, Registration (checkbox), Tutor Check (checkbox), Admin ID Check (checkbox)
+
+**Expandable Detail Row (click arrow):** Course(s), Notes (auto-save), ID Links (auto-save)
+
+**Filters:** Search (name/email/ID), Registration (All/Ticked/Unticked), Tutor Check, Admin ID Check, Tutor dropdown, Course dropdown
+
+**Batch Sync:** Processes 5 students per AJAX call with progress bar to avoid Hostinger's ~30s PHP timeout. Browser fires successive calls until all students are processed.
+
+**Sidebar Link:** Hardcoded in `theme/alpha/classes/output/core_renderer.php` with role check (`teacher`, `editingteacher`, or `is_siteadmin`). Uses `has_capability()` won't work because tutors have roles at course context (level 50), not system context.
+
+**Key Data Flow:**
+```
+Sync → Get ALL Moodle users (id > 2, non-deleted, not @example.com)
+     → For each email, call Pearl LMS API
+     → If paid > 500 AND status Active → upsert into local_pendingregistration
+     → If no longer meets criteria → set is_active = 0
+
+Page Load → Fetch WHERE registration_check = 0 AND is_active = 1
+          → Batch lookup: Moodle user IDs, tutors (group membership), courses (enrollment), progression (passed/total)
+          → Render sortable table with expandable detail rows
+```
+
+---
+
 ## Production-Specific Notes
 
 - **Hosting:** Hostinger shared hosting. Short MySQL `wait_timeout` — long operations need keepalive (`SELECT 1`).
@@ -1634,7 +1693,7 @@ Roles & Contexts                              ▼
 - **Default password for new users:** `Epearl@123` (set in `local/learner/users.php`)
 - **Tutor identification:** Users with role shortname `'teacher'` (not `'editingteacher'`). Both `local/learner` and `local/tutors` use this pattern.
 - **Grading scale:** Pass/Refer stored as scale values in `grade_grades.finalgrade` (Refer=1, Pass=2 as positive integers).
-- **Draft submissions with grades:** Some assignments are graded while still in "Draft (not submitted)" status. This is intentional — tutors grade draft uploads for feedback purposes. These are not counted in dashboard queries (which filter `sub.status = 'submitted'`).
+- **Draft submissions with grades:** Some assignments are graded while still in "Draft (not submitted)" status. This is intentional — tutors grade draft uploads for feedback purposes. Dashboard queries include drafts using a 3-tier filter: `sub.status = 'submitted'` OR (`status = 'draft'` AND assignment is a case study) OR (`status = 'draft'` AND has file or onlinetext). Case studies get a special exception because they don't use file upload or online text submission plugins — just having a submission record is sufficient. Already-graded submissions are excluded by the grade check (`gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0`). Re-upload detection (file created after grading) is restricted to `status = 'submitted'` only to prevent false positives on drafts.
 
 ### Files That Must Stay In Sync
 
