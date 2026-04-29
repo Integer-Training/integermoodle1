@@ -4,7 +4,7 @@
 
 **Status:** Open
 **Priority:** Medium (local download works as workaround)
-**Affected:** Production (epearlacademy.com)
+**Affected:** Production
 
 ### Symptoms
 
@@ -25,7 +25,7 @@ The error message shows an empty value after the colon, suggesting the `grant_ty
 ### Configuration
 
 - Google Cloud Console: OAuth 2.0 Web Application
-- Redirect URI: `https://epearlacademy.com/local/sitebackup/authorize.php`
+- Redirect URI: `https://YOUR_DOMAIN/local/sitebackup/authorize.php`
 - OAuth consent screen: Testing mode (test user added)
 - Scope: `https://www.googleapis.com/auth/drive.file`
 - Token endpoint: `https://oauth2.googleapis.com/token`
@@ -46,7 +46,7 @@ The error message shows an empty value after the colon, suggesting the `grant_ty
      -d "code=AUTH_CODE_HERE" \
      -d "client_id=YOUR_CLIENT_ID" \
      -d "client_secret=YOUR_SECRET" \
-     -d "redirect_uri=https://epearlacademy.com/local/sitebackup/authorize.php" \
+     -d "redirect_uri=https://YOUR_DOMAIN/local/sitebackup/authorize.php" \
      -d "grant_type=authorization_code"
    ```
 2. If CLI cURL works, the issue is in PHP HTTP handling on the host

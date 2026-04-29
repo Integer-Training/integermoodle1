@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+global $CFG;
+
 if ($hassiteconfig) {
 
     $settings = new admin_settingpage('local_twiliosms', get_string('pluginname', 'local_twiliosms'));
@@ -67,7 +69,7 @@ if ($hassiteconfig) {
         'local_twiliosms/messagetemplate',
         get_string('messagetemplate', 'local_twiliosms'),
         get_string('messagetemplate_desc', 'local_twiliosms'),
-        'Integer Training - User: {username} Pass: Integer@123 Login: epearlacademy.com'
+        'Integer Training - User: {username} Pass: Integer@123 Login: ' . parse_url($CFG->wwwroot, PHP_URL_HOST)
     ));
 
     // Link to SMS logs.

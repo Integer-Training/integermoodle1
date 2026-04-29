@@ -146,7 +146,7 @@ class notify_existing extends adhoc_task {
         $tutor = self::get_assigned_tutor($row->userid);
         if (!$tutor) {
             $tutor = \core_user::get_noreply_user();
-            $tutorname = 'Epearl Academy';
+            $tutorname = 'Integer Training';
         } else {
             $tutorname = fullname($tutor);
         }

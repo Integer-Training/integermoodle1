@@ -92,7 +92,7 @@ $string['forceunlock_reason_required'] = 'A reason is required.';
 $string['msg_grandfather_subject'] = 'Important update — one assignment at a time';
 $string['msg_grandfather_body'] = 'Hi {$a->firstname},
 
-From today, Epearl Academy has a new rule: you can only have ONE assignment awaiting marking at a time. Once your tutor marks it, your next assignment unlocks automatically.
+From today, Integer Training has a new rule: you can only have ONE assignment awaiting marking at a time. Once your tutor marks it, your next assignment unlocks automatically.
 
 Why:
 • Submitting everything at once means if there is an issue, everything goes back for resubmission
@@ -116,7 +116,7 @@ Your submission for "{$a->assignmentname}" was returned to draft status because 
 
 You can still edit and re-save your draft. It will be submitted automatically once you become eligible.
 
-— Epearl Academy';
+— Integer Training';
 
 // Stuck alert to admin.
 $string['msg_stuck_subject'] = '{$a->count} learner(s) stuck > {$a->days} days';
@@ -132,7 +132,7 @@ $string['msg_forceunlocked_body'] = 'Hi {$a->firstname},
 
 An administrator has granted you a temporary bypass on the sequential submission rule. You can submit your next assignment immediately. The bypass expires {$a->expires} or as soon as your stuck submission is marked, whichever comes first.
 
-— Epearl Academy';
+— Integer Training';
 
 // Order preview page.
 $string['orderpreview_intro'] = 'This page shows the unit order the plugin will enforce for each course. The order comes from the drag-drop arrangement of activities on each course home page. If any course looks wrong, fix the course page OR add it to the exempt list in plugin settings.';

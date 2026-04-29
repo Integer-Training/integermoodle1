@@ -1,6 +1,6 @@
 # Mokshith Updates — February 2026
 
-All new features, enhancements, and bug fixes delivered to the Epearl Academy Moodle platform from February 1, 2026 onwards.
+All new features, enhancements, and bug fixes delivered to the Integer Training Moodle platform (forked from Epearl Academy `moodlebackup` repo) from February 1, 2026 onwards.
 
 ---
 

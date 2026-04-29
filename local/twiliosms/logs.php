@@ -26,7 +26,7 @@ require_once('../../config.php');
 require_login();
 require_capability('moodle/site:config', context_system::instance());
 
-global $DB, $OUTPUT, $PAGE;
+global $DB, $OUTPUT, $PAGE, $CFG;
 
 // Handle retry action.
 $action = optional_param('action', '', PARAM_ALPHA);
@@ -40,7 +40,7 @@ if ($action === 'retry' && $logid > 0 && confirm_sesskey()) {
             // Re-build message from current template.
             $template = get_config('local_twiliosms', 'messagetemplate');
             if (empty($template)) {
-                $template = 'Integer Training - User: {username} Pass: Integer@123 Login: epearlacademy.com';
+                $template = 'Integer Training - User: {username} Pass: Integer@123 Login: ' . parse_url($CFG->wwwroot, PHP_URL_HOST);
             }
             $message = str_replace(
                 ['{firstname}', '{lastname}', '{username}', '{email}'],

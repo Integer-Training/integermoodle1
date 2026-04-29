@@ -1,3 +1,6 @@
+// HISTORICAL — these scratch SQL queries reference the original Epearl database
+// (`u774156482_epearl` schema, `r6ua_` prefix). For the Integer Training fork,
+// substitute your own schema name and table prefix before running.
 
 //generate alter statements
 SELECT CONCAT(

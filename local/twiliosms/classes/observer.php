@@ -36,7 +36,7 @@ class observer {
      * @param \core\event\user_created $event
      */
     public static function user_created(\core\event\user_created $event) {
-        global $DB;
+        global $DB, $CFG;
 
         // Check if plugin is enabled.
         if (!get_config('local_twiliosms', 'enabled')) {
@@ -66,7 +66,7 @@ class observer {
         // Build message from template.
         $template = get_config('local_twiliosms', 'messagetemplate');
         if (empty($template)) {
-            $template = 'Integer Training - User: {username} Pass: Integer@123 Login: epearlacademy.com';
+            $template = 'Integer Training - User: {username} Pass: Integer@123 Login: ' . parse_url($CFG->wwwroot, PHP_URL_HOST);
         }
 
         $message = str_replace(

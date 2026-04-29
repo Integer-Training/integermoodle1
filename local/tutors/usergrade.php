@@ -198,7 +198,7 @@ echo $OUTPUT->header();
 
 echo '<h3>Gradebook</h3>';
 echo '<ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="https://epearlacademy.com/">Home</a></li>
+                <li class="breadcrumb-item"><a href="'.$CFG->wwwroot.'/">Home</a></li>
             </ol>';
 
 echo '<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>

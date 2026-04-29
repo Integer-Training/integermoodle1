@@ -110,13 +110,13 @@ class observer {
             $body = "Hi {$learner->firstname},\n\n"
                   . "Great news! Your assignment \"{$assign->name}\" in {$coursename} has been marked as Pass by {$gradername}.\n\n"
                   . "Keep up the good work!\n\n"
-                  . "Epearl Academy";
+                  . "Integer Training";
         } else {
             $subject = 'Assignment Needs Revision: ' . $assign->name;
             $body = "Hi {$learner->firstname},\n\n"
                   . "Your assignment \"{$assign->name}\" in {$coursename} has been marked as Refer by {$gradername}.\n\n"
                   . "Please review the feedback and resubmit your work.\n\n"
-                  . "Epearl Academy";
+                  . "Integer Training";
         }
 
         self::send_notification($learner, $subject, $body, 'workbook_graded');
@@ -147,7 +147,7 @@ class observer {
             $body = "Hi {$learner->firstname},\n\n"
                   . "Your case study \"{$assignname}\" has been approved by {$reviewername}.\n\n"
                   . "Well done!\n\n"
-                  . "Epearl Academy";
+                  . "Integer Training";
             $provider = 'casestudy_approved';
         } else {
             $subject = 'Case Study Needs Resubmission: ' . $assignname;
@@ -157,7 +157,7 @@ class observer {
                 $body .= "Feedback: {$feedback}\n\n";
             }
             $body .= "Please review the feedback and resubmit.\n\n"
-                    . "Epearl Academy";
+                    . "Integer Training";
             $provider = 'casestudy_rejected';
         }
 

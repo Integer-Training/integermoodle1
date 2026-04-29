@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is **Epearlmoodle** — a customized Moodle 5.0.1 LMS installation managed by Integer Training. It is a fork of standard Moodle with custom local plugins and third-party extensions for an e-learning platform.
+This is **integermoodle1** — Integer Training's customized Moodle 5.0.1 LMS, forked from the original `moodlebackup` (Epearl) instance and rebranded for Integer Training. It is a fork of standard Moodle with custom local plugins and third-party extensions for an e-learning platform.
 
 **Moodle version:** 5.0.1 (branch 500, build 20250609)
 **PHP:** >=8.2.0 | **Node:** >=22.11.0 <23 | **Database:** PostgreSQL, MySQL/MariaDB, or SQL Server
@@ -163,8 +163,8 @@ echo $OUTPUT->footer();
 ## Configuration
 
 - Copy `config-dist.php` to `config.php` and fill in database credentials, `$CFG->wwwroot`, and `$CFG->dataroot`
-- The production database uses table prefix `r6ua_` (non-standard; default is `mdl_`)
-- Production database name: `u774156482_epearl`
+- The original Epearl production database uses table prefix `r6ua_` (non-standard; default is `mdl_`). The Integer Training fork's prefix is whatever Hostinger generates for the new install (default `mdl_` unless changed during install).
+- Original Epearl production database name: `u774156482_epearl` (kept in this doc for historical reference; the Integer Training instance has its own DB).
 
 ## Moodle Development Conventions
 
@@ -301,7 +301,7 @@ The primary custom plugin. Manages learner accounts, tutor caseloads, user regis
 #### User Registration Flow (`users.php`)
 
 1. Manager fills form: username, firstname, lastname, email, phone, courses
-2. System creates user with password `Epearl@123`, forces change on first login
+2. System creates user with password `Integer@123`, forces change on first login
 3. Enrolls user in selected courses (role ID 5 = student, 365-day duration)
 4. Sends HTML welcome email with login URL and course details
 5. Logs email in `local_leaner_email`
@@ -1687,10 +1687,10 @@ Page Load → Fetch WHERE registration_check = 0 AND is_active = 1
 
 - **Hosting:** Hostinger shared hosting. Short MySQL `wait_timeout` — long operations need keepalive (`SELECT 1`).
 - **Deployment:** Upload modified PHP files via Hostinger File Manager, then purge caches at Site admin > Development > Purge all caches.
-- **Production URL:** `https://epearlacademy.com`
+- **Production URL:** TBD — will be set when Integer Training Hostinger domain is provisioned. Code uses `$CFG->wwwroot` (set in `config.php`) so no hardcoded URLs remain.
 - **Database prefix:** `r6ua_` (non-standard). Local dev uses `mdl_`. Always use `{table}` syntax or `$CFG->prefix` — never hardcode prefixes.
 - **Support email:** `student.support@integertraining.com` (hardcoded in `local/learner/sendcontactmail.php`)
-- **Default password for new users:** `Epearl@123` (set in `local/learner/users.php`)
+- **Default password for new users:** `Integer@123` (set in `local/learner/users.php`)
 - **Tutor identification:** Users with role shortname `'teacher'` (not `'editingteacher'`). Both `local/learner` and `local/tutors` use this pattern.
 - **Grading scale:** Pass/Refer stored as scale values in `grade_grades.finalgrade` (Refer=1, Pass=2 as positive integers).
 - **Draft submissions with grades:** Some assignments are graded while still in "Draft (not submitted)" status. This is intentional — tutors grade draft uploads for feedback purposes. Dashboard queries include drafts using a 3-tier filter: `sub.status = 'submitted'` OR (`status = 'draft'` AND assignment is a case study) OR (`status = 'draft'` AND has file or onlinetext). Case studies get a special exception because they don't use file upload or online text submission plugins — just having a submission record is sufficient. Already-graded submissions are excluded by the grade check (`gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0`). Re-upload detection (file created after grading) is restricted to `status = 'submitted'` only to prevent false positives on drafts.
@@ -1752,7 +1752,7 @@ Modern glassmorphism design with animated inspirational quotes:
 | -------------------------------------------- | ------------------------------------------------- |
 | `theme/alpha/templates/loginform.mustache`   | Custom login screen with animated quotes carousel |
 | `theme/alpha/layout/tmpl-frontpage.mustache` | Front page for non-logged users with hero section |
-| `theme/alpha/pix/epearl-logo.png`            | Epearl Academy logo (120px in hero)               |
+| `theme/alpha/pix/integer-logo.webp`          | Integer Training logo (120px in hero)             |
 
 ### Features
 
@@ -1767,7 +1767,7 @@ Upload these 3 files to Hostinger:
 
 1. `public_html/theme/alpha/templates/loginform.mustache`
 2. `public_html/theme/alpha/layout/tmpl-frontpage.mustache`
-3. `public_html/theme/alpha/pix/epearl-logo.png`
+3. `public_html/theme/alpha/pix/integer-logo.webp`
 
 Then purge caches.
 

@@ -18,7 +18,7 @@
  * AJAX endpoint for case study approve/reject/resubmit actions.
  *
  * @package    local_learner
- * @copyright  2026 Epearl Academy
+ * @copyright  2026 Integer Training
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 

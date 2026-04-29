@@ -12,7 +12,7 @@ After auditing the codebase, the problems fall into four categories:
 - Tutors have **zero sidebar links**. They must know URLs or stumble onto the dashboard.
 - Learners see stat counts ("3 Due Assignments") but **can't click them to see which ones**.
 - Features like mark allocation, inactive learners, and due dates are buried behind dashboard cards with no visual affordance that they're clickable.
-- Breadcrumbs are hardcoded to `epearlacademy.com` — fragile and not dynamic.
+- (Historical — fixed at fork) Breadcrumbs were hardcoded to a single domain — fragile and not dynamic.
 
 ### 2. Grading is fragmented
 - Two parallel grading workflows exist: custom mark allocation table AND Moodle's native grader. Tutors don't know which to use.
@@ -104,7 +104,7 @@ Add visual affordance: `cursor: pointer`, hover lift effect, right-arrow icon on
 
 Replace:
 ```html
-<a href="https://epearlacademy.com/local/learner/view.php">Learners</a>
+<a href="{{{wwwroot}}}/local/learner/view.php">Learners</a>
 ```
 
 With:

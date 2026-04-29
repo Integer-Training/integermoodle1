@@ -379,7 +379,7 @@ echo $OUTPUT->header();
 
 echo '<h3>Marking History</h3>';
 echo '<ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="https://epearlacademy.com/">Home</a></li>
+                <li class="breadcrumb-item"><a href="'.$CFG->wwwroot.'/">Home</a></li>
             </ol>';
 if($action){
     $r_url = new moodle_url('/course/view.php',['id'=>$cid]);

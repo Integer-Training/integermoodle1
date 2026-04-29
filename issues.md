@@ -1,4 +1,6 @@
-# Epearlmoodle — Known Issues & Diagnostics
+# integermoodle1 — Known Issues & Diagnostics
+
+> Forked from `moodlebackup` (Epearl) on 2026-04-29. Issues below were identified on the original Epearl production. They are inherited unless explicitly fixed during the fork — see "Issues fixed at fork" section at the top of any rebrand commit messages.
 
 Last updated: 2026-02-03
 

@@ -67,7 +67,7 @@ $htmlmessage = '<p>Hi <strong>'.$to->firstname.'</strong>,</p>
             <div class="mb-3">
               <h4 class="mb-2">Here are your login details</h4>
               <ul class="list-unstyled ms-3">
-                <li>Learning website: <a href="https://epearlacademy.com" target="_blank" rel="noopener">https://epearlacademy.com</a></li>
+                <li>Learning website: <a href="'.$CFG->wwwroot.'" target="_blank" rel="noopener">'.$CFG->wwwroot.'</a></li>
                 <li>Username: <span class="credential">'.$to->username.'</span></li>
                 <li>Password: <span class="credential">'.ucwords('Integer@123').'</span></li>
               </ul>
@@ -101,7 +101,7 @@ $htmlmessage = '<p>Hi <strong>'.$to->firstname.'</strong>,</p>
                 <div class="small-muted">Course Support Team</div>
               </div>
               <div class="ms-auto">
-                <a href="https://epearlacademy.com/login/index.php" target="_blank" class="btn btn-primary">Log in to your account</a>
+                <a href="'.$CFG->wwwroot.'/login/index.php" target="_blank" class="btn btn-primary">Log in to your account</a>
               </div>
             </div>';
 //print_object($to);
