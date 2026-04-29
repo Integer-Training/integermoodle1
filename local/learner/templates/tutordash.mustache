@@ -144,6 +144,17 @@
       <i class="bi bi-arrow-right td-alert-arrow"></i>
     </a>
 
+    {{#ss_has_stuck}}
+    <a href="{{{ss_stuck_url}}}" class="td-alert td-alert--stuck" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left: 4px solid #dc2626;">
+      <div class="td-alert-icon" style="color: #991b1b;"><i class="bi bi-hourglass-bottom"></i></div>
+      <div class="td-alert-content">
+        <span class="td-alert-label">Stuck Learners (Pending &gt; SLA)</span>
+        <span class="td-alert-value" style="color: #991b1b;">{{{ss_stuck_count}}}</span>
+      </div>
+      <i class="bi bi-arrow-right td-alert-arrow"></i>
+    </a>
+    {{/ss_has_stuck}}
+
     <a href="{{{ai_checks_url}}}" class="td-alert td-alert--ai">
       <div class="td-alert-icon"><i class="bi bi-robot"></i></div>
       <div class="td-alert-content">

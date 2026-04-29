@@ -308,6 +308,27 @@
     </a>
     {{/draftfeedback_enabled}}
 
+    {{#ss_enabled}}
+    <a href="{{{ss_manage_url}}}" class="admindash-alert admindash-alert--ss" style="background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-left: 4px solid #3a5ba0;">
+      <div class="admindash-alert-icon" style="color: #3a5ba0;"><i class="bi bi-lock-fill"></i></div>
+      <div class="admindash-alert-content">
+        <span class="admindash-alert-label">Active Submission Locks</span>
+        <span class="admindash-alert-value" style="color: #1a2238;">{{{ss_active_locks}}}</span>
+      </div>
+      <i class="bi bi-arrow-right admindash-alert-arrow"></i>
+    </a>
+    {{#ss_has_stuck}}
+    <a href="{{{ss_manage_url}}}" class="admindash-alert admindash-alert--ss-stuck" style="background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); border-left: 4px solid #dc2626;">
+      <div class="admindash-alert-icon" style="color: #991b1b;"><i class="bi bi-hourglass-bottom"></i></div>
+      <div class="admindash-alert-content">
+        <span class="admindash-alert-label">Stuck Learners (Pending &gt; SLA)</span>
+        <span class="admindash-alert-value" style="color: #991b1b;">{{{ss_stuck_count}}}</span>
+      </div>
+      <i class="bi bi-arrow-right admindash-alert-arrow"></i>
+    </a>
+    {{/ss_has_stuck}}
+    {{/ss_enabled}}
+
   </div>
 
   <div class="admindash-alerts admindash-alerts--single">

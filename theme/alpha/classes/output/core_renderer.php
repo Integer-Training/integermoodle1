@@ -1528,6 +1528,16 @@ class core_renderer extends \core_renderer {
                             </a>
                         </li>';
             }
+            // Sequential Submission — admin only. Guarded by plugin existence.
+            if (is_siteadmin($USER) && file_exists($CFG->dirroot . '/local/sequentialsubmission/index.php')) {
+                $sslink = new moodle_url('/local/sequentialsubmission/index.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$sslink.'" id="itemSubmissionLocks" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-lock"></i></span>
+                                <span class="rui-sidebar-nav-text">Submission Locks</span>
+                            </a>
+                        </li>';
+            }
             //
             if (get_config('local_performance', 'enable_role_cache')
                 && class_exists('\\local_performance\\role_cache')) {

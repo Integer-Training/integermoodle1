@@ -383,6 +383,46 @@ if ($DB->get_manager()->table_exists('local_draftfeedback')) {
 }
 
 // ============================================================
+// 11b. STUCK LEARNERS (Sequential Submission plugin)
+// Learners in this tutor's groups whose pending submission is > SLA days.
+// ============================================================
+$stuck_learner_count = 0;
+if ($DB->get_manager()->table_exists('local_ss_log')
+    && class_exists('\\local_sequentialsubmission\\lock_checker')
+    && \local_sequentialsubmission\lock_checker::is_enabled()
+    && !empty($learner_ids)) {
+    $ss_sla = (int) get_config('local_sequentialsubmission', 'sla_days');
+    if ($ss_sla <= 0) {
+        $ss_sla = 7;
+    }
+    $ss_threshold = time() - ($ss_sla * 86400);
+
+    [$ssin, $ssparams] = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'ssuid');
+    $sspatterns = \local_sequentialsubmission\lock_checker::get_exempt_patterns();
+    $ssexcl = '';
+    foreach ($sspatterns as $ssi => $ssp) {
+        $sskey = "sseps{$ssi}";
+        $ssexcl .= " AND a.name NOT LIKE :{$sskey}";
+        $ssparams[$sskey] = '%' . $ssp . '%';
+    }
+    $ssparams['ssthresh'] = $ss_threshold;
+
+    $stuck_sql = "SELECT COUNT(DISTINCT sub.userid) AS cnt
+                  FROM {assign_submission} sub
+                  JOIN {assign} a ON a.id = sub.assignment
+                  JOIN {modules} m ON m.name = 'assign'
+                  JOIN {course_modules} cm ON cm.instance = a.id AND cm.module = m.id AND cm.visible = 1
+                  LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = sub.userid
+                      AND gr.attemptnumber = sub.attemptnumber
+                  WHERE sub.userid {$ssin}
+                    AND sub.latest = 1 AND sub.status = 'submitted'
+                    AND sub.timemodified < :ssthresh
+                    AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0 OR gr.grade = 1)
+                    {$ssexcl}";
+    $stuck_learner_count = (int) $DB->count_records_sql($stuck_sql, $ssparams);
+}
+
+// ============================================================
 // 12. RECENT NEWS (from local_news plugin)
 // ============================================================
 $recent_news = [];
@@ -482,6 +522,11 @@ $templatecontext = [
     'draft_feedback_count' => $draft_feedback_count,
     'draft_feedback_url'   => new moodle_url('/local/draftfeedback/index.php'),
     'has_draft_feedback'   => ($draft_feedback_count > 0),
+
+    // Sequential Submission — stuck learners.
+    'ss_stuck_count'      => $stuck_learner_count,
+    'ss_has_stuck'        => ($stuck_learner_count > 0),
+    'ss_stuck_url'        => new moodle_url('/local/learner/markallocation.php', ['action' => 'overdue']),
 
     // News.
     'recent_news'          => $recent_news,

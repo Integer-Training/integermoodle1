@@ -548,6 +548,38 @@ if (!empty($learner_ids)) {
     $created_count = 0;
     $thirty_days_ago = time() - (30 * 24 * 60 * 60);
 
+    // Sequential Submission integration: bulk-fetch pending counts per learner
+    // so the progression row can show a 🔒 indicator. Guarded for plugin absence.
+    $pending_map = [];
+    if (class_exists('\\local_sequentialsubmission\\lock_checker')
+        && \local_sequentialsubmission\lock_checker::is_enabled()
+        && !empty($learner_ids)) {
+        [$ssin, $ssparams] = $DB->get_in_or_equal($learner_ids, SQL_PARAMS_NAMED, 'sslid');
+        $sspatterns = \local_sequentialsubmission\lock_checker::get_exempt_patterns();
+        $ssexcl = '';
+        foreach ($sspatterns as $ssi => $ssp) {
+            $sskey = "ssep{$ssi}";
+            $ssexcl .= " AND a.name NOT LIKE :{$sskey}";
+            $ssparams[$sskey] = '%' . $ssp . '%';
+        }
+        $sspend_sql = "SELECT sub.userid, COUNT(DISTINCT sub.id) AS pcnt
+                       FROM {assign_submission} sub
+                       JOIN {assign} a ON a.id = sub.assignment
+                       JOIN {modules} m ON m.name = 'assign'
+                       JOIN {course_modules} cm ON cm.instance = a.id AND cm.module = m.id AND cm.visible = 1
+                       LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = sub.userid
+                           AND gr.attemptnumber = sub.attemptnumber
+                       WHERE sub.userid {$ssin}
+                         AND sub.latest = 1 AND sub.status = 'submitted'
+                         AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0 OR gr.grade = 1)
+                         {$ssexcl}
+                       GROUP BY sub.userid";
+        $sspend_rows = $DB->get_records_sql($sspend_sql, $ssparams);
+        foreach ($sspend_rows as $sspr) {
+            $pending_map[(int) $sspr->userid] = (int) $sspr->pcnt;
+        }
+    }
+
     foreach ($learner_data as $uid => $ld) {
         $total = $ld['total_all'];
         $passed = $ld['total_passed'];
@@ -622,6 +654,7 @@ if (!empty($learner_ids)) {
             $learner_course_names[] = $cd['name'];
         }
 
+        $ss_pending = $pending_map[$uid] ?? 0;
         $learners[] = [
             'fullname' => $ld['fullname'],
             'start_date' => $start_date,
@@ -635,6 +668,8 @@ if (!empty($learner_ids)) {
             'cs_total' => $ld['cs_total_all'],
             'detail_json' => json_encode($course_details),
             'course_names' => implode('||', $learner_course_names),
+            'ss_has_pending' => $ss_pending > 0,
+            'ss_pending_count' => $ss_pending,
         ];
     }
 

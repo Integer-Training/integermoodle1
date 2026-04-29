@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/sequentialsubmission/db" VERSION="20260422" COMMENT="Sequential Submission plugin database tables">
+  <TABLES>
+    <TABLE NAME="local_ss_log" COMMENT="Audit trail of lock events, force-unlocks, mobile reverts, and stuck alerts">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Learner the event relates to"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="30" NOTNULL="true" COMMENT="block | force_unlock | mobile_revert | stuck_alert | grandfather_sent"/>
+        <FIELD NAME="blocked_cmid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Course module the user tried to submit (for block/mobile_revert)"/>
+        <FIELD NAME="blocking_cmid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Course module that caused the block (the pending/referred unit)"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Course context"/>
+        <FIELD NAME="reason" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="rule_1a_refer | rule_2a_order | rule_4b_pending | admin_unlock | sla_stuck"/>
+        <FIELD NAME="initiatedby" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Admin user for force_unlock events"/>
+        <FIELD NAME="notes" TYPE="text" NOTNULL="false" COMMENT="Free-text admin reason or diagnostic data"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="initiatedby_fk" TYPE="foreign" FIELDS="initiatedby" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid_action_idx" UNIQUE="false" FIELDS="userid, action"/>
+        <INDEX NAME="timecreated_idx" UNIQUE="false" FIELDS="timecreated"/>
+        <INDEX NAME="action_idx" UNIQUE="false" FIELDS="action"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_ss_bypass" COMMENT="Temporary bypass entries created by admin force-unlock. Expires by TTL or when the blocking submission is marked, whichever is sooner.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Learner who has the bypass"/>
+        <FIELD NAME="blocking_cmid" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="The cmid that was blocking them (bypass auto-clears when this is marked)"/>
+        <FIELD NAME="grantedby" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Admin user who granted the bypass"/>
+        <FIELD NAME="expiresat" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Unix timestamp when the bypass auto-expires"/>
+        <FIELD NAME="reason" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Admin-provided reason for the force-unlock"/>
+        <FIELD NAME="active" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="1 active, 0 consumed/expired"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="userid_fk" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="grantedby_fk" TYPE="foreign" FIELDS="grantedby" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid_active_idx" UNIQUE="false" FIELDS="userid, active"/>
+        <INDEX NAME="expiresat_idx" UNIQUE="false" FIELDS="expiresat"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

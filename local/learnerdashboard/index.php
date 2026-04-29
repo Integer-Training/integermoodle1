@@ -621,6 +621,32 @@ $has_progression = !empty($progression_courses);
 // ===== TEMPLATE CONTEXT =====
 $has_unread = ($unread_count > 0);
 
+// Sequential Submission integration: surface the learner's current pending
+// submission so they can see at a glance which assignment is blocking them.
+// Guarded with class_exists so this works even if the plugin is uninstalled.
+$pending_submissions = [];
+$current_submission = null;
+if (class_exists('\\local_sequentialsubmission\\lock_checker')
+    && \local_sequentialsubmission\lock_checker::is_enabled()) {
+    $raw_pending = \local_sequentialsubmission\lock_checker::get_pending_for($USER->id);
+    foreach ($raw_pending as $p) {
+        $pending_submissions[] = [
+            'assignname' => format_string($p->assignname),
+            'coursename' => format_string($p->coursename),
+            'days_waiting' => (int) $p->days_waiting,
+            'is_refer' => $p->gradestate === 'refer',
+            'status_label' => $p->gradestate === 'refer' ? 'Referred' : 'Awaiting Marking',
+            'assign_link' => (new moodle_url('/mod/assign/view.php', ['id' => $p->cmid]))->out(false),
+        ];
+    }
+    // Oldest pending = the one tutors will clear first.
+    if (!empty($pending_submissions)) {
+        $current_submission = $pending_submissions[0];
+    }
+}
+$has_pending_submission = !empty($pending_submissions);
+$pending_count = count($pending_submissions);
+
 $templatecontext = [
     'name'                  => $USER->firstname,
     'fullname'              => fullname($USER),
@@ -668,6 +694,12 @@ $templatecontext = [
     'has_news'              => $has_news,
     'unread_news_count'     => $unread_news_count,
     'news_link'             => (new moodle_url('/local/news/index.php'))->out(false),
+
+    // Sequential Submission.
+    'has_pending_submission' => $has_pending_submission,
+    'pending_count'          => $pending_count,
+    'pending_submissions'    => $pending_submissions,
+    'current_submission'     => $current_submission,
 ];
 
 echo $OUTPUT->render_from_template('local_learnerdashboard/dashboard', $templatecontext);

@@ -782,6 +782,55 @@ $templatecontext = [
     'ai_checks_url'             => (new moodle_url('/local/learner/aichecks.php'))->out(),
 ];
 
+// ============================================================
+// Sequential Submission (Active Locks + Stuck Learners)
+// ============================================================
+$ss_active_locks = 0;
+$ss_stuck_count = 0;
+$ss_enabled = false;
+if ($DB->get_manager()->table_exists('local_ss_log')
+    && class_exists('\\local_sequentialsubmission\\lock_checker')
+    && \local_sequentialsubmission\lock_checker::is_enabled()) {
+    $ss_enabled = true;
+    $ss_sla = (int) get_config('local_sequentialsubmission', 'sla_days');
+    if ($ss_sla <= 0) {
+        $ss_sla = 7;
+    }
+    $ss_threshold = time() - ($ss_sla * 86400);
+    $sspatterns = \local_sequentialsubmission\lock_checker::get_exempt_patterns();
+    $ssparams = [];
+    $ssexcl = '';
+    foreach ($sspatterns as $ssi => $ssp) {
+        $sskey = "sspat{$ssi}";
+        $ssexcl .= " AND a.name NOT LIKE :{$sskey}";
+        $ssparams[$sskey] = '%' . $ssp . '%';
+    }
+
+    // Count active locks (distinct learners with pending submissions).
+    $ss_active_sql = "SELECT COUNT(DISTINCT sub.userid)
+                      FROM {assign_submission} sub
+                      JOIN {user} u ON u.id = sub.userid AND u.suspended = 0 AND u.deleted = 0
+                      JOIN {assign} a ON a.id = sub.assignment
+                      JOIN {modules} m ON m.name = 'assign'
+                      JOIN {course_modules} cm ON cm.instance = a.id AND cm.module = m.id AND cm.visible = 1
+                      LEFT JOIN {assign_grades} gr ON gr.assignment = a.id AND gr.userid = sub.userid
+                          AND gr.attemptnumber = sub.attemptnumber
+                      WHERE sub.latest = 1 AND sub.status = 'submitted'
+                        AND (gr.id IS NULL OR gr.grade IS NULL OR gr.grade < 0 OR gr.grade = 1)
+                        {$ssexcl}";
+    $ss_active_locks = (int) $DB->count_records_sql($ss_active_sql, $ssparams);
+
+    $ssparams['ssthresh'] = $ss_threshold;
+    $ss_stuck_sql = $ss_active_sql . " AND sub.timemodified < :ssthresh";
+    $ss_stuck_count = (int) $DB->count_records_sql($ss_stuck_sql, $ssparams);
+}
+$templatecontext['ss_enabled']        = $ss_enabled;
+$templatecontext['ss_active_locks']   = $ss_active_locks;
+$templatecontext['ss_stuck_count']    = $ss_stuck_count;
+$templatecontext['ss_has_stuck']      = $ss_stuck_count > 0;
+$templatecontext['ss_has_active']     = $ss_active_locks > 0;
+$templatecontext['ss_manage_url']     = (new moodle_url('/local/sequentialsubmission/index.php'))->out(false);
+
 // Monthly enrollment data.
 for ($m = 1; $m <= 12; $m++) {
     $templatecontext['enrol_month_' . $m] = $enrollment_months[$m];

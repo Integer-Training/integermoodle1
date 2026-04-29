@@ -444,6 +444,18 @@ echo '<ol class="breadcrumb">
                 <li class="breadcrumb-item"><a href="https://epearlacademy.com/">Home</a></li>
             </ol>';
 
+// Sequential Submission: info banner so tutors understand the impact of their marking.
+if (($action === 'mark' || $action === 'resub' || $action === 'overdue')
+    && $DB->get_manager()->table_exists('local_ss_log')
+    && class_exists('\\local_sequentialsubmission\\lock_checker')
+    && \local_sequentialsubmission\lock_checker::is_enabled()) {
+    echo '<div style="margin:12px 0 18px 0;padding:14px 18px;background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%);border-left:4px solid #3a5ba0;border-radius:8px;font-family:Inter,system-ui,sans-serif;font-size:14px;color:#1e293b;">
+          <i class="bi bi-unlock-fill" style="color:#3a5ba0;margin-right:6px;"></i>
+          <strong>Sequential Submission rule is active.</strong>
+          Each learner below can only submit one assignment at a time. Marking any row as <strong>Pass</strong> immediately unblocks that learner for their next unit.
+          </div>';
+}
+
 echo '<script src="https://cdn.datatables.net/buttons/1.6.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/1.6.2/js/buttons.flash.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>

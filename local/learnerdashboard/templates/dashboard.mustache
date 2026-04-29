@@ -303,6 +303,36 @@
   </div>
   {{/has_referred}}
 
+  {{! ===== CURRENT PENDING SUBMISSION (Sequential Submission plugin) ===== }}
+  {{#has_pending_submission}}
+  <div class="ld-card ld-card--pending">
+    <div class="ld-card-hdr" style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);">
+      <h3><i class="bi bi-hourglass-split"></i> Current Submission {{#pending_count}}{{#pending_submissions.1}}({{pending_count}}){{/pending_submissions.1}}{{/pending_count}}</h3>
+    </div>
+    <div class="ld-card-body">
+      <p style="margin: 0 0 14px 0; color: #78350f; font-size: 14.5px;">
+        You have {{pending_count}} assignment{{#pending_submissions.1}}s{{/pending_submissions.1}} awaiting marking. You can submit your next assignment once this is marked.
+      </p>
+      <div class="ld-revision-list">
+        {{#pending_submissions}}
+        <div class="ld-revision-item">
+          <div class="ld-revision-info">
+            <div class="ld-revision-top">
+              <span class="ld-revision-assign">{{{assignname}}}</span>
+              <span class="ld-revision-grade" style="background: {{#is_refer}}#fee2e2{{/is_refer}}{{^is_refer}}#fef3c7{{/is_refer}}; color: {{#is_refer}}#991b1b{{/is_refer}}{{^is_refer}}#92400e{{/is_refer}};">{{status_label}}</span>
+            </div>
+            <span class="ld-revision-course">{{{coursename}}} &middot; {{days_waiting}} day{{#days_waiting}}s{{/days_waiting}}{{^days_waiting}}{{/days_waiting}} waiting</span>
+          </div>
+          <a href="{{{assign_link}}}" class="ld-btn-resubmit" style="background: #f59e0b;">
+            <i class="bi bi-eye"></i> View
+          </a>
+        </div>
+        {{/pending_submissions}}
+      </div>
+    </div>
+  </div>
+  {{/has_pending_submission}}
+
   <!-- ===== MY PROGRESSION ===== -->
   <div class="ld-card">
     <div class="ld-card-hdr">
