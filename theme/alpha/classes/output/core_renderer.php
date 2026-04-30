@@ -1381,7 +1381,12 @@ class core_renderer extends \core_renderer {
             
             for ($i = 0; $i < $items; $i++) {
 
-                if ($headerlinks[$i]['status'] == true) {
+                // Skip items that are configured "on" but have no label or URL.
+                // Without this guard, custom item slots 2-5 (which Epearl admin
+                // left blank) render as empty <li> links to the current page.
+                $title = isset($headerlinks[$i]['title']) ? trim((string)$headerlinks[$i]['title']) : '';
+                $rawurl = isset($headerlinks[$i]['url']) ? trim((string)$headerlinks[$i]['url']) : '';
+                if ($headerlinks[$i]['status'] == true && $title !== '' && $rawurl !== '' && $rawurl !== $CFG->wwwroot . '/') {
                     $html .= '<li class="rui-sidebar-nav-item">
                     <a href="' . $headerlinks[$i]['url'] .
                         '" id="' .
