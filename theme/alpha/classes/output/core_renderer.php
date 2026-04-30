@@ -1551,7 +1551,9 @@ class core_renderer extends \core_renderer {
                 }
                 $is_manager_user = in_array($USER->id,$in_users);
             }
-            if($is_manager_user){
+            // Show User Creation for managers who are NOT also siteadmins;
+            // siteadmins already get it from the admin-only block above so this prevents the duplicate.
+            if($is_manager_user && !is_siteadmin($USER)){
                 $user_link = new moodle_url('/local/learner/users.php', array('contextid' => 1));
                     $html  .= '<li class="rui-sidebar-nav-item">
                             <a href="'.$user_link.'" id="itemCustomItem5" class="rui-sidebar-nav-item-link">
