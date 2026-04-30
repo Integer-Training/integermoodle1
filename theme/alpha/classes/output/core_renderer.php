@@ -1400,8 +1400,24 @@ class core_renderer extends \core_renderer {
                 }
             }
             if(is_siteadmin($USER)){
-                // Admin Dashboard link comes from local/admindashboard/lib.php navigation hook
-                // (goes to /local/admindashboard/index.php)
+                // Admin Dashboard — Alpha theme ignores $node->showinflatnavigation,
+                // so the local_admindashboard navigation hook never reaches the sidebar.
+                // Render it directly here for siteadmins.
+                $admindash_link = new moodle_url('/local/admindashboard/index.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$admindash_link.'" id="itemAdminDashboard" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-gauge-high"></i></span>
+                                <span class="rui-sidebar-nav-text">Admin Dashboard</span>
+                            </a>
+                        </li>';
+                // All Courses — direct link to Moodle's course index.
+                $allcourses_link = new moodle_url('/course/index.php');
+                $html .= '<li class="rui-sidebar-nav-item">
+                            <a href="'.$allcourses_link.'" id="itemAllCourses" class="rui-sidebar-nav-item-link">
+                                <span class="rui-sidebar-nav-icon"><i class="fa-solid fa-book-open"></i></span>
+                                <span class="rui-sidebar-nav-text">All Courses</span>
+                            </a>
+                        </li>';
                 $prog_link = new moodle_url('/local/learnerprogression/index.php');
                 $html .= '<li class="rui-sidebar-nav-item">
                             <a href="'.$prog_link.'" id="itemProgression" class="rui-sidebar-nav-item-link">
