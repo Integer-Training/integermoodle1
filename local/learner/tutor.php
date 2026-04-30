@@ -52,12 +52,15 @@ $PAGE->requires->js('/local/learner/js/jquery.dataTables.min.js',true);
 $PAGE->requires->css('/local/learner/js/jquery.dataTables.min.css',true);
 //
 $result = '';
+$count_recs_arr = [];
 
 $contextlevel = CONTEXT_COURSE;
 
-// Find teacher roles (editingteacher, teacher, etc.)
+// Find tutor roles. Match both 'teacher' (Epearl convention per CLAUDE.md)
+// and 'editingteacher' so the page works even when only editingteacher
+// assignments exist in the imported data.
 $teacherroles = $DB->get_records_sql(
-    "SELECT id FROM {role} WHERE shortname IN ('teacher')"
+    "SELECT id FROM {role} WHERE shortname IN ('teacher', 'editingteacher')"
 );
 
 if (empty($teacherroles)) {
@@ -69,7 +72,7 @@ list($insql, $params) = $DB->get_in_or_equal($roleids, SQL_PARAMS_NAMED);
 
 // Query to get all courses where user has teacher roles.
 $sql = "SELECT ra.userid,u.*
-          FROM  {role_assignments} ra 
+          FROM  {role_assignments} ra
           JOIN {user} u ON u.id=ra.userid
          WHERE  ra.roleid $insql
       GROUP BY u.id";
