@@ -139,16 +139,16 @@ $sql = "SELECT l.id,
             l.action,
             l.target,
             FROM_UNIXTIME(l.timecreated) AS logtime
-        FROM mdl_logstore_standard_log l
-        JOIN mdl_user u ON u.id = l.userid
-        JOIN mdl_course_modules cm ON cm.id = l.contextinstanceid
-        JOIN mdl_modules m ON m.id = cm.module
-        JOIN mdl_course c ON c.id=cm.course
-        LEFT JOIN mdl_assign a ON m.name = 'assign' AND a.id = cm.instance
-        LEFT JOIN mdl_hvp q ON m.name = 'hvp' AND q.id = cm.instance
-        WHERE l.userid = ".$user_obj->id."
+        FROM {logstore_standard_log} l
+        JOIN {user} u ON u.id = l.userid
+        JOIN {course_modules} cm ON cm.id = l.contextinstanceid
+        JOIN {modules} m ON m.id = cm.module
+        JOIN {course} c ON c.id = cm.course
+        LEFT JOIN {assign} a ON m.name = 'assign' AND a.id = cm.instance
+        LEFT JOIN {hvp} q ON m.name = 'hvp' AND q.id = cm.instance
+        WHERE l.userid = :userid
         ORDER BY l.timecreated DESC";
-$activity_logs = $DB->get_records_sql($sql);
+$activity_logs = $DB->get_records_sql($sql, ['userid' => $user_obj->id]);
 //print_object($activity_logs);die;
 //
 $datalog = array();
