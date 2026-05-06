@@ -1379,30 +1379,56 @@ class core_renderer extends \core_renderer {
 
             $html = '';
             
-            for ($i = 0; $i < $items; $i++) {
+            // Map custom item slots (itemCustomItem1..5) to their underlying
+            // raw setting names so we can skip slots whose label is blank.
+            // The status flag is forced to true elsewhere for siteadmins,
+            // so checking the formatted $headerlinks[$i]['title'] alone
+            // isn't reliable (format_text may wrap empty strings).
+            $customitemslots = [
+                'itemCustomItem1' => 'labelcustomitem1',
+                'itemCustomItem2' => 'labelcustomitem2',
+                'itemCustomItem3' => 'labelcustomitem3',
+                'itemCustomItem4' => 'labelcustomitem4',
+                'itemCustomItem5' => 'labelcustomitem5',
+            ];
 
-                // Skip items that are configured "on" but have no label or URL.
-                // Without this guard, custom item slots 2-5 (which Epearl admin
-                // left blank) render as empty <li> links to the current page.
-                $title = isset($headerlinks[$i]['title']) ? trim((string)$headerlinks[$i]['title']) : '';
-                $rawurl = isset($headerlinks[$i]['url']) ? trim((string)$headerlinks[$i]['url']) : '';
-                if ($headerlinks[$i]['status'] == true && $title !== '' && $rawurl !== '' && $rawurl !== $CFG->wwwroot . '/') {
-                    $html .= '<li class="rui-sidebar-nav-item">
-                    <a href="' . $headerlinks[$i]['url'] .
-                        '" id="' .
-                        $headerlinks[$i]['itemid'] .
-                        '" class="rui-sidebar-nav-item-link ' .
-                        $headerlinks[$i]['isactiveitem'] .
-                        '">
-                        <span class="rui-sidebar-nav-icon">' .
-                        $headerlinks[$i]['icon'] .
-                        '</span>
-                        <span class="rui-sidebar-nav-text">' .
-                        $headerlinks[$i]['title'] .
-                        '</span>
-                    </a>
-                    </li>';
+            for ($i = 0; $i < $items; $i++) {
+                if ($headerlinks[$i]['status'] != true) {
+                    continue;
                 }
+
+                // Skip empty custom-item slots based on the raw underlying
+                // theme setting. Without this, blank customitem2-5 slots
+                // render as empty <li> links that go to the current page.
+                $itemid = $headerlinks[$i]['itemid'] ?? '';
+                if (isset($customitemslots[$itemid])) {
+                    $rawlabel = (string)($theme->settings->{$customitemslots[$itemid]} ?? '');
+                    if (trim(strip_tags($rawlabel)) === '') {
+                        continue;
+                    }
+                }
+
+                // Belt-and-braces: also skip if the formatted title strips to empty.
+                $titlecheck = trim(strip_tags((string)($headerlinks[$i]['title'] ?? '')));
+                if ($titlecheck === '') {
+                    continue;
+                }
+
+                $html .= '<li class="rui-sidebar-nav-item">
+                <a href="' . $headerlinks[$i]['url'] .
+                    '" id="' .
+                    $headerlinks[$i]['itemid'] .
+                    '" class="rui-sidebar-nav-item-link ' .
+                    $headerlinks[$i]['isactiveitem'] .
+                    '">
+                    <span class="rui-sidebar-nav-icon">' .
+                    $headerlinks[$i]['icon'] .
+                    '</span>
+                    <span class="rui-sidebar-nav-text">' .
+                    $headerlinks[$i]['title'] .
+                    '</span>
+                </a>
+                </li>';
             }
             if(is_siteadmin($USER)){
                 // Admin Dashboard — Alpha theme ignores $node->showinflatnavigation,
