@@ -2480,6 +2480,21 @@ class core_renderer extends \core_renderer {
                 . '</div><div class="dropdown-divider dropdown-divider-user"></div>' . $dashboardlink
         );
 
+        // When impersonating someone via "Login As", show a clearly-labeled
+        // "Back to Normal" link that goes to our custom backurl.php which
+        // restores the admin/tutor session via the matching session-manager
+        // cleanup. Moodle's default menu mislabels this as "Log out" which
+        // is confusing, so we add an explicit entry here.
+        if (\core\session\manager::is_loggedinas()) {
+            $am->add(
+                '<div class="dropdown-item-wrapper"><a class="dropdown-item" href="'
+                . (new moodle_url('/local/learner/backurl.php'))->out()
+                . '" data-identifier="backtonormal,local_learner" title="Back to your admin account">'
+                . get_string('switchrolereturn', 'moodle')
+                . '</a></div>'
+            );
+        }
+
         if ($withlinks) {
             $navitemcount = count($opts->navitems);
             $idx = 0;
