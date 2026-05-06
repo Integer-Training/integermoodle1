@@ -65,10 +65,12 @@ echo '<!-- jQuery (required) -->
 <!-- Select2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>';
 $mform = new filter_form(null,[]);
+$fromform = null;
+$count_recs = 0;
 if ($mform->is_cancelled()) {
     redirect(new moodle_url('/local/tutors/view.php'));
 } else if($data = $mform->get_data()){
-    $fromform = data_submitted(); 
+    $fromform = data_submitted();
 }
 $result = '';
 if($fromform && !$action){
@@ -156,7 +158,7 @@ if($fromform && !$action){
             //
             $sub_time = $DB->get_record_sql($sub_sql);
             
-            $row['Submission'] = date('d-m-Y',$sub_time->subtime);
+            $row['Submission'] = ($sub_time && !empty($sub_time->subtime)) ? date('d-m-Y',$sub_time->subtime) : 'N/A';
             $row['Date'] =  date('d-m-Y',$record->timemodified);
             //
             //result query her
@@ -169,15 +171,15 @@ if($fromform && !$action){
                             )
                         ) AS grade_label,
                         FROM_UNIXTIME(ag.timemodified) AS graded_on
-                    FROM mdl_assign_grades ag
-                    JOIN mdl_user t ON t.id = ag.grader          -- TUTOR
-                    JOIN mdl_user su ON su.id = ag.userid        -- STUDENT
-                    JOIN mdl_assign a ON a.id = ag.assignment
-                    JOIN mdl_grade_items gi ON gi.iteminstance = a.id
+                    FROM {assign_grades} ag
+                    JOIN {user} t ON t.id = ag.grader            -- TUTOR
+                    JOIN {user} su ON su.id = ag.userid          -- STUDENT
+                    JOIN {assign} a ON a.id = ag.assignment
+                    JOIN {grade_items} gi ON gi.iteminstance = a.id
                         AND gi.itemmodule = "assign"
-                    JOIN mdl_grade_grades gg ON gg.itemid = gi.id
+                    JOIN {grade_grades} gg ON gg.itemid = gi.id
                         AND gg.userid = ag.userid
-                    JOIN mdl_scale sc ON sc.id = gi.scaleid
+                    JOIN {scale} sc ON sc.id = gi.scaleid
                     WHERE gg.finalgrade IS NOT NULL AND su.id = '.$record->userid.'
                     AND a.id = '.$assign_obj->id.'                                                                                                                                  
                     ORDER BY su.id,a.id';
@@ -215,12 +217,13 @@ if($fromform && !$action){
                            
             //ends                                                                                                                                  
             $row['Feedback'] =  '<a href="'.$url.'" target="_blank"><i class="fa text-danger fa-file-pdf-o fa-2x"></i></a>';
-            if($resultobj->grade_label == 'Pass'){
+            $gradelabel = ($resultobj && !empty($resultobj->grade_label)) ? $resultobj->grade_label : '';
+            if($gradelabel == 'Pass'){
                 $row['Result'] =  '<a href="#" class="fbox btn btn-success" style="color:#ffffff">Pass</a>';
-            }else if($resultobj->grade_label == 'Refer'){
+            }else if($gradelabel == 'Refer'){
                 $row['Result'] =  '<a href="#" class="fbox btn btn-danger" style="color:#ffffff">Refer</a>';
-            }else if($resultobj->grade_label){
-                $row['Result'] = ucowrds($result->grade_label);
+            }else if($gradelabel){
+                $row['Result'] = ucwords($gradelabel);
             }else{
                 $row['Result'] = 'N/A';
             }
@@ -284,7 +287,7 @@ if($fromform && !$action){
             //
             $sub_time = $DB->get_record_sql($sub_sql);
             
-            $row['Submission'] = date('d-m-Y',$sub_time->subtime);
+            $row['Submission'] = ($sub_time && !empty($sub_time->subtime)) ? date('d-m-Y',$sub_time->subtime) : 'N/A';
             $row['Date'] =  date('d-m-Y',$record->timemodified);
             //
             //result query her
@@ -297,15 +300,15 @@ if($fromform && !$action){
                             )
                         ) AS grade_label,
                         FROM_UNIXTIME(ag.timemodified) AS graded_on
-                    FROM mdl_assign_grades ag
-                    JOIN mdl_user t ON t.id = ag.grader          -- TUTOR
-                    JOIN mdl_user su ON su.id = ag.userid        -- STUDENT
-                    JOIN mdl_assign a ON a.id = ag.assignment
-                    JOIN mdl_grade_items gi ON gi.iteminstance = a.id
+                    FROM {assign_grades} ag
+                    JOIN {user} t ON t.id = ag.grader            -- TUTOR
+                    JOIN {user} su ON su.id = ag.userid          -- STUDENT
+                    JOIN {assign} a ON a.id = ag.assignment
+                    JOIN {grade_items} gi ON gi.iteminstance = a.id
                         AND gi.itemmodule = "assign"
-                    JOIN mdl_grade_grades gg ON gg.itemid = gi.id
+                    JOIN {grade_grades} gg ON gg.itemid = gi.id
                         AND gg.userid = ag.userid
-                    JOIN mdl_scale sc ON sc.id = gi.scaleid
+                    JOIN {scale} sc ON sc.id = gi.scaleid
                     WHERE gg.finalgrade IS NOT NULL AND su.id = '.$record->userid.'
                     AND a.id = '.$assign_obj->id.'                                                                                                                                  
                     ORDER BY su.id,a.id';
@@ -343,12 +346,13 @@ if($fromform && !$action){
                            
             //ends                                                                                                                                  
             $row['Feedback'] =  '<a href="'.$url.'" target="_blank"><i class="fa text-danger fa-file-pdf-o fa-2x"></i></a>';
-            if($resultobj->grade_label == 'Pass'){
+            $gradelabel = ($resultobj && !empty($resultobj->grade_label)) ? $resultobj->grade_label : '';
+            if($gradelabel == 'Pass'){
                 $row['Result'] =  '<a href="#" class="fbox btn btn-success" style="color:#ffffff">Pass</a>';
-            }else if($resultobj->grade_label == 'Refer'){
+            }else if($gradelabel == 'Refer'){
                 $row['Result'] =  '<a href="#" class="fbox btn btn-danger" style="color:#ffffff">Refer</a>';
-            }else if($resultobj->grade_label){
-                $row['Result'] = ucowrds($result->grade_label);
+            }else if($gradelabel){
+                $row['Result'] = ucwords($gradelabel);
             }else{
                 $row['Result'] = 'N/A';
             }
